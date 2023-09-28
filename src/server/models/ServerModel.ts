@@ -67,6 +67,23 @@ export class Server {
     };
   }
 
+  public static getSimpleGameModelBot(game: IGame): SimpleGameModel {
+    return {
+      activePlayer: game.getPlayerById(game.activePlayer).color,
+      activePlayerName: game.getPlayerById(game.activePlayer).name,
+      id: game.id,
+      phase: game.phase,
+      players: game.getPlayersInGenerationOrder().map((player) => ({
+        color: player.color,
+        id: player.id,
+        name: player.name,
+        waitingFor: player.getWaitingFor(),
+      })),
+      passedPlayers: game.getPassedPlayers(),
+      turmoil: getTurmoilModel(game),
+    };
+  }
+
   public static getGameModel(game: IGame): GameModel {
     const turmoil = getTurmoilModel(game);
 
