@@ -60,6 +60,7 @@ export class Server {
         color: player.color,
         id: player.id,
         name: player.name,
+        waitingFor: player.getWaitingFor(),
       })),
       passedPlayers: game.getPassedPlayers(),
       spectatorId: game.spectatorId,
