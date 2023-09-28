@@ -53,6 +53,7 @@ export class Server {
   public static getSimpleGameModel(game: IGame): SimpleGameModel {
     return {
       activePlayer: game.getPlayerById(game.activePlayer).color,
+      activePlayerName: game.getPlayerById(game.activePlayer).name,
       id: game.id,
       phase: game.phase,
       players: game.getPlayersInGenerationOrder().map((player) => ({
@@ -60,6 +61,7 @@ export class Server {
         id: player.id,
         name: player.name,
       })),
+      passedPlayers: game.getPassedPlayers(),
       spectatorId: game.spectatorId,
       gameOptions: this.getGameOptionsAsModel(game.gameOptions),
       lastSoloGeneration: game.lastSoloGeneration(),
