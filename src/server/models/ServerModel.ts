@@ -53,6 +53,23 @@ export class Server {
   public static getSimpleGameModel(game: IGame): SimpleGameModel {
     return {
       activePlayer: game.getPlayerById(game.activePlayer).color,
+      id: game.id,
+      phase: game.phase,
+      players: game.getPlayersInGenerationOrder().map((player) => ({
+        color: player.color,
+        id: player.id,
+        name: player.name,
+      })),
+      spectatorId: game.spectatorId,
+      gameOptions: this.getGameOptionsAsModel(game.gameOptions),
+      lastSoloGeneration: game.lastSoloGeneration(),
+      expectedPurgeTimeMs: game.expectedPurgeTimeMs(),
+    };
+  }
+
+  public static getSimpleGameModelBot(game: IGame): SimpleGameModel {
+    return {
+      activePlayer: game.getPlayerById(game.activePlayer).color,
       activePlayerName: game.getPlayerById(game.activePlayer).name,
       id: game.id,
       phase: game.phase,
@@ -63,10 +80,6 @@ export class Server {
         waitingFor: player.getWaitingFor(),
       })),
       passedPlayers: game.getPassedPlayers(),
-      spectatorId: game.spectatorId,
-      gameOptions: this.getGameOptionsAsModel(game.gameOptions),
-      lastSoloGeneration: game.lastSoloGeneration(),
-      expectedPurgeTimeMs: game.expectedPurgeTimeMs(),
       turmoil: getTurmoilModel(game),
     };
   }
