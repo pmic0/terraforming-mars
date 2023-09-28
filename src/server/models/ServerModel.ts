@@ -66,6 +66,7 @@ export class Server {
       gameOptions: this.getGameOptionsAsModel(game.gameOptions),
       lastSoloGeneration: game.lastSoloGeneration(),
       expectedPurgeTimeMs: game.expectedPurgeTimeMs(),
+      turmoil: getTurmoilModel(game),
     };
   }
 
