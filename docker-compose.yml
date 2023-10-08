@@ -14,14 +14,14 @@ services:
     depends_on:
       - tfm-test-postgres
     environment:
-      POSTGRES_HOST: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@mars-postgres/terraforming-mars
+      POSTGRES_HOST: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@tfm-test-postgres/${POSTGRES_DBNAME}
       NODE_ENV: production
       PORT: 8080
       MAX_GAME_DAYS: 20
       LOG_LENGTH: 500
-      SERVER_ID: sedes
-      STATS_ID: sedestatsy
-      HOST: tfm.polpak.network
+      SERVER_ID: ${SERVER_ID}
+      STATS_ID: ${STATS_ID}
+      HOST: ${HOST}
     # Limit stdout logs of the docker container
     logging:
       options:
@@ -58,9 +58,9 @@ services:
     # User mapping from the host to the container (postgres user is 999, see `cat /etc/passwd` on host for the desired user id)
     user: "1000:999"
     environment:
-      POSTGRES_USER: tm-postgres
-      POSTGRES_PASSWORD: Teraformer123!
-      POSTGRES_DB: terraforming-mars
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DBNAME}
     volumes:
       - ./certs/server.crt:/var/lib/postgresql/server.crt:ro
       - ./certs/server.key:/var/lib/postgresql/server.key:ro
