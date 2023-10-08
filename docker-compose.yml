@@ -16,7 +16,7 @@ services:
     environment:
       POSTGRES_HOST: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@tfm-test-postgres/${POSTGRES_DBNAME}
       NODE_ENV: production
-      PORT: 8080
+      PORT: 8081
       MAX_GAME_DAYS: 20
       LOG_LENGTH: 500
       SERVER_ID: ${SERVER_ID}
