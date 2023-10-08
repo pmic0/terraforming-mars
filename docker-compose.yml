@@ -12,7 +12,7 @@ services:
     - traefik-public
     # Ensure postgres is running before starting this container
     depends_on:
-      - mars-postgres
+      - tfm-test-postgres
     environment:
       POSTGRES_HOST: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@mars-postgres/terraforming-mars
       NODE_ENV: production
@@ -35,19 +35,19 @@ services:
       - "traefik.constraint-label=traefik-public"
       - "traefik.docker.network=traefik-public"
       - "traefik.http.routers.terraforming-mars.entrypoints=https"
-      - "traefik.http.routers.terraforming-mars.rule=Host(`tfm.polpak.network`)"
-      #- "traefik.http.routers.terraforming-mars.service=terraforming-mars"
+      - "traefik.http.routers.terraforming-mars.rule=Host(`tfm-test.polpak.network`)"
+      #- "traefik.http.routers.terraforming-mars.service=tfm-test"
       - "traefik.http.routers.terraforming-mars.tls=true"
       # To use certs uncomment below and replace "letsencrypt" with the resolver name you configured on the traefik side
       - "traefik.http.routers.terraforming-mars.tls.certresolver=le"
       #- "traefik.http.routers.terraforming-mars.tls.certresolver=letsencrypt"
-      #- "traefik.http.routers.terraforming-mars.tls.domains[0].main=terraforming-mars.polpak.network"
+      #- "traefik.http.routers.terraforming-mars.tls.domains[0].main=tfm-test.polpak.network"
       # If you configured traefik TLS options replace "default" with the options name and uncommend line below
       #- "traefik.http.routers.terraforming-mars.tls.options=default"
-      - "traefik.http.services.terraforming-mars.loadbalancer.server.port=8080"
+      - "traefik.http.services.terraforming-mars.loadbalancer.server.port=8081"
       - "traefik.http.services.terraforming-mars.loadbalancer.server.scheme=http"
   # Production database
-  mars-postgres:
+  tfm-test-postgres:
     image: postgres:14.5
     restart: on-failure:3
     # Need to enable ssl and point to the certificates
