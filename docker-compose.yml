@@ -62,9 +62,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DBNAME}
     volumes:
-      - ./certs/server.crt:/var/lib/postgresql/server.crt:ro
-      - ./certs/server.key:/var/lib/postgresql/server.key:ro
-      - ./data/mars-postgres:/var/lib/postgresql/data
+      - ${MOUNT}/certs/server.crt:/var/lib/postgresql/server.crt:ro
+      - ${MOUNT}/certs/server.key:/var/lib/postgresql/server.key:ro
+      - ${MOUNT}/data/mars-postgres:/var/lib/postgresql/data
     logging:
       options:
         max-size: 10m
