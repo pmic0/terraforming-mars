@@ -4,7 +4,7 @@ services:
   tfm-test:
     # The image can be either built localy (by cloning repo and running 'docker build -t tfm-test .') and taged for example 'tfm-test' (this option is valid especially when server app is needed to run on ARM architectures)
     # Or one of the above mentioned pre-built images can be used
-    image: pmichaelis/tfm-test:as-test
+    image: pmichaelis/terraforming-mars:as-test
     restart: on-failure:3
     # Preferable on linux, use docker networks on Windows/Mac
     networks:
