@@ -1,14 +1,78 @@
-version: "3.7"  
+version: '3'
 services:
-  terraforming-mars:
-    container_name: terraforming-mars
-    build: ./
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    security_opt:
-      - no-new-privileges:true
+  # Server backend
+  tfm-test:
+    # The image can be either built localy (by cloning repo and running 'docker build -t terraforming-mars .') and taged for example 'terraforming-mars' (this option is valid especially when server app is needed to run on ARM architectures)
+    # Or one of the above mentioned pre-built images can be used
+    image: pmichaelis/terraforming-mars:as-test
+    restart: on-failure:3
+    # Preferable on linux, use docker networks on Windows/Mac
+    networks:
+    - tfm-test-net
+    - traefik-public
+    # Ensure postgres is running before starting this container
+    depends_on:
+      - mars-postgres
+    environment:
+      POSTGRES_HOST: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@mars-postgres/terraforming-mars
+      NODE_ENV: production
+      PORT: 8080
+      MAX_GAME_DAYS: 20
+      LOG_LENGTH: 500
+      SERVER_ID: sedes
+      STATS_ID: sedestatsy
+      HOST: tfm.polpak.network
+    # Limit stdout logs of the docker container
+    logging:
+      options:
+        max-size: 10m
+    deploy:
+      mode: replicated
+      replicas: 1
+
+      labels:
+      - "traefik.enable=true"
+      - "traefik.constraint-label=traefik-public"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.terraforming-mars.entrypoints=https"
+      - "traefik.http.routers.terraforming-mars.rule=Host(`tfm.polpak.network`)"
+      #- "traefik.http.routers.terraforming-mars.service=terraforming-mars"
+      - "traefik.http.routers.terraforming-mars.tls=true"
+      # To use certs uncomment below and replace "letsencrypt" with the resolver name you configured on the traefik side
+      - "traefik.http.routers.terraforming-mars.tls.certresolver=le"
+      #- "traefik.http.routers.terraforming-mars.tls.certresolver=letsencrypt"
+      #- "traefik.http.routers.terraforming-mars.tls.domains[0].main=terraforming-mars.polpak.network"
+      # If you configured traefik TLS options replace "default" with the options name and uncommend line below
+      #- "traefik.http.routers.terraforming-mars.tls.options=default"
+      - "traefik.http.services.terraforming-mars.loadbalancer.server.port=8080"
+      - "traefik.http.services.terraforming-mars.loadbalancer.server.scheme=http"
+  # Production database
+  mars-postgres:
+    image: postgres:14.5
+    restart: on-failure:3
+    # Need to enable ssl and point to the certificates
+    command: >
+      -c ssl=on
+      -c ssl_cert_file=/var/lib/postgresql/server.crt
+      -c ssl_key_file=/var/lib/postgresql/server.key
+    # User mapping from the host to the container (postgres user is 999, see `cat /etc/passwd` on host for the desired user id)
+    user: "1000:999"
+    environment:
+      POSTGRES_USER: tm-postgres
+      POSTGRES_PASSWORD: Teraformer123!
+      POSTGRES_DB: terraforming-mars
     volumes:
-      - tm-db:/usr/src/app/db
-volumes:
-  tm-db:
+      - ./certs/server.crt:/var/lib/postgresql/server.crt:ro
+      - ./certs/server.key:/var/lib/postgresql/server.key:ro
+      - ./data/mars-postgres:/var/lib/postgresql/data
+    logging:
+      options:
+        max-size: 10m
+    networks:
+      - tfm-test-net
+
+
+networks:
+  tfm-test-net:
+  traefik-public:
+    external: true
