@@ -6,7 +6,7 @@ import {ICorporationCard} from '../corporation/ICorporationCard';
 import {CardType} from '../../../common/cards/CardType';
 import {Resource} from '../../../common/Resource';
 import {IPlayer} from '../../IPlayer';
-import {SelectAmount} from '../../../server/inputs/SelectAmount';
+import {SelectAmount} from '../../inputs/SelectAmount';
 
 export class TychoMagnetics extends Card implements ICorporationCard {
   constructor() {
@@ -41,10 +41,8 @@ export class TychoMagnetics extends Card implements ICorporationCard {
   }
 
   public action(player: IPlayer) {
-    return new SelectAmount(
-      'Select amount of energy to spend',
-      'OK',
-      (amount: number) => {
+    return new SelectAmount('Select amount of energy to spend', 'OK', 1, player.energy)
+      .andThen((amount) => {
         player.stock.deduct(Resource.ENERGY, amount);
         player.game.log('${0} spent ${1} energy', (b) => b.player(player).number(amount));
         if (amount === 1) {
@@ -53,9 +51,6 @@ export class TychoMagnetics extends Card implements ICorporationCard {
         }
         player.drawCardKeepSome(amount, {keepMax: 1});
         return undefined;
-      },
-      1,
-      player.energy,
-    );
+      });
   }
 }

@@ -16,14 +16,14 @@ import {IPlayer} from './IPlayer';
 import {PlayerId, GameId, SpectatorId, SpaceId, isGameId} from '../common/Types';
 import {CardResource} from '../common/CardResource';
 import {Resource} from '../common/Resource';
-import {DeferredAction, Priority} from './deferredActions/DeferredAction';
+import {AndThen, DeferredAction, Priority} from './deferredActions/DeferredAction';
 import {DeferredActionsQueue} from './deferredActions/DeferredActionsQueue';
 import {SerializedGame} from './SerializedGame';
 import {SpaceBonus} from '../common/boards/SpaceBonus';
 import {TileType} from '../common/TileType';
 import {Turmoil} from './turmoil/Turmoil';
 import {AresData} from '../common/ares/AresData';
-import {IMoonData} from './moon/IMoonData';
+import {MoonData} from './moon/MoonData';
 import {SeededRandom} from '../common/utils/Random';
 import {PathfindersData} from './pathfinders/PathfindersData';
 import {GameOptions} from './game/GameOptions';
@@ -31,6 +31,7 @@ import {CorporationDeck, PreludeDeck, ProjectDeck, CeoDeck} from './cards/Deck';
 import {Tag} from '../common/cards/Tag';
 import {Tile} from './Tile';
 import {Logger} from './logs/Logger';
+import {GlobalParameter} from '../common/GlobalParameter';
 
 export interface Score {
   corporation: String;
@@ -51,6 +52,7 @@ export interface IGame extends Logger {
   inputsThisRound: number;
   resettable: boolean;
   generation: number;
+  globalsPerGeneration: Array<Partial<Record<GlobalParameter, number>>>;
   phase: Phase;
   projectDeck: ProjectDeck;
   preludeDeck: PreludeDeck;
@@ -67,7 +69,7 @@ export interface IGame extends Logger {
   discardedColonies: Array<IColony>; // Not serialized
   turmoil: Turmoil | undefined;
   aresData: AresData | undefined;
-  moonData: IMoonData | undefined;
+  moonData: MoonData | undefined;
   pathfindersData: PathfindersData | undefined;
   // Card-specific data
   // Mons Insurance promo corp
@@ -80,6 +82,13 @@ export interface IGame extends Logger {
   gagarinBase: Array<SpaceId>;
   // St. Joseph of Cupertino Mission
   stJosephCathedrals: Array<SpaceId>;
+  // Mars Nomads
+  nomadSpace: SpaceId | undefined;
+  // Trade Embargo
+  tradeEmbargo: boolean;
+  // Behold The Emperor
+  beholdTheEmperor: boolean;
+
   // The set of tags available in this game.
   readonly tags: ReadonlyArray<Tag>;
   // Function use to properly start the game: with project draft or with research phase
@@ -92,7 +101,7 @@ export interface IGame extends Logger {
   getPlayerById(id: PlayerId): IPlayer;
   // Return an array of players from an array of player ids
   getPlayersById(ids: Array<PlayerId>): Array<IPlayer>;
-  defer(action: DeferredAction<any>, priority?: Priority): void;
+  defer<T>(action: DeferredAction<T>, priority?: Priority): AndThen<T>;
   milestoneClaimed(milestone: IMilestone): boolean;
   marsIsTerraformed(): boolean;
   lastSoloGeneration(): number;

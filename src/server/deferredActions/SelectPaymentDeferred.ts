@@ -9,14 +9,14 @@ export type Options = {
   canUseSteel?: boolean;
   canUseTitanium?: boolean;
   canUseSeeds?: boolean,
-  canUseData?: boolean,
+  canUseAuroraiData?: boolean,
   canUseGraphene?: boolean;
   canUseAsteroids?: boolean;
+  canUseSpireScience?: boolean,
   title?: string | Message;
-  afterPay?: () => void;
 }
 
-export class SelectPaymentDeferred extends DeferredAction {
+export class SelectPaymentDeferred extends DeferredAction<Payment> {
   constructor(
     player: IPlayer,
     public amount: number,
@@ -48,7 +48,10 @@ export class SelectPaymentDeferred extends DeferredAction {
     if (this.options.canUseSeeds && (this.player.resourcesOnCard(CardName.SOYLENT_SEEDLING_SYSTEMS) > 0)) {
       return false;
     }
-    if (this.options.canUseData && (this.player.resourcesOnCard(CardName.AURORAI) > 0)) {
+    if (this.options.canUseAuroraiData && (this.player.resourcesOnCard(CardName.AURORAI) > 0)) {
+      return false;
+    }
+    if (this.options.canUseSpireScience && (this.player.resourcesOnCard(CardName.SPIRE) > 0)) {
       return false;
     }
 
@@ -60,8 +63,9 @@ export class SelectPaymentDeferred extends DeferredAction {
       if (this.player.megaCredits < this.amount) {
         throw new Error(`Player does not have ${this.amount} M€`);
       }
-      this.player.pay(Payment.of({megaCredits: this.amount}));
-      this.options.afterPay?.();
+      const payment = Payment.of({megaCredits: this.amount});
+      this.player.pay(payment);
+      this.cb(payment);
       return undefined;
     }
 
@@ -73,31 +77,15 @@ export class SelectPaymentDeferred extends DeferredAction {
         titanium: this.options.canUseTitanium || false,
         heat: this.player.canUseHeatAsMegaCredits,
         seeds: this.options.canUseSeeds || false,
-        data: this.options.canUseData || false,
+        auroraiData: this.options.canUseAuroraiData || false,
+        spireScience: this.options.canUseSpireScience || false,
         lunaTradeFederationTitanium: this.player.canUseTitaniumAsMegacredits,
         kuiperAsteroids: this.options.canUseAsteroids || false,
-      },
-      (payment: Payment) => {
-        if (!this.player.canSpend(payment)) {
-          throw new Error('You do not have that many resources to spend');
-        }
-        const amountPaid = this.player.payingAmount(payment, {
-          steel: this.options.canUseSteel,
-          titanium: this.options.canUseTitanium,
-          seeds: this.options.canUseSeeds,
-          floaters: false, // Used in project cards only
-          microbes: false, // Used in project cards only
-          science: false, // Used in project cards only
-          auroraiData: this.options.canUseData,
-          kuiperAsteroids: this.options.canUseAsteroids,
-        });
-        if (amountPaid < this.amount) {
-          throw new Error('Did not spend enough');
-        }
+      })
+      .andThen((payment) => {
         this.player.pay(payment);
-        this.options.afterPay?.();
+        this.cb(payment);
         return undefined;
-      },
-    );
+      });
   }
 }

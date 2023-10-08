@@ -4,17 +4,16 @@ import {CardRenderer} from '../render/CardRenderer';
 import {IProjectCard} from '../IProjectCard';
 import {Card} from '../Card';
 import {CardType} from '../../../common/cards/CardType';
-import {CardRequirements} from '../requirements/CardRequirements';
 
 export class IshtarExpedition extends Card implements IProjectCard {
-  public migrated = true;
   constructor() {
     super({
       name: CardName.ISHTAR_EXPEDITION,
       cost: 6,
+      tags: [Tag.VENUS],
       type: CardType.EVENT,
 
-      requirements: CardRequirements.builder((b) => b.venus(10)),
+      requirements: {venus: 10},
 
       behavior: {
         stock: {

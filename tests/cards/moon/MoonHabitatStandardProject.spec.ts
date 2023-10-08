@@ -1,5 +1,5 @@
 import {Game} from '../../../src/server/Game';
-import {IMoonData} from '../../../src/server/moon/IMoonData';
+import {MoonData} from '../../../src/server/moon/MoonData';
 import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
 import {cast, testRedsCosts} from '../../TestingUtils';
 import {TestPlayer} from '../../TestPlayer';
@@ -9,11 +9,12 @@ import {SelectPaymentDeferred} from '../../../src/server/deferredActions/SelectP
 import {PlaceMoonHabitatTile} from '../../../src/server/moon/PlaceMoonHabitatTile';
 import {MooncrateBlockFactory} from '../../../src/server/cards/moon/MooncrateBlockFactory';
 import {Phase} from '../../../src/common/Phase';
+import {Payment} from '../../../src/common/inputs/Payment';
 
 describe('MoonHabitatStandardProject', () => {
   let game: Game;
   let player: TestPlayer;
-  let moonData: IMoonData;
+  let moonData: MoonData;
   let card: MoonHabitatStandardProject;
 
   beforeEach(() => {
@@ -57,7 +58,7 @@ describe('MoonHabitatStandardProject', () => {
 
     card.action(player);
     const payAction = cast(game.deferredActions.pop(), SelectPaymentDeferred);
-    payAction.options.afterPay!();
+    payAction.cb(Payment.EMPTY);
 
     expect(player.titanium).eq(2);
     expect(player.production.megacredits).eq(1);
