@@ -64,7 +64,7 @@ services:
     volumes:
       - ${MOUNT}/certs/server.crt:/var/lib/postgresql/server.crt:ro
       - ${MOUNT}/certs/server.key:/var/lib/postgresql/server.key:ro
-      - ${MOUNT}/data/mars-postgres:/var/lib/postgresql/data
+      - ${MOUNT}/data:/var/lib/postgresql/data
     logging:
       options:
         max-size: 10m
