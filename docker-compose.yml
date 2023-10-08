@@ -2,9 +2,9 @@ version: '3'
 services:
   # Server backend
   tfm-test:
-    # The image can be either built localy (by cloning repo and running 'docker build -t terraforming-mars .') and taged for example 'terraforming-mars' (this option is valid especially when server app is needed to run on ARM architectures)
+    # The image can be either built localy (by cloning repo and running 'docker build -t tfm-test .') and taged for example 'tfm-test' (this option is valid especially when server app is needed to run on ARM architectures)
     # Or one of the above mentioned pre-built images can be used
-    image: pmichaelis/terraforming-mars:as-test
+    image: pmichaelis/tfm-test:as-test
     restart: on-failure:3
     # Preferable on linux, use docker networks on Windows/Mac
     networks:
@@ -34,18 +34,18 @@ services:
       - "traefik.enable=true"
       - "traefik.constraint-label=traefik-public"
       - "traefik.docker.network=traefik-public"
-      - "traefik.http.routers.terraforming-mars.entrypoints=https"
-      - "traefik.http.routers.terraforming-mars.rule=Host(`tfm-test.polpak.network`)"
-      #- "traefik.http.routers.terraforming-mars.service=tfm-test"
-      - "traefik.http.routers.terraforming-mars.tls=true"
+      - "traefik.http.routers.tfm-test.entrypoints=https"
+      - "traefik.http.routers.tfm-test.rule=Host(`tfm-test.polpak.network`)"
+      #- "traefik.http.routers.tfm-test.service=tfm-test"
+      - "traefik.http.routers.tfm-test.tls=true"
       # To use certs uncomment below and replace "letsencrypt" with the resolver name you configured on the traefik side
-      - "traefik.http.routers.terraforming-mars.tls.certresolver=le"
-      #- "traefik.http.routers.terraforming-mars.tls.certresolver=letsencrypt"
-      #- "traefik.http.routers.terraforming-mars.tls.domains[0].main=tfm-test.polpak.network"
+      - "traefik.http.routers.tfm-test.tls.certresolver=le"
+      #- "traefik.http.routers.tfm-test.tls.certresolver=letsencrypt"
+      #- "traefik.http.routers.tfm-test.tls.domains[0].main=tfm-test.polpak.network"
       # If you configured traefik TLS options replace "default" with the options name and uncommend line below
-      #- "traefik.http.routers.terraforming-mars.tls.options=default"
-      - "traefik.http.services.terraforming-mars.loadbalancer.server.port=8081"
-      - "traefik.http.services.terraforming-mars.loadbalancer.server.scheme=http"
+      #- "traefik.http.routers.tfm-test.tls.options=default"
+      - "traefik.http.services.tfm-test.loadbalancer.server.port=8081"
+      - "traefik.http.services.tfm-test.loadbalancer.server.scheme=http"
   # Production database
   tfm-test-postgres:
     image: postgres:14.5
