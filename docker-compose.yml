@@ -14,7 +14,7 @@ services:
     depends_on:
       - tfm-test-postgres
     environment:
-      POSTGRES_HOST: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_DBNAME}
+      POSTGRES_HOST: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@tfm-test-postgres/${POSTGRES_DBNAME}
       NODE_ENV: production
       PORT: 8081
       MAX_GAME_DAYS: 20
