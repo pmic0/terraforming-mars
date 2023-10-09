@@ -2,7 +2,7 @@ import {PlayerId, isPlayerId} from '../common/Types';
 import {CardName} from '../common/cards/CardName';
 import {ICorporationCard} from './cards/corporation/ICorporationCard';
 import {IGame, isIGame} from './IGame';
-import {Payment} from '../common/inputs/Payment';
+import {Payment, PaymentOptions} from '../common/inputs/Payment';
 import {ICard, IActionCard, DynamicTRSource} from './cards/ICard';
 import {TRSource} from '../common/cards/TRSource';
 import {IProjectCard} from './cards/IProjectCard';
@@ -33,7 +33,7 @@ import {Stock} from './player/Stock';
 
 export type ResourceSource = IPlayer | GlobalEventName | ICard;
 
-export type CanAffordOptions = Partial<Payment.Options> & {
+export type CanAffordOptions = Partial<PaymentOptions> & {
   cost: number,
   reserveUnits?: Units,
   tr?: TRSource | DynamicTRSource,
@@ -83,6 +83,8 @@ export interface IPlayer {
   canUseHeatAsMegaCredits: boolean;
   // Luna Trade Federation
   canUseTitaniumAsMegacredits: boolean;
+  // Martian Lumber Corp
+  canUsePlantsAsMegacredits: boolean;
 
   // This generation / this round
   actionsTakenThisRound: number;
@@ -113,7 +115,6 @@ export interface IPlayer {
 
   // Custom cards
   // Community Leavitt Station and Pathfinders Leavitt Station
-  // TODO(kberg): move scienceTagCount to Tags?
   scienceTagCount: number;
   // PoliticalAgendas Scientists P41
   hasTurmoilScienceTagBonus: boolean;
@@ -211,12 +212,12 @@ export interface IPlayer {
   spendableMegacredits(): number;
   getSpendableMicrobes(): number;
   getSpendableFloaters(): number;
-  getSpendableScienceResources(): number;
+  getSpendableLunaArchiveScienceResources(): number;
   getSpendableSeedResources(): number;
   getSpendableData(): number;
   getSpendableGraphene(): number;
   getSpendableKuiperAsteroids(): number;
-  payMegacreditsDeferred(cost: number, title: string, afterPay?: () => void): void;
+  getSpendableSpireScienceResources(): number;
   checkPaymentAndPlayCard(selectedCard: IProjectCard, payment: Payment, cardAction?: CardAction): void;
   pay(payment: Payment): void;
   availableHeat(): number;
@@ -229,14 +230,16 @@ export interface IPlayer {
   drawCard(count?: number, options?: DrawOptions): void;
   drawCardKeepSome(count: number, options: AllOptions): void;
   discardPlayedCard(card: IProjectCard): void;
+  discardCardFromHand(card: IProjectCard, options?: {log?: boolean}): void;
 
+  /** Player is done taking actions this generation. */
   pass(): void;
   takeActionForFinalGreenery(): void;
   getPlayableCards(): Array<PlayableCard>;
   canPlay(card: IProjectCard): boolean | YesAnd;
   simpleCanPlay(card: IProjectCard, canAffordOptions?: CanAffordOptions): boolean | YesAnd;
   canSpend(payment: Payment, reserveUnits?: Units): boolean;
-  payingAmount(payment: Payment, options?: Partial<Payment.Options>): number;
+  payingAmount(payment: Payment, options?: Partial<PaymentOptions>): number;
   /**
    * Returns a summary of how much a player would have to spend to play a card,
    * any associated costs, and ways the player can pay.

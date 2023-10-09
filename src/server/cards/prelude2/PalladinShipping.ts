@@ -28,11 +28,11 @@ export class PalladinShipping extends Card implements ICorporationCard, IActionC
         cardNumber: '',
         renderData: CardRenderer.builder((b) => {
           b.megacredits(36).titanium(5, {digit}).br;
-          b.effect('When you play a space event, gain 1 titanium', (eb) => {
+          b.effect('When you play a space event, gain 1 titanium.', (eb) => {
             eb.space({played}).event({played}).startEffect.titanium(1);
           });
           b.br;
-          b.action('Spend 2 titanium to raise the temperature 1 step', (ab) => {
+          b.action('Spend 2 titanium to raise the temperature 1 step.', (ab) => {
             ab.titanium(2).startAction.temperature(1);
           });
         }),
@@ -42,8 +42,10 @@ export class PalladinShipping extends Card implements ICorporationCard, IActionC
   }
 
   public onCardPlayed(player: IPlayer, card: IProjectCard) {
-    if (card.type === CardType.EVENT && card.tags.includes(Tag.SPACE)) {
-      player.stock.add(Resource.TITANIUM, 1, {log: true});
+    if (player.isCorporation(this.name)) {
+      if (card.type === CardType.EVENT && card.tags.includes(Tag.SPACE)) {
+        player.stock.add(Resource.TITANIUM, 1, {log: true});
+      }
     }
   }
 

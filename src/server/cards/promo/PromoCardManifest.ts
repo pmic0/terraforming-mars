@@ -1,8 +1,7 @@
 import {CardName} from '../../../common/cards/CardName';
 import {ModuleManifest} from '../ModuleManifest';
 import {Advertising} from './Advertising';
-import {AntidesertificationTechniques} from '../promo/AntidesertificationTechniques';
-import {AppliedScience} from '../prelude2/AppliedScience';
+import {AntidesertificationTechniques} from './AntidesertificationTechniques';
 import {AqueductSystems} from './AqueductSystems';
 import {ArcadianCommunities} from './ArcadianCommunities';
 import {AsteroidDeflectionSystem} from './AsteroidDeflectionSystem';
@@ -19,8 +18,8 @@ import {CrashSiteCleanup} from './CrashSiteCleanup';
 import {CuttingEdgeTechnology} from './CuttingEdgeTechnology';
 import {CyberiaSystems} from './CyberiaSystems';
 import {DeimosDownPromo} from './DeimosDownPromo';
-import {DirectedImpactors} from './DirectedImpactors';
 import {DirectedHeatUsage} from './DirectedHeatUsage';
+import {DirectedImpactors} from './DirectedImpactors';
 import {DiversitySupport} from './DiversitySupport';
 import {DoubleDown} from './DoubleDown';
 import {DuskLaserMining} from './DuskLaserMining';
@@ -30,29 +29,30 @@ import {FieldCappedCity} from './FieldCappedCity';
 import {GiantSolarCollector} from './GiantSolarCollector';
 import {GreatDamPromo} from './GreatDamPromo';
 import {Harvest} from './Harvest';
-import {HeadStart} from './HeadStart';
+// import {HeadStart} from './HeadStart';
 import {HermeticOrderofMars} from './HermeticOrderofMars';
 import {HiTechLab} from './HiTechLab';
 import {HomeostasisBureau} from './HomeostasisBureau';
 import {ImportedNutrients} from './ImportedNutrients';
 import {InterplanetaryTrade} from './InterplanetaryTrade';
-import {IshtarExpedition} from '../prelude2/IshtarExpedition';
 import {JovianEmbassy} from './JovianEmbassy';
+import {KaguyaTech} from './KaguyaTech';
 import {KuiperCooperative} from './KuiperCooperative';
 import {LawSuit} from './LawSuit';
 import {MagneticFieldGeneratorsPromo} from './MagneticFieldGeneratorsPromo';
 import {MagneticShield} from './MagneticShield';
+import {MarsNomads} from './MarsNomads';
+import {MartianLumberCorp} from './MartianLumberCorp';
 import {MeatIndustry} from './MeatIndustry';
 import {Meltworks} from './Meltworks';
 import {MercurianAlloys} from './MercurianAlloys';
 import {Merger} from './Merger';
 import {MoholeLake} from './MoholeLake';
 import {MonsInsurance} from './MonsInsurance';
+import {NeptunianPowerConsultants} from './NeptunianPowerConsultants';
 import {NewPartner} from './NewPartner';
-import {NirgalEnterprises} from '../prelude2/NirgalEnterprises';
 import {OrbitalCleanup} from './OrbitalCleanup';
 import {OutdoorSports} from './OutdoorSports';
-import {PalladinShipping} from '../prelude2/PalladinShipping';
 import {Penguins} from './Penguins';
 import {PharmacyUnion} from './PharmacyUnion';
 import {Philares} from './Philares';
@@ -60,17 +60,20 @@ import {Potatoes} from './Potatoes';
 import {ProjectInspection} from './ProjectInspection';
 import {Psyche} from './16Psyche';
 import {Recyclon} from './Recyclon';
+import {RedShips} from './RedShips';
 import {RegoPlastics} from './RegoPlastics';
 import {RobotPollinators} from './RobotPollinators';
 import {SaturnSurfing} from './SaturnSurfing';
 import {SelfReplicatingRobots} from './SelfReplicatingRobots';
 import {SmallAsteroid} from './SmallAsteroid';
 import {SnowAlgae} from './SnowAlgae';
+import {SolarLogistics} from './SolarLogistics';
 import {Splice} from './Splice';
 import {StanfordTorus} from './StanfordTorus';
 import {StJosephOfCupertinoMission} from './StJosephOfCupertinoMission';
 import {SubCrustMeasurements} from './SubCrustMeasurements';
 import {Supercapacitors} from './Supercapacitors';
+import {Teslaract} from './Teslaract';
 import {TopsoilContract} from './TopsoilContract';
 import {TychoMagnetics} from './TychoMagnetics';
 
@@ -121,7 +124,6 @@ export const PROMO_CARD_MANIFEST = new ModuleManifest({
     [CardName.PSYCHE]: {Factory: Psyche},
     [CardName.ROBOT_POLLINATORS]: {Factory: RobotPollinators},
     [CardName.SUPERCAPACITORS]: {Factory: Supercapacitors},
-    [CardName.DIRECTED_HEAT_USAGE]: {Factory: DirectedHeatUsage},
     [CardName.AQUEDUCT_SYSTEMS]: {Factory: AqueductSystems},
     [CardName.ASTRA_MECHANICA]: {Factory: AstraMechanica},
     [CardName.ST_JOSEPH_OF_CUPERTINO_MISSION]: {Factory: StJosephOfCupertinoMission},
@@ -129,7 +131,14 @@ export const PROMO_CARD_MANIFEST = new ModuleManifest({
     [CardName.CYBERIA_SYSTEMS]: {Factory: CyberiaSystems},
     [CardName.HERMETIC_ORDER_OF_MARS]: {Factory: HermeticOrderofMars},
     [CardName.HOMEOSTASIS_BUREAU]: {Factory: HomeostasisBureau},
-    [CardName.ISHTAR_EXPEDITION]: {Factory: IshtarExpedition, compatibility: 'venus'},
+    [CardName.KAGUYA_TECH]: {Factory: KaguyaTech},
+    [CardName.MARS_NOMADS]: {Factory: MarsNomads},
+    [CardName.NEPTUNIAN_POWER_CONSULTANTS]: {Factory: NeptunianPowerConsultants},
+    [CardName.MARTIAN_LUMBER_CORP]: {Factory: MartianLumberCorp},
+    [CardName.RED_SHIPS]: {Factory: RedShips},
+    [CardName.SOLAR_LOGISTICS]: {Factory: SolarLogistics},
+    [CardName.TESLARACT]: {Factory: Teslaract},
+    [CardName.DIRECTED_HEAT_USAGE]: {Factory: DirectedHeatUsage},
   },
 
   preludeCards: {
@@ -137,9 +146,9 @@ export const PROMO_CARD_MANIFEST = new ModuleManifest({
     [CardName.MERGER]: {Factory: Merger},
     [CardName.CORPORATE_ARCHIVES]: {Factory: CorporateArchives},
     [CardName.DOUBLE_DOWN]: {Factory: DoubleDown, compatibility: 'prelude'},
-    [CardName.HEAD_START]: {Factory: HeadStart},
+    // [CardName.HEAD_START]: {Factory: HeadStart}, // Head Start is disabled because it's not working well.
     [CardName.ANTI_DESERTIFICATION_TECHNIQUES]: {Factory: AntidesertificationTechniques},
-    [CardName.APPLIED_SCIENCE]: {Factory: AppliedScience},
+    // [CardName.ESTABLISHED_METHODS]: {Factory: EstablishedMethods},
     [CardName.GIANT_SOLAR_COLLECTOR]: {Factory: GiantSolarCollector, compatibility: 'venus'},
   },
 
@@ -158,8 +167,6 @@ export const PROMO_CARD_MANIFEST = new ModuleManifest({
     [CardName.RECYCLON]: {Factory: Recyclon},
     [CardName.SPLICE]: {Factory: Splice},
     [CardName.TYCHO_MAGNETICS]: {Factory: TychoMagnetics},
-    [CardName.NIRGAL_ENTERPRISES]: {Factory: NirgalEnterprises},
     [CardName.KUIPER_COOPERATIVE]: {Factory: KuiperCooperative},
-    [CardName.PALLADIN_SHIPPING]: {Factory: PalladinShipping},
   },
 });

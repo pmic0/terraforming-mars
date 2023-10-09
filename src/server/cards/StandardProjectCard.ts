@@ -9,6 +9,7 @@ import {SelectPaymentDeferred} from '../deferredActions/SelectPaymentDeferred';
 import {Card} from './Card';
 import {MoonExpansion} from '../moon/MoonExpansion';
 import {Units} from '../../common/Units';
+import {newMessage} from '../logs/MessageBuilder';
 
 type StaticStandardProjectCardProperties = {
   name: CardName,
@@ -57,6 +58,7 @@ export abstract class StandardProjectCard extends Card implements IActionCard, I
       cost: this.cost - this.discount(player),
       tr: this.tr,
       auroraiData: true,
+      spireScience: true,
       reserveUnits: MoonExpansion.adjustedReserveCosts(player, this),
     };
   }
@@ -74,10 +76,6 @@ export abstract class StandardProjectCard extends Card implements IActionCard, I
     this.onStandardProject(player);
   }
 
-  private suffixFreeCardName(cardName: CardName): string {
-    return cardName.split(':')[0];
-  }
-
   public action(player: IPlayer): PlayerInput | undefined {
     const canPayWith = this.canPayWith(player);
     player.game.defer(new SelectPaymentDeferred(
@@ -87,14 +85,14 @@ export abstract class StandardProjectCard extends Card implements IActionCard, I
         canUseSteel: canPayWith.steel,
         canUseTitanium: canPayWith.titanium,
         canUseSeeds: canPayWith.seeds,
-        canUseData: player.isCorporation(CardName.AURORAI),
-        canUseAsteroids: player.isCorporation(CardName.KUIPER_COOPERATIVE),
-        title: `Select how to pay for ${this.suffixFreeCardName(this.name)} standard project`,
-        afterPay: () => {
-          this.projectPlayed(player);
-          this.actionEssence(player);
-        },
-      }));
+        canUseAuroraiData: player.isCorporation(CardName.AURORAI),
+        canUseSpireScience: player.isCorporation(CardName.SPIRE),
+        canUseAsteroids: canPayWith.kuiperAsteroids && player.isCorporation(CardName.KUIPER_COOPERATIVE),
+        title: newMessage('Select how to pay for the ${0} standard project', (b) => b.cardName(this.name)),
+      })).andThen(() => {
+      this.projectPlayed(player);
+      this.actionEssence(player);
+    });
     return undefined;
   }
 }

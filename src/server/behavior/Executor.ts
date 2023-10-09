@@ -27,6 +27,7 @@ import {OrOptions} from '../inputs/OrOptions';
 import {SelectOption} from '../inputs/SelectOption';
 import {Payment} from '../../common/inputs/Payment';
 import {SelectResources} from '../inputs/SelectResources';
+import {TITLES} from '../inputs/titles';
 
 export class Executor implements BehaviorExecutor {
   public canExecute(behavior: Behavior, player: IPlayer, card: ICard, canAffordOptions?: CanAffordOptions) {
@@ -135,8 +136,19 @@ export class Executor implements BehaviorExecutor {
           min: arctac.min,
           robotCards: arctac.robotCards !== undefined,
         });
-        if (action.getCardCount() === 0) {
+        const cards = action.getCards();
+        const count = cards[0].length + cards[1].length;
+        if (count === 0) {
           return false;
+        }
+        // Not playable if the behavior is based on spending a resource
+        // from itself to add to itself, like Applied Science.
+        if (count === 1 && (behavior.spend?.resourcesHere ?? 0 > 0)) {
+          // TODO(kberg): also check wither arctac.min + spend is enough.
+          // but that's just to make this future-proof.
+          if (cards[0][0]?.name === card.name) {
+            return false;
+          }
         }
       }
     }
@@ -189,15 +201,16 @@ export class Executor implements BehaviorExecutor {
       const options = behavior.or.behaviors
         .filter((behavior) => this.canExecute(behavior, player, card))
         .map((behavior) => {
-          return new SelectOption(behavior.title, undefined, () => {
-            this.execute(behavior, player, card);
-            return undefined;
-          });
+          return new SelectOption(behavior.title)
+            .andThen(() => {
+              this.execute(behavior, player, card);
+              return undefined;
+            });
         });
 
       // TODO(kberg): move this behavior to OrOptions?
       if (options.length === 1 && behavior.or.autoSelect === true) {
-        options[0].cb();
+        options[0].cb(undefined);
       } else {
         player.defer(new OrOptions(...options));
       }
@@ -207,13 +220,13 @@ export class Executor implements BehaviorExecutor {
       const spend = behavior.spend;
       if (spend.megacredits) {
         player.game.defer(new SelectPaymentDeferred(player, spend.megacredits, {
-          title: 'Select how to pay for action',
-          afterPay: () => {
+          title: TITLES.payForCardAction(card.name),
+        }))
+          .andThen(() => {
             const copy = {...behavior};
             delete copy['spend'];
             this.execute(copy, player, card);
-          },
-        }));
+          });
         // Exit early as the rest of handled by the deferred action.
         return;
       }
