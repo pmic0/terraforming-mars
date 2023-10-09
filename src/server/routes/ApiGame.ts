@@ -26,7 +26,13 @@ export class ApiGame extends Handler {
       ctx.route.notFound(req, res, 'game not found');
       return;
     }
-    const model = Server.getSimpleGameModelBot(game);
-    ctx.route.writeJson(res, model);
+    const bot = ctx.url.searchParams.get('bot');
+    if(!bot){
+      const model = Server.getSimpleGameModel(game);
+      ctx.route.writeJson(res, model);
+    } else {
+      const model = Server.getSimpleGameModelBot(game);
+      ctx.route.writeJson(res, model);
+    }
   }
 }
