@@ -4,6 +4,7 @@ import {PlayerId, GameId, SpectatorId} from '../Types';
 import {Phase} from '../Phase';
 import {GameOptionsModel} from './GameOptionsModel';
 import {TurmoilModel} from './TurmoilModel';
+import {PlayerInputModel} from './PlayerInputModel';
 
 export type SimpleGameModel = {
     activePlayer: Color;
@@ -21,7 +22,7 @@ export type SimpleBotGameModel = {
     activePlayerName: string;
     id: GameId;
     phase: Phase;
-    players: Array<SimplePlayerModel>;
+    players: Array<SimplePlayerModelBot>;
     passedPlayers: Array<Color>;
     turmoil: TurmoilModel | undefined;
 }
@@ -30,4 +31,11 @@ type SimplePlayerModel = {
     color: Color;
     id: PlayerId;
     name: string;
+}
+
+type SimplePlayerModelBot = {
+    color: Color;
+    id: PlayerId;
+    name: string;
+    waitingFor: PlayerInputModel | undefined;
 }

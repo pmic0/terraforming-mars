@@ -60,10 +60,10 @@ export class Server {
         color: player.color,
         id: player.id,
         name: player.name,
-        waitingFor: player.getWaitingFor(),
+        waitingFor: this.getWaitingFor(player, player.getWaitingFor()),
       })),
       passedPlayers: game.getPassedPlayers(),
-      turmoil: getTurmoilModel(game),
+      turmoil: game.gameOptions.turmoilExtension ? getTurmoilModel(game) : undefined,
     };
   }
 
