@@ -78,5 +78,5 @@ export const LANGUAGES: Record<typeof ALL_LANGUAGES[number], string> = {
 };
 
 export const APP_NAME = 'Terraforming Mars';
-export const DISCORD_INVITE = 'https://discord.com/channels/230937749434138625/984023449141907526';
+export const DISCORD_INVITE = 'https://discord.gg/ab2krj2y';
 export const PRELUDE_CARDS_DEALT_PER_PLAYER = 4;
