@@ -97,12 +97,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pmic0/terraforming-mars.git#tfm-as-test"
+    "url": "git+https://github.com/pmic0/terraforming-mars.git#tfm-as"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/pmic0/terraforming-mar/issues"
+    "url": "https://github.com/pmic0/terraforming-mars/issues"
   },
-  "homepage": "https://github.com/pmic0/terraforming-mar#readme"
+  "homepage": "https://github.com/pmic0/terraforming-mars#readme"
+
 }
