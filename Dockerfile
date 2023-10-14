@@ -55,6 +55,6 @@ COPY --from=builder /usr/src/app/assets ./assets
 
 # Run command.
 
-EXPOSE 8081
+EXPOSE 8080
 
 CMD npm run start
