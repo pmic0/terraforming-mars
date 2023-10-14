@@ -653,7 +653,7 @@ export class Game implements IGame, Logger {
   }
 
   private gotoInitialResearchPhase(): void {
-    this.phase = Phase.RESEARCH;
+    this.phase = Phase.INITIALRESEARCH;
 
     this.save();
 
@@ -712,6 +712,7 @@ export class Game implements IGame, Logger {
       return;
     }
     if (this.gameIsOver()) {
+      this.phase = Phase.FINALGREEN;
       this.log('Final greenery placement', (b) => b.forNewGeneration());
       this.takeNextFinalGreeneryAction();
       return;

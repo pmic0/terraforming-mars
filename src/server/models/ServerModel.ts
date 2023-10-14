@@ -2,7 +2,7 @@ import {CardModel} from '../../common/models/CardModel';
 import {Color} from '../../common/Color';
 import {IGame} from '../IGame';
 import {GameOptions} from '../game/GameOptions';
-import {SimpleGameModel} from '../../common/models/SimpleGameModel';
+import {SimpleGameModel, SimpleBotGameModel} from '../../common/models/SimpleGameModel';
 import {GameOptionsModel} from '../../common/models/GameOptionsModel';
 import {Board} from '../boards/Board';
 import {Space} from '../boards/Space';
@@ -50,7 +50,8 @@ export class Server {
     };
   }
 
-  public static getSimpleGameModelBot(game: IGame): SimpleGameModel {
+
+  public static getSimpleGameModelBot(game: IGame): SimpleBotGameModel {
     return {
       activePlayer: game.getPlayerById(game.activePlayer).color,
       activePlayerName: game.getPlayerById(game.activePlayer).name,
@@ -60,10 +61,10 @@ export class Server {
         color: player.color,
         id: player.id,
         name: player.name,
-        waitingFor: player.getWaitingFor(),
+        waitingFor: game.phase == Phase.INITIALRESEARCH ? undefined : this.getWaitingFor(player, player.getWaitingFor()),
       })),
       passedPlayers: game.getPassedPlayers(),
-      turmoil: getTurmoilModel(game),
+      turmoil: game.gameOptions.turmoilExtension ? getTurmoilModel(game) : undefined,
     };
   }
 

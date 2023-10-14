@@ -9,4 +9,6 @@ export enum Phase {
     CEOS = 'ceos',
     SOLAR = 'solar',
     INTERGENERATION = 'intergeneration',
+    INITIALRESEARCH = 'initial_research',
+    FINALGREEN = 'final_green'
 }
