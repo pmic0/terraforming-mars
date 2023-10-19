@@ -50,6 +50,7 @@ export class Server {
     };
   }
 
+
   public static getSimpleGameModelBot(game: IGame): SimpleBotGameModel {
     return {
       activePlayer: game.getPlayerById(game.activePlayer).color,
