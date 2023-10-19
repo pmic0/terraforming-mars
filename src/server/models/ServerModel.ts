@@ -60,7 +60,7 @@ export class Server {
         color: player.color,
         id: player.id,
         name: player.name,
-        waitingFor: game.phase == Phase.INITIALRESEARCH ? undefined : this.getWaitingFor(player, player.getWaitingFor()),
+        waitingFor: this.getWaitingFor(player, player.getWaitingFor()),
       })),
       passedPlayers: game.getPassedPlayers(),
       turmoil: game.gameOptions.turmoilExtension ? getTurmoilModel(game) : undefined,
