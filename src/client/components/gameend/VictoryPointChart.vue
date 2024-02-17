@@ -25,7 +25,10 @@ const COLOR_CODES: Record<Color, string> = {
   [Color.PURPLE]: 'rgb(140, 0, 255)',
   [Color.ORANGE]: 'rgb(236, 113, 12)',
   [Color.PINK]: 'rgb(245, 116, 187)',
-
+  [Color.LRED]: 'rgb(249,137,137)',
+  [Color.LYELLOW]: 'rgb(231,227,149)',
+  [Color.LGREEN]: 'rgb(170,199,111)',
+  [Color.LBLUE]: 'rgb(122,157,238)',
   // Not actual player colors
   [Color.NEUTRAL]: '',
   [Color.BRONZE]: '',
