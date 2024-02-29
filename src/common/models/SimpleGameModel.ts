@@ -24,6 +24,7 @@ export type SimpleBotGameModel = {
     phase: Phase;
     players: Array<SimplePlayerModelBot>;
     passedPlayers: Array<Color>;
+    deckSize: number;
     turmoil: TurmoilModel | undefined;
 }
 

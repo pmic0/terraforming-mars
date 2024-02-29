@@ -64,6 +64,7 @@ export class Server {
         waitingFor: this.getWaitingFor(player, player.getWaitingFor()),
       })),
       passedPlayers: game.getPassedPlayers(),
+      deckSize: game.projectDeck.drawPile.length ? game.projectDeck.drawPile.length  : -1,
       turmoil: game.gameOptions.turmoilExtension ? getTurmoilModel(game) : undefined,
     };
   }
