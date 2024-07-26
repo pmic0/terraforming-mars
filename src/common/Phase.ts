@@ -6,6 +6,7 @@
  * https://docs.google.com/drawings/d/1OvSmFEWVxVuydRCVkWT1BVoqurKYeYNvKP-6htNjcCM/edit?usp=sharing
  */
 export enum Phase {
+
   /**
    * Not part of the rulebook, initial drafting includes project cards and
    * prelude cards (maybe others ongoing?) Transitions to RESEARCH
@@ -40,4 +41,5 @@ export enum Phase {
 
   /** The game is over. */
   END = 'end',
+
 }

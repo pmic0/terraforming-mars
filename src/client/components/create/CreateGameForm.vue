@@ -12,7 +12,7 @@
                     <div class="create-game-page-container">
                         <div class="create-game-page-column">
                             <h4 v-i18n>№ of Players</h4>
-                            <template v-for="pCount in [1,2,3,4,5,6]">
+                            <template v-for="pCount in [1,2,3,4,5,6,7,8]">
                               <div v-bind:key="pCount">
                                 <input type="radio" :value="pCount" name="playersCount" v-model="playersCount" :id="pCount+'-radio'">
                                 <label :for="pCount+'-radio'">
@@ -404,7 +404,7 @@
                                               <input class="form-input form-inline create-game-player-name" :placeholder="getPlayerNamePlaceholder(index)" v-model="newPlayer.name" />
                                           </div>
                                           <div class="create-game-page-color-row">
-                                              <template v-for="color in ['Red', 'Green', 'Yellow', 'Blue', 'Black', 'Purple', 'Orange', 'Pink']">
+                                              <template v-for="color in ['Red', 'Green', 'Yellow', 'Blue', 'Black', 'Purple', 'Orange', 'Pink', 'Lred', 'Lyellow', 'Lgreen', 'Lblue']">
                                                 <div v-bind:key="color">
                                                   <input type="radio" :value="color.toLowerCase()" :name="'playerColor' + (index + 1)" v-model="newPlayer.color" :id="'radioBox' + color + (index + 1)">
                                                   <label :for="'radioBox' + color + (index + 1)">
@@ -565,14 +565,18 @@ export default (Vue as WithRefs<Refs>).extend({
       firstIndex: 1,
       playersCount: 1,
       players: [
-        {name: '', color: Color.RED, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.GREEN, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.YELLOW, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.BLUE, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.BLACK, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.PURPLE, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.ORANGE, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.PINK, beginner: false, handicap: 0, first: false},
+        {index: 1, name: '', color: Color.RED, beginner: false, handicap: 0, first: false},
+        {index: 2, name: '', color: Color.GREEN, beginner: false, handicap: 0, first: false},
+        {index: 3, name: '', color: Color.YELLOW, beginner: false, handicap: 0, first: false},
+        {index: 4, name: '', color: Color.BLUE, beginner: false, handicap: 0, first: false},
+        {index: 5, name: '', color: Color.BLACK, beginner: false, handicap: 0, first: false},
+        {index: 6, name: '', color: Color.PURPLE, beginner: false, handicap: 0, first: false},
+        {index: 7, name: '', color: Color.ORANGE, beginner: false, handicap: 0, first: false},
+        {index: 8, name: '', color: Color.PINK, beginner: false, handicap: 0, first: false},
+        {index: 9, name: '', color: Color.LRED, beginner: false, handicap: 0, first: false},
+        {index: 10, name: '', color: Color.LYELLOW, beginner: false, handicap: 0, first: false},
+        {index: 11, name: '', color: Color.LGREEN, beginner: false, handicap: 0, first: false},
+        {index: 12, name: '', color: Color.LBLUE, beginner: false, handicap: 0, first: false},              
       ],
       corporateEra: true,
       prelude: false,
