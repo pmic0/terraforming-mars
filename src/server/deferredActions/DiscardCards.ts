@@ -1,11 +1,12 @@
 import {IPlayer} from '../IPlayer';
 import {SelectCard} from '../inputs/SelectCard';
-import {DeferredAction, Priority} from './DeferredAction';
+import {DeferredAction} from './DeferredAction';
+import {Priority} from './Priority';
 import {Message} from '../../common/logs/Message';
-import {newMessage} from '../logs/MessageBuilder';
+import {message} from '../logs/MessageBuilder';
 import {IProjectCard} from '../cards/IProjectCard';
 
-export class DiscardCards extends DeferredAction<Array<IProjectCard>> {
+export class DiscardCards extends DeferredAction<ReadonlyArray<IProjectCard>> {
   constructor(
     player: IPlayer,
     public min: number = 1,
@@ -31,10 +32,10 @@ export class DiscardCards extends DeferredAction<Array<IProjectCard>> {
         if (this.min === 1) {
           title = 'Select 1 card to discard';
         } else {
-          title = newMessage('Select ${0} cards to discard', (b) => b.number(this.min));
+          title = message('Select ${0} cards to discard', (b) => b.number(this.min));
         }
       } else {
-        title = newMessage('Select between ${0} and ${1} cards to discard', (b) => b.number(this.min).number(this.max));
+        title = message('Select between ${0} and ${1} cards to discard', (b) => b.number(this.min).number(this.max));
       }
     }
     return new SelectCard(

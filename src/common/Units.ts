@@ -5,7 +5,7 @@ import {Resource} from './Resource';
 
 // Units represents any value of each standard unit.
 // Could be positive or negative, depending on how it's used.
-export interface Units {
+export type Units = {
   megacredits: number;
   steel: number;
   titanium: number;
@@ -108,7 +108,14 @@ export namespace Units {
     return partial;
   }
 
-  export function values(u: Units): Array<number> {
+  /**
+   * Returns an array of 6 elements representing the unit value in unit order.
+   *
+   * In other words, it returns an array of
+   * [MC, steel, titanium, plants, energy, heat].
+   *
+   */
+  export function values(u: Units): ReadonlyArray<number> {
     return keys.map((k) => u[k]);
   }
 

@@ -12,8 +12,8 @@ describe('StormCraftIncorporated', function() {
 
   beforeEach(function() {
     card = new StormCraftIncorporated();
-    [/* skipped */, player] = testGame(2);
-    player.setCorporationForTest(card);
+    [/* game */, player] = testGame(2);
+    player.corporations.push(card);
   });
 
   it('Should play', function() {

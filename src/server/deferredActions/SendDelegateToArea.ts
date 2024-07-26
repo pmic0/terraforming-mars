@@ -1,6 +1,7 @@
 import {IPlayer} from '../IPlayer';
 import {SelectParty} from '../inputs/SelectParty';
-import {DeferredAction, Priority} from './DeferredAction';
+import {DeferredAction} from './DeferredAction';
+import {Priority} from './Priority';
 import {SelectPaymentDeferred} from './SelectPaymentDeferred';
 import {Delegate, Turmoil} from '../turmoil/Turmoil';
 
@@ -49,7 +50,6 @@ export class SendDelegateToArea extends DeferredAction {
     if (availableParties.length === 0) {
       return undefined;
     }
-    // How many delegates to send
     const numDelegateToSend = this.options.count ?? 1;
 
     const sendDelegate = new SelectParty(this.title, 'Send delegate', availableParties)
@@ -58,17 +58,16 @@ export class SendDelegateToArea extends DeferredAction {
           this.player.game.defer(new SelectPaymentDeferred(this.player, this.options.cost, {title: 'Select how to pay for send delegate action'}));
         }
 
-        // TODO(kberg): reconfirm the delegate count.
         for (let i = 0; i < numDelegateToSend; i++) {
           if (this.options.replace) {
-            this.turmoil.replaceDelegateFromParty(this.options.replace, this.player.id, partyName, this.player.game);
+            this.turmoil.replaceDelegateFromParty(this.options.replace, this.player, partyName, this.player.game);
           } else {
-            this.turmoil.sendDelegateToParty(this.player.id, partyName, this.player.game);
+            this.turmoil.sendDelegateToParty(this.player, partyName, this.player.game);
           }
         }
 
         if (this.options?.freeStandardAction === true) {
-          this.turmoil.usedFreeDelegateAction.add(this.player.id);
+          this.turmoil.usedFreeDelegateAction.add(this.player);
         }
         this.player.totalDelegatesPlaced += numDelegateToSend;
         this.player.game.log('${0} sent ${1} delegate(s) in ${2} area', (b) => b.player(this.player).number(numDelegateToSend).partyName(partyName));

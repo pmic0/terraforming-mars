@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {Inventrix} from '../../../src/server/cards/corporation/Inventrix';
-import {Game} from '../../../src/server/Game';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
 import {runAllActions} from '../../TestingUtils';
 import {testGame} from '../../TestGame';
@@ -9,7 +9,7 @@ import {GlobalParameter} from '../../../src/common/GlobalParameter';
 describe('Inventrix', function() {
   let card: Inventrix;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
   beforeEach(function() {
     card = new Inventrix();
@@ -22,7 +22,7 @@ describe('Inventrix', function() {
   });
 
   it('Should take initial action', function() {
-    player.runInitialAction(card);
+    player.deferInitialAction(card);
     runAllActions(game);
     expect(player.cardsInHand).has.lengthOf(3);
   });

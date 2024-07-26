@@ -9,17 +9,17 @@ describe('GeneRepair', function() {
 
   beforeEach(function() {
     card = new GeneRepair();
-    [/* skipped */, player] = testGame(2);
+    [/* game */, player] = testGame(2);
   });
 
   it('Can not play', function() {
     player.tagsForTest = {science: 2};
-    expect(player.simpleCanPlay(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
   });
 
   it('Can play', function() {
     player.tagsForTest = {science: 3};
-    expect(player.simpleCanPlay(card)).is.true;
+    expect(card.canPlay(player)).is.true;
   });
 
   it('Should play', function() {

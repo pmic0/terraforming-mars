@@ -1,4 +1,5 @@
-import {Game} from '../../../src/server/Game';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
 import {TestPlayer} from '../../TestPlayer';
 import {ThoriumRush} from '../../../src/server/cards/moon/ThoriumRush';
 import {expect} from 'chai';
@@ -11,13 +12,12 @@ import {Reds} from '../../../src/server/turmoil/parties/Reds';
 
 describe('ThoriumRush', () => {
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let card: ThoriumRush;
   let moonData: MoonData;
 
   beforeEach(() => {
-    player = TestPlayer.BLUE.newPlayer();
-    game = Game.newInstance('gameid', [player], player, {moonExpansion: true});
+    [game, player] = testGame(1, {moonExpansion: true});
     card = new ThoriumRush();
     moonData = MoonExpansion.moonData(game);
   });
@@ -37,9 +37,9 @@ describe('ThoriumRush', () => {
 
     card.play(player);
 
-    game.deferredActions.pop()?.execute()?.cb(moonData.moon.getSpace('m02')),
-    game.deferredActions.pop()?.execute()?.cb(moonData.moon.getSpace('m03')),
-    game.deferredActions.pop()?.execute()?.cb(moonData.moon.getSpace('m04')),
+    game.deferredActions.pop()?.execute()?.cb(moonData.moon.getSpaceOrThrow('m02')),
+    game.deferredActions.pop()?.execute()?.cb(moonData.moon.getSpaceOrThrow('m03')),
+    game.deferredActions.pop()?.execute()?.cb(moonData.moon.getSpaceOrThrow('m04')),
 
     expect(moonData.habitatRate).eq(1);
     expect(moonData.habitatRate).eq(1);
@@ -48,8 +48,7 @@ describe('ThoriumRush', () => {
   });
 
   it('canPlay when Reds are in power', () => {
-    const player = TestPlayer.BLUE.newPlayer();
-    const game = Game.newInstance('gameid', [player], player, {moonExpansion: true, turmoilExtension: true});
+    const [game, player] = testGame(1, {moonExpansion: true, turmoilExtension: true});
     const turmoil = game.turmoil!;
     const moonData = MoonExpansion.moonData(game);
     game.phase = Phase.ACTION;
@@ -68,21 +67,21 @@ describe('ThoriumRush', () => {
     player.megaCredits = card.cost + 8;
     expect(player.canPlay(card)).is.false;
     player.megaCredits = card.cost + 9;
-    expect(player.canPlay(card)).is.true;
+    expect(player.canPlay(card)).deep.eq({redsCost: 9});
 
     moonData.miningRate = 8;
 
     player.megaCredits = card.cost + 5;
     expect(player.canPlay(card)).is.false;
     player.megaCredits = card.cost + 6;
-    expect(player.canPlay(card)).is.true;
+    expect(player.canPlay(card)).deep.eq({redsCost: 6});
 
     moonData.habitatRate = 8;
 
     player.megaCredits = card.cost + 2;
     expect(player.canPlay(card)).is.false;
     player.megaCredits = card.cost + 3;
-    expect(player.canPlay(card)).is.true;
+    expect(player.canPlay(card)).deep.eq({redsCost: 3});
 
     moonData.logisticRate = 8;
 

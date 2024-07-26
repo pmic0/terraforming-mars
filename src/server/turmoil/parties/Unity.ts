@@ -1,30 +1,28 @@
 import {IParty} from './IParty';
 import {Party} from './Party';
 import {PartyName} from '../../../common/turmoil/PartyName';
-import {IGame} from '../../IGame';
 import {Tag} from '../../../common/cards/Tag';
 import {Resource} from '../../../common/Resource';
 import {Bonus} from '../Bonus';
-import {Policy} from '../Policy';
+import {Policy, IPolicy} from '../Policy';
 import {SelectPaymentDeferred} from '../../deferredActions/SelectPaymentDeferred';
 import {IPlayer} from '../../IPlayer';
 import {POLITICAL_AGENDAS_MAX_ACTION_USES} from '../../../common/constants';
-import {SimpleDeferredAction} from '../../deferredActions/DeferredAction';
 import {OrOptions} from '../../inputs/OrOptions';
 import {SelectCard} from '../../inputs/SelectCard';
 import {SelectOption} from '../../inputs/SelectOption';
 import {CardResource} from '../../../common/CardResource';
 import {sum} from '../../../common/utils/utils';
 import {TITLES} from '../../inputs/titles';
+import {message} from '../../logs/MessageBuilder';
 
 export class Unity extends Party implements IParty {
   name = PartyName.UNITY;
-  description = 'Wants to see humanity prosper in the whole solar system.';
   bonuses = [UNITY_BONUS_1, UNITY_BONUS_2];
   policies = [UNITY_POLICY_1, UNITY_POLICY_2, UNITY_POLICY_3, UNITY_POLICY_4];
 }
 
-class UnityBonus01 implements Bonus {
+class UnityBonus01 extends Bonus {
   id = 'ub01' as const;
   description = 'Gain 1 M€ for each Venus, Earth and Jovian tag you have';
 
@@ -33,14 +31,12 @@ class UnityBonus01 implements Bonus {
     return sum(tags.map((tag) => player.tags.count(tag, 'raw')));
   }
 
-  grant(game: IGame) {
-    game.getPlayersInGenerationOrder().forEach((player) => {
-      player.stock.add(Resource.MEGACREDITS, this.getScore(player));
-    });
+  grantForPlayer(player: IPlayer) {
+    player.stock.add(Resource.MEGACREDITS, this.getScore(player));
   }
 }
 
-class UnityBonus02 implements Bonus {
+class UnityBonus02 extends Bonus {
   id = 'ub02' as const;
   description = 'Gain 1 M€ for each Space tag you have';
 
@@ -48,30 +44,24 @@ class UnityBonus02 implements Bonus {
     return player.tags.count(Tag.SPACE, 'raw');
   }
 
-  grant(game: IGame) {
-    game.getPlayersInGenerationOrder().forEach((player) => {
-      player.stock.add(Resource.MEGACREDITS, this.getScore(player));
-    });
+  grantForPlayer(player: IPlayer) {
+    player.stock.add(Resource.MEGACREDITS, this.getScore(player));
   }
 }
 
-class UnityPolicy01 implements Policy {
+class UnityPolicy01 extends Policy {
   id = 'up01' as const;
   description = 'Your titanium resources are worth 1 M€ extra';
 
-  onPolicyStart(game: IGame): void {
-    game.getPlayersInGenerationOrder().forEach((player) => {
-      player.increaseTitaniumValue();
-    });
+  override onPolicyStartForPlayer(player: IPlayer): void {
+    player.increaseTitaniumValue();
   }
-  onPolicyEnd(game: IGame): void {
-    game.getPlayersInGenerationOrder().forEach((player) => {
-      player.decreaseTitaniumValue();
-    });
+  override onPolicyEndForPlayer(player: IPlayer): void {
+    player.decreaseTitaniumValue();
   }
 }
 
-class UnityPolicy02 implements Policy {
+class UnityPolicy02 implements IPolicy {
   id = 'up02' as const;
   description = 'Spend 4 M€ to gain 2 titanium or add 2 floaters to ANY card (Turmoil Unity)';
 
@@ -81,7 +71,7 @@ class UnityPolicy02 implements Policy {
 
   action(player: IPlayer) {
     const game = player.game;
-    game.log('${0} used Turmoil Unity action', (b) => b.player(player));
+    game.log('${0} used Turmoil ${1} action', (b) => b.player(player).partyName(PartyName.UNITY));
     player.politicalAgendasActionUsedCount += 1;
 
     game.defer(new SelectPaymentDeferred(player, 4, {title: TITLES.payForPartyAction(PartyName.UNITY)}))
@@ -91,7 +81,7 @@ class UnityPolicy02 implements Policy {
 
         if (availableFloaterCards.length === 1) {
           orOptions.options.push(
-            new SelectOption('Add 2 floaters to ' + availableFloaterCards[0].name, 'Confirm').andThen(() => {
+            new SelectOption(message('Add ${0} floaters to ${1}', (b) => b.number(2).card(availableFloaterCards[0]))).andThen(() => {
               player.addResourceTo(availableFloaterCards[0], {qty: 2, log: true});
 
               return undefined;
@@ -99,7 +89,7 @@ class UnityPolicy02 implements Policy {
           );
         } else if (availableFloaterCards.length > 1) {
           orOptions.options.push(
-            new SelectOption('Add 2 floaters to a card', 'Confirm').andThen(() => {
+            new SelectOption('Add 2 floaters to a card').andThen(() => {
               return new SelectCard('Select card to add 2 floaters', 'Add floaters', availableFloaterCards)
                 .andThen(([card]) => {
                   player.addResourceTo(card, {qty: 2, log: true});
@@ -109,7 +99,7 @@ class UnityPolicy02 implements Policy {
           );
         }
 
-        orOptions.options.push(new SelectOption('Gain 2 titanium', 'Confirm').andThen(() => {
+        orOptions.options.push(new SelectOption('Gain 2 titanium').andThen(() => {
           player.stock.add(Resource.TITANIUM, 2);
           game.log('${0} gained 2 titanium', (b) => b.player(player));
           return undefined;
@@ -117,7 +107,7 @@ class UnityPolicy02 implements Policy {
 
         if (orOptions.options.length === 1) return orOptions.options[0].cb();
 
-        game.defer(new SimpleDeferredAction(player, () => orOptions));
+        player.defer(orOptions);
         return undefined;
       });
 
@@ -125,7 +115,7 @@ class UnityPolicy02 implements Policy {
   }
 }
 
-class UnityPolicy03 implements Policy {
+class UnityPolicy03 implements IPolicy {
   id = 'up03' as const;
   description = 'Spend 4 M€ to draw a Space card (Turmoil Unity)';
 
@@ -135,7 +125,7 @@ class UnityPolicy03 implements Policy {
 
   action(player: IPlayer) {
     const game = player.game;
-    game.log('${0} used Turmoil Unity action', (b) => b.player(player));
+    game.log('${0} used Turmoil ${1} action', (b) => b.player(player).partyName(PartyName.UNITY));
     player.politicalAgendasActionUsedCount += 1;
 
     game.defer(new SelectPaymentDeferred(player, 4, {title: TITLES.payForPartyAction(PartyName.UNITY)}))
@@ -145,7 +135,7 @@ class UnityPolicy03 implements Policy {
   }
 }
 
-class UnityPolicy04 implements Policy {
+class UnityPolicy04 implements IPolicy {
   id = 'up04' as const;
   description = 'Cards with Space tags cost 2 M€ less to play';
 }

@@ -5,11 +5,12 @@ import {addOcean, cast} from '../../TestingUtils';
 import {OrOptions} from '../../../src/server/inputs/OrOptions';
 import {Units} from '../../../src/common/Units';
 import {SelectOption} from '../../../src/server/inputs/SelectOption';
+import {SelectResource} from '../../../src/server/inputs/SelectResource';
 
 describe('CloneTroopers', () => {
   it('Can play', () => {
     const card = new CloneTroopers();
-    const [/* skipped */, player] = testGame(2, {starWarsExpansion: true});
+    const [/* game */, player] = testGame(2, {starWarsExpansion: true});
 
     addOcean(player);
     addOcean(player);
@@ -26,7 +27,7 @@ describe('CloneTroopers', () => {
 
   it('act solo', () => {
     const card = new CloneTroopers();
-    const [/* skipped */, player] = testGame(1, {starWarsExpansion: true});
+    const [/* game */, player] = testGame(1, {starWarsExpansion: true});
 
     expect(card.resourceCount).eq(0);
 
@@ -39,18 +40,16 @@ describe('CloneTroopers', () => {
 
     expect(card.resourceCount).eq(2);
 
-    expect(orOptions.options[1].cb()).is.undefined;
-
     orOptions = cast(card.action(player), OrOptions);
     expect(player.stock.asUnits()).deep.eq(Units.EMPTY);
-    cast(orOptions.options[1], OrOptions).options[2].cb();
+    cast(orOptions.options[1], SelectResource).cb('titanium');
     expect(player.stock.asUnits()).deep.eq(Units.of({titanium: 1}));
     expect(card.resourceCount).eq(1);
   });
 
   it('act multiplayer', () => {
     const card = new CloneTroopers();
-    const [/* skipped */, player, player2, player3] = testGame(3, {starWarsExpansion: true});
+    const [/* game */, player, player2, player3] = testGame(3, {starWarsExpansion: true});
 
     expect(card.resourceCount).eq(0);
 

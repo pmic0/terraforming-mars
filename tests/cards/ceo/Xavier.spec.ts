@@ -1,8 +1,7 @@
 import {expect} from 'chai';
-import {Game} from '../../../src/server/Game';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
 import {testGame} from '../../TestGame';
-
 import {Xavier} from '../../../src/server/cards/ceos/Xavier';
 import {Cartel} from '../../../src/server/cards/base/Cartel';
 import {GeneRepair} from '../../../src/server/cards/base/GeneRepair';
@@ -10,13 +9,13 @@ import {LightningHarvest} from '../../../src/server/cards/base/LightningHarvest'
 import {SearchForLife} from '../../../src/server/cards/base/SearchForLife';
 import {SulphurExports} from '../../../src/server/cards/venusNext/SulphurExports';
 import {Ecologist} from '../../../src/server/milestones/Ecologist';
-import {forceGenerationEnd} from '../../TestingUtils';
+import {forceGenerationEnd, runAllActions} from '../../TestingUtils';
 
 
 describe('Xavier', function() {
   let card: Xavier;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
   beforeEach(() => {
     card = new Xavier();
@@ -38,7 +37,7 @@ describe('Xavier', function() {
     expect(geneRepair.canPlay(player)).is.true;
 
     // Bonus wild tags are lost next generation
-    game.deferredActions.runAll(() => {});
+    runAllActions(game);
     expect(card.isDisabled).is.true;
     player.runProductionPhase();
     expect(geneRepair.canPlay(player)).is.false;
@@ -57,7 +56,7 @@ describe('Xavier', function() {
     expect(player.production.megacredits).to.eq(3);
 
     // Bonus wild tags are lost next generation
-    game.deferredActions.runAll(() => {});
+    runAllActions(game);
     expect(card.isDisabled).is.true;
     player.runProductionPhase();
 
@@ -79,7 +78,7 @@ describe('Xavier', function() {
     expect(card.getCardDiscount(player, geneRepair)).eq(1);
 
     // Persists over generations
-    game.deferredActions.runAll(() => {});
+    runAllActions(game);
     expect(card.isDisabled).is.true;
     player.runProductionPhase();
     expect(card.getCardDiscount(player, lightningHarvest)).eq(1);

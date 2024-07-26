@@ -9,7 +9,7 @@ import {CardResource} from '../../../common/CardResource';
 export class CloudCity extends Card implements IProjectCard {
   constructor() {
     super({
-      type: CardType.ACTIVE,
+      type: CardType.AUTOMATED,
       name: CardName.CLOUD_CITY,
       tags: [Tag.VENUS],
       cost: 5,
@@ -22,7 +22,7 @@ export class CloudCity extends Card implements IProjectCard {
 
       metadata: {
         cardNumber: 'SW05',
-        renderData: CardRenderer.builder((b) => b.venus(1).floaters(2)),
+        renderData: CardRenderer.builder((b) => b.venus(1).resource(CardResource.FLOATER, 2)),
         description: 'Requires Venus 6%. Raise Venus 1 step. Add 2 floaters to any card.',
       },
     });

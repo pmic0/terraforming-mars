@@ -14,10 +14,10 @@ describe('AgricolaInc', function() {
 
   beforeEach(function() {
     card = new AgricolaInc();
-    [/* skipped */, player] = testGame(2);
+    [/* game */, player] = testGame(2);
 
     card.play(player);
-    player.setCorporationForTest(card);
+    player.corporations.push(card);
   });
 
   it('Starts with correct production', function() {
@@ -34,9 +34,9 @@ describe('AgricolaInc', function() {
   });
 
   it('Scores endgame VP correctly, with Venus', function() {
-    [/* skipped */, player] = testGame(2, {venusNextExtension: true});
+    [/* game */, player] = testGame(2, {venusNextExtension: true});
     card.play(player);
-    player.setCorporationForTest(card);
+    player.corporations.push(card);
 
     expect(card.getVictoryPoints(player)).to.eq(-20);
 

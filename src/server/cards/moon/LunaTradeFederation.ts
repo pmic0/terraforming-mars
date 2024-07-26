@@ -1,8 +1,7 @@
 import {CardName} from '../../../common/cards/CardName';
-import {CardType} from '../../../common/cards/CardType';
 import {IPlayer} from '../../IPlayer';
 import {Tag} from '../../../common/cards/Tag';
-import {ICorporationCard} from '../corporation/ICorporationCard';
+import {CorporationCard} from '../corporation/CorporationCard';
 import {CardRenderer} from '../render/CardRenderer';
 import {TileType} from '../../../common/TileType';
 import {MoonExpansion} from '../../moon/MoonExpansion';
@@ -10,14 +9,11 @@ import {Space} from '../../boards/Space';
 import {Resource} from '../../../common/Resource';
 import {Size} from '../../../common/cards/render/Size';
 // import {AltSecondaryTag} from '../../../common/cards/render/AltSecondaryTag';
-import {Card} from '../Card';
 // import {all, multiplier} from '../Options';
-import {multiplier} from '../Options';
 
-export class LunaTradeFederation extends Card implements ICorporationCard {
+export class LunaTradeFederation extends CorporationCard {
   constructor() {
     super({
-      type: CardType.CORPORATION,
       name: CardName.LUNA_TRADE_FEDERATION,
       tags: [Tag.MOON, Tag.SPACE],
       startingMegaCredits: 15,
@@ -45,7 +41,7 @@ export class LunaTradeFederation extends Card implements ICorporationCard {
           });
           b.br;
           b.effect('You may use titanium resources as 2M€ each.', (eb) => {
-            eb.startEffect.text('X').titanium(1).equals().megacredits(2, {multiplier});
+            eb.startEffect.text('X').titanium(1).equals().megacredits(1, {text: '2x'});
           });
         }),
       },

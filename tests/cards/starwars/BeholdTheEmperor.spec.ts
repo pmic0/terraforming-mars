@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {BeholdTheEmperor} from '../../../src/server/cards/starwars/BeholdTheEmperor';
-import {Game} from '../../../src/server/Game';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
 import {testGame} from '../../TestGame';
 import {Turmoil} from '../../../src/server/turmoil/Turmoil';
@@ -12,7 +12,7 @@ describe('BeholdTheEmperor', () => {
   let card: BeholdTheEmperor;
   let player: TestPlayer;
   let player2: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let turmoil: Turmoil;
 
   beforeEach(() => {
@@ -26,11 +26,11 @@ describe('BeholdTheEmperor', () => {
 
     expect(card.canPlay(player)).is.false;
 
-    turmoil.chairman = player2.id;
+    turmoil.chairman = player2;
 
     expect(card.canPlay(player)).is.false;
 
-    turmoil.chairman = player.id;
+    turmoil.chairman = player;
 
     expect(card.canPlay(player)).is.true;
   });
@@ -46,16 +46,16 @@ describe('BeholdTheEmperor', () => {
       party.delegates.clear();
     });
 
-    turmoil.chairman = player.id;
+    turmoil.chairman = player;
     turmoil.rulingParty = kelvinists;
 
-    turmoil.sendDelegateToParty(player2.id, PartyName.REDS, game);
-    turmoil.sendDelegateToParty(player2.id, PartyName.REDS, game);
-    turmoil.sendDelegateToParty(player2.id, PartyName.REDS, game);
-    turmoil.sendDelegateToParty(player2.id, PartyName.REDS, game);
-    turmoil.sendDelegateToParty(player2.id, PartyName.REDS, game);
-    turmoil.sendDelegateToParty(player.id, PartyName.REDS, game);
-    turmoil.sendDelegateToParty(player.id, PartyName.GREENS, game);
+    turmoil.sendDelegateToParty(player2, PartyName.REDS, game);
+    turmoil.sendDelegateToParty(player2, PartyName.REDS, game);
+    turmoil.sendDelegateToParty(player2, PartyName.REDS, game);
+    turmoil.sendDelegateToParty(player2, PartyName.REDS, game);
+    turmoil.sendDelegateToParty(player2, PartyName.REDS, game);
+    turmoil.sendDelegateToParty(player, PartyName.REDS, game);
+    turmoil.sendDelegateToParty(player, PartyName.GREENS, game);
 
     card.play(player);
 
@@ -67,7 +67,7 @@ describe('BeholdTheEmperor', () => {
     turmoil.endGeneration(game);
     runAllActions(game);
 
-    expect(turmoil.chairman).to.eq(player.id);
+    expect(turmoil.chairman).to.eq(player);
     expect(player.getTerraformRating()).to.eq(20);
     expect(player2.getTerraformRating()).to.eq(19);
 
@@ -76,6 +76,9 @@ describe('BeholdTheEmperor', () => {
     // Using greaterThan to ameliorate the global events.
     expect(kelvinists.delegates.size).greaterThanOrEqual(0);
     expect(reds.delegates.size).greaterThanOrEqual(6);
-    expect(greens.delegates.size).greaterThanOrEqual(0);
+    expect(greens.delegates.size).greaterThanOrEqual(1);
+
+    expect(turmoil.delegateReserve.get(player)).to.equal(5);
+    expect(turmoil.delegateReserve.get(player2)).to.equal(2);
   });
 });

@@ -1,16 +1,16 @@
 import {expect} from 'chai';
 import {Mangrove} from '../../../src/server/cards/base/Mangrove';
-import {Game} from '../../../src/server/Game';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
 import {TileType} from '../../../src/common/TileType';
-import {cast, runAllActions} from '../../TestingUtils';
-import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {runAllActions, setOxygenLevel, setTemperature, testRedsCosts} from '../../TestingUtils';
 import {testGame} from '../../TestGame';
+import {assertPlaceTile} from '../../assertions';
 
 describe('Mangrove', function() {
   let card: Mangrove;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
   beforeEach(function() {
     card = new Mangrove();
@@ -18,17 +18,38 @@ describe('Mangrove', function() {
   });
 
   it('Can not play', function() {
-    expect(player.simpleCanPlay(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
+    setTemperature(game, 2);
+    expect(card.canPlay(player)).is.not.true;
+    setTemperature(game, 4);
+    expect(card.canPlay(player)).is.true;
   });
 
   it('Should play', function() {
     expect(card.play(player)).is.undefined;
     runAllActions(game);
-    const action = cast(player.popWaitingFor(), SelectSpace);
-    action.cb(action.spaces[0]);
-    expect(action.spaces[0].tile && action.spaces[0].tile.tileType).to.eq(TileType.GREENERY);
-    expect(action.spaces[0].player).to.eq(player);
+
+    assertPlaceTile(player, player.popWaitingFor(), TileType.GREENERY);
 
     expect(card.getVictoryPoints(player)).to.eq(1);
   });
+
+
+  const redsRuns = [
+    {oxygen: 12, expected: 3},
+    {oxygen: 13, expected: 3},
+    {oxygen: 14, expected: 0},
+  ] as const;
+
+  for (const run of redsRuns) {
+    it('Works with reds ' + JSON.stringify(run), () => {
+      const [game, player/* , player2 */] = testGame(2, {turmoilExtension: true});
+
+      // Card requirement
+      setTemperature(game, 4);
+
+      setOxygenLevel(game, run.oxygen);
+      testRedsCosts(() => player.canPlay(card), player, card.cost, run.expected);
+    });
+  }
 });

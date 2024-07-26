@@ -1,13 +1,12 @@
 import {CardType} from '../../common/cards/CardType';
 import {IProjectCard} from './IProjectCard';
 import {Space} from '../boards/Space';
-import {Message} from '../../common/logs/Message';
 import {PlayerInput} from '../PlayerInput';
 import {IPlayer} from '../IPlayer';
 import {Tag} from '../../common/cards/Tag';
 import {CardResource} from '../../common/CardResource';
 import {CardName} from '../../common/cards/CardName';
-import {ICardMetadata} from '../../common/cards/ICardMetadata';
+import {CardMetadata} from '../../common/cards/CardMetadata';
 import {GlobalParameter} from '../../common/GlobalParameter';
 import {BoardType} from '../boards/BoardType';
 import {CardDiscount} from '../../common/cards/Types';
@@ -18,6 +17,10 @@ import {TRSource} from '../../common/cards/TRSource';
 import {CardRequirementDescriptor} from '../../common/cards/CardRequirementDescriptor';
 import {OneOrArray} from '../../common/utils/types';
 import {JSONValue} from '../../common/Types';
+import {IStandardProjectCard} from './IStandardProjectCard';
+import {Warning} from '../../common/cards/Warning';
+import {Resource} from '../../common/Resource';
+import {Units} from '../../common/Units';
 
 /*
  * Represents a card which has an action that itself allows a player
@@ -34,8 +37,6 @@ export interface IHasCheckLoops {
 export function isIHasCheckLoops(object: any): object is IHasCheckLoops {
   return object.getCheckLoops !== undefined;
 }
-
-export type DynamicTRSource = (player: IPlayer) => TRSource;
 
 export interface ICard {
   name: CardName;
@@ -55,6 +56,10 @@ export interface ICard {
    * Having descriptions this simple also makes it easier to render its discount in the UI.
    */
   cardDiscount?: OneOrArray<CardDiscount>;
+  /**
+   * Describes the M€ discount `player` could apply to playing `card`.
+   */
+  getStandardProjectDiscount?(player: IPlayer, card: IStandardProjectCard): number;
 
   /**
    * The +/- bonus applied to global parameter requirements, e.g. Adaptation Technology.
@@ -67,10 +72,12 @@ export interface ICard {
   getGlobalParameterRequirementBonus(player: IPlayer, parameter: GlobalParameter): number;
   victoryPoints?: number | 'special' | IVictoryPoints,
   getVictoryPoints(player: IPlayer): number;
+  /** Returns any dynamic influence value */
+  getInfluenceBonus?: (player: IPlayer) => number;
   /** Called when cards are played. However, if this is a corp, it'll be called when opponents play cards, too. */
-  onCardPlayed?(player: IPlayer, card: IProjectCard): PlayerInput | undefined | void;
+  onCardPlayed?(player: IPlayer, card: ICard): PlayerInput | undefined | void;
   onCardPlayedFromAnyPlayer?(thisCardOwner: IPlayer, playedCardOwner: IPlayer, card: IProjectCard): PlayerInput | undefined;
-  onStandardProject?(player: IPlayer, project: ICard): void;
+  onStandardProject?(player: IPlayer, project: IStandardProjectCard): void;
   onTilePlaced?(cardOwner: IPlayer, activePlayer: IPlayer, space: Space, boardType: BoardType): void;
   onDiscard?(player: IPlayer): void;
   /**
@@ -97,10 +104,12 @@ export interface ICard {
    * Optional callback when any player identifies a space.
    *
    * @param identifyingPlayer the player performing the identification action
+   *   or undefined if added by a neutral player.
    * @param cardOwner the player who owns THIS CARD.
    * @param space the space that was just identified.
+   * @param fromExcavate when true, this identifacation came from excavating an unidentified space.
    */
-  onIdentification?(identifyingPlayer: IPlayer, cardOwner: IPlayer, space: Space): void;
+  onIdentification?(identifyingPlayer: IPlayer | undefined, cardOwner: IPlayer, space: Space, fromExcavate: boolean): void;
 
   /**
    * Optional callback when any player excavates a space.
@@ -110,18 +119,55 @@ export interface ICard {
    */
   onExcavation?(player: IPlayer, space: Space): void;
 
+  onProductionGain?(player: IPlayer, resource: Resource, amount: number): void;
+  onProductionPhase?(player: IPlayer): void;
+
+  /** Optional callback when ANY player adds a colony. */
+  onColonyAdded?(player: IPlayer, cardOwner: IPlayer): void;
+  /** Optional callback when `player` adds a colony to Leavitt. */
+  onColonyAddedToLeavitt?(player: IPlayer): void;
+
   cost?: number; /** Used with IProjectCard and PreludeCard. */
   type: CardType;
   requirements: Array<CardRequirementDescriptor>;
-  metadata: ICardMetadata;
-  warning?: string | Message;
+  metadata: CardMetadata;
+
+  /**
+   * Per-instance state-specific warnings about this card's action.
+   */
+  warnings: Set<Warning>;
+
   behavior?: Behavior,
+
+  /**
+   * Returns the contents of the card's production box.
+   *
+   * Use with Robotic Workforce and Cyberia Systems.
+   *
+   * Prefer this to `produce` and prefer `behavior` to this.
+   */
+  productionBox?(player: IPlayer): Units;
+
+  /**
+   * Applies the production change for the card's production box.
+   *
+   * Use with Robotic Workforce and Cyberia Systems.
+   * (Special case for Small Open Pit Mine.)
+   *
+   * Prefer both `productionBox` and `behavior` over this.
+   */
   produce?(player: IPlayer): void;
-  tr?: TRSource | DynamicTRSource;
+
+  /** Terraform Rating predicted when this card is played */
+  tr?: TRSource;
+  /** Terraform Rating predicted when this card is played */
+  computeTr?(player: IPlayer): TRSource;
+
   resourceCount: number;
   resourceType?: CardResource;
+  protectedResources?: boolean;
   /** Currently used for The Moon, but can be expanded to encompass other tile-placing cards. */
-  tilesBuilt?: Array<TileType>;
+  tilesBuilt: ReadonlyArray<TileType>;
   isDisabled?: boolean; // For Pharmacy Union and CEO cards.
   /**
    * Extra data that the game will serialize and deserialize along with the card.
@@ -129,6 +175,10 @@ export interface ICard {
    * ONLY store plain JSON data. Classes, objects, functions, will all be incorrectly serialized.
    */
   data?: JSONValue;
+
+  /** The generation the card was activated. Used for Duncan and Underworld cards. */
+  // TODO(kberg): move to json?
+  generationUsed?: number;
 }
 
 export interface IActionCard {

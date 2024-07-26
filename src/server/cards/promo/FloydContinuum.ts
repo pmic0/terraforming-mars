@@ -15,19 +15,18 @@ import {IActionCard} from '../ICard';
 export class FloydContinuum extends Card implements IProjectCard, IActionCard {
   constructor() {
     super({
-      cost: 12,
+      cost: 4,
       name: CardName.FLOYD_CONTINUUM,
       tags: [Tag.SCIENCE],
       type: CardType.ACTIVE,
 
       metadata: {
         cardNumber: '',
+        hasExternalHelp: true,
         renderData: CardRenderer.builder((b) => {
           b.action('Gain 3 M€ per completed terraforming parameter.', (eb) => {
             eb.empty().startAction.megacredits(3).slash().oceans(1).oxygen(1).temperature(1).asterix();
           });
-          b.br;
-          b.plainText('(FAN NOTE: This will apply to Venus but not The Moon.)');
         }),
       },
     });

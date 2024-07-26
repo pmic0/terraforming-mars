@@ -12,6 +12,7 @@ import {CardName} from '../../../common/cards/CardName';
 import {Resource} from '../../../common/Resource';
 import {CardRenderer} from '../render/CardRenderer';
 import {digit} from '../Options';
+import {message} from '../../logs/MessageBuilder';
 
 export class ImportedHydrogen extends Card implements IProjectCard {
   constructor() {
@@ -30,8 +31,8 @@ export class ImportedHydrogen extends Card implements IProjectCard {
         renderData: CardRenderer.builder((b) => {
           b.plants(3, {digit});
           b.or();
-          b.microbes(3, {digit}).asterix().or();
-          b.animals(2, {digit}).asterix().br;
+          b.resource(CardResource.MICROBE, {amount: 3, digit}).asterix().or();
+          b.resource(CardResource.ANIMAL, {amount: 2, digit}).asterix().br;
           b.oceans(1);
         }),
         description: 'Gain 3 plants, or add 3 microbes or 2 animals to ANOTHER card. Place an ocean tile.',
@@ -52,14 +53,14 @@ export class ImportedHydrogen extends Card implements IProjectCard {
       return gainPlants();
     }
 
-    const availableActions: Array<PlayerInput> = [];
+    const availableActions = [];
 
     const gainPlantsOption = new SelectOption('Gain 3 plants', 'Gain plants').andThen(gainPlants);
     availableActions.push(gainPlantsOption);
 
     if (availableMicrobeCards.length === 1) {
       const targetMicrobeCard = availableMicrobeCards[0];
-      availableActions.push(new SelectOption('Add 3 microbes to ' + targetMicrobeCard.name, 'Add microbes').andThen(() => {
+      availableActions.push(new SelectOption(message('Add ${0} microbes to ${1}', (b) => b.number(3).card(targetMicrobeCard)), 'Add microbes').andThen(() => {
         player.addResourceTo(targetMicrobeCard, {qty: 3, log: true});
         return undefined;
       }));
@@ -75,7 +76,7 @@ export class ImportedHydrogen extends Card implements IProjectCard {
 
     if (availableAnimalCards.length === 1) {
       const targetAnimalCard = availableAnimalCards[0];
-      availableActions.push(new SelectOption('Add 2 animals to ' + targetAnimalCard.name, 'Add animals').andThen(() => {
+      availableActions.push(new SelectOption(message('Add ${0} animals to ${1}', (b) => b.number(2).card(targetAnimalCard)), 'Add animals').andThen(() => {
         player.addResourceTo(targetAnimalCard, {qty: 2, log: true});
         return undefined;
       }));

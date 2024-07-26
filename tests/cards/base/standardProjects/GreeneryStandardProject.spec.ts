@@ -1,26 +1,24 @@
 import {expect} from 'chai';
-import {cast, churnAction, setOxygenLevel} from '../../../TestingUtils';
+import {churnAction, setOxygenLevel} from '../../../TestingUtils';
 import {GreeneryStandardProject} from '../../../../src/server/cards/base/standardProjects/GreeneryStandardProject';
 import {TestPlayer} from '../../../TestPlayer';
-import {Game} from '../../../../src/server/Game';
+import {IGame} from '../../../../src/server/IGame';
 import {PoliticalAgendas} from '../../../../src/server/turmoil/PoliticalAgendas';
 import {Reds} from '../../../../src/server/turmoil/parties/Reds';
 import {Phase} from '../../../../src/common/Phase';
 import {MAX_OXYGEN_LEVEL} from '../../../../src/common/constants';
-import {SelectSpace} from '../../../../src/server/inputs/SelectSpace';
-import {SpaceType} from '../../../../src/common/boards/SpaceType';
 import {TileType} from '../../../../src/common/TileType';
 import {testGame} from '../../../TestGame';
+import {assertPlaceTile} from '../../../assertions';
 
 describe('GreeneryStandardProject', function() {
   let card: GreeneryStandardProject;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
   beforeEach(function() {
     card = new GreeneryStandardProject();
-    player = TestPlayer.BLUE.newPlayer();
-    game = Game.newInstance('gameid', [player], player);
+    [game, player] = testGame(1);
   });
 
   it('Can act', function() {
@@ -35,14 +33,7 @@ describe('GreeneryStandardProject', function() {
     player.setTerraformRating(20);
     expect(game.getOxygenLevel()).eq(0);
 
-    const selectSpace = cast(churnAction(card, player), SelectSpace);
-    const availableSpace = selectSpace.spaces[0];
-
-    expect(availableSpace.spaceType).eq(SpaceType.LAND);
-
-    selectSpace?.cb(availableSpace);
-
-    expect(availableSpace.tile!.tileType).eq(TileType.GREENERY);
+    assertPlaceTile(player, churnAction(card, player), TileType.GREENERY);
 
     expect(player.megaCredits).eq(0);
     expect(player.getTerraformRating()).eq(21);

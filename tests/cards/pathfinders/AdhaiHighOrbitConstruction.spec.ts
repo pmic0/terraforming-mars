@@ -18,8 +18,8 @@ describe('AdhaiHighOrbitConstructions', function() {
 
   beforeEach(function() {
     card = new AdhaiHighOrbitConstructions();
-    [/* skipped */, player] = testGame(1, {coloniesExtension: true});
-    player.setCorporationForTest(card);
+    [/* game */, player] = testGame(1, {coloniesExtension: true});
+    player.corporations.push(card);
   });
 
   it('onCardPlayed', function() {

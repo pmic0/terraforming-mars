@@ -1,7 +1,7 @@
-import {Game} from '../../../src/server/Game';
+import {expect} from 'chai';
+import {testGame} from '../../TestGame';
 import {TestPlayer} from '../../TestPlayer';
 import {DarksideObservatory} from '../../../src/server/cards/moon/DarksideObservatory';
-import {expect} from 'chai';
 import {PhysicsComplex} from '../../../src/server/cards/base/PhysicsComplex';
 import {SearchForLife} from '../../../src/server/cards/base/SearchForLife';
 import {OlympusConference} from '../../../src/server/cards/base/OlympusConference';
@@ -27,8 +27,7 @@ describe('DarksideObservatory', () => {
   const nanotechIndustries = new NanotechIndustries();
 
   beforeEach(() => {
-    player = TestPlayer.BLUE.newPlayer();
-    Game.newInstance('gameid', [player], player, {moonExpansion: true});
+    [/* game */, player] = testGame(1, {moonExpansion: true});
     card = new DarksideObservatory();
   });
 
@@ -52,13 +51,13 @@ describe('DarksideObservatory', () => {
     expect(card.canAct(player)).is.true;
 
     player.playedCards = [];
-    player.setCorporationForTest(nanotechIndustries);
+    player.corporations.push(nanotechIndustries);
     expect(card.canAct(player)).is.true;
   });
 
   it('act', () => {
     player.playedCards = [physicsComplex, searchForLife, olympusConference, prideoftheEarthArkship, processorFactory];
-    player.setCorporationForTest(nanotechIndustries);
+    player.corporations.push(nanotechIndustries);
     const input = card.action(player);
 
     expect(input.cards).has.members([olympusConference, prideoftheEarthArkship, processorFactory, nanotechIndustries]);

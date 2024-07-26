@@ -299,8 +299,22 @@ input[type="radio"]:checked + .filterDiv::after {
 }
 
 .prelude2-icon:after {
-  &:extend(.prelude-icon:after);
+  position: absolute;
+  border: 1px solid black;
+  font-family: Prototype;
+  background-color: rgb(235, 118, 171);
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 16px;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+  color: white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  content: "2";
 }
+
 .venus-icon:after {
     position: absolute;
     border: 1px solid black;
@@ -472,6 +486,15 @@ input[type="radio"]:checked + .filterDiv::after {
     border-radius: 50%;
     box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
     content: "W";
+}
+
+.underworld-icon:after {
+  position: absolute;
+  background-image: url(./assets/expansion_icons/expansion_icon_underworld.png);
+  width: 26px;
+  height: 26px;
+  background-size: 26px;
+  content: "";
 }
 
 .button-icon:after {
@@ -661,7 +684,9 @@ input[type="radio"]:checked + .filterDiv::after {
 .tag-none {
     background-image: url("./assets/tags/tag-none.png");
 }
-
+.tag-asterisk {
+  background-image: url("./assets/underworld/asterisk-tag.png");
+}
 /************** Style the Content ************/
 .content {
     color: black;
@@ -2667,9 +2692,8 @@ input[type="radio"]:checked + .filterDiv::after {
     background-image: url(./assets/expansion_icons/expansion_icon_prelude.png);
 }
 
-// Create an icon with a 2, perhaps?
 .expansion-icon-prelude2 {
-    background-image: url(./assets/expansion_icons/expansion_icon_prelude.png);
+    background-image: url(./assets/expansion_icons/expansion_icon_prelude2.png);
 }
 
 .expansion-icon-colony {
@@ -2715,14 +2739,12 @@ input[type="radio"]:checked + .filterDiv::after {
     background-image: url(./assets/expansion_icons/expansion_icon_starwars.png);
 }
 
+.expansion-icon-underworld {
+  background-image: url(./assets/expansion_icons/expansion_icon_underworld.png);
+}
+
 /* refactored */
 .card-container {
-    .project-icon:after,
-    .preludeCard-icon:after {
-        bottom: 8px;
-        left: 8px;
-        margin: 0px;
-    }
     .card-content-wrapper {
         position: relative;
         .temporary-content-wrapper {
@@ -2756,19 +2778,20 @@ input[type="radio"]:checked + .filterDiv::after {
             .card-help {
                 float: left;
                 font-family: Prototype;
-                font-size: 26px;
-                width: 30px;
-                height: 50px;
+                font-size: 20px;
+                width: 24px;
+                height: 24px;
                 margin-left: -20px;
-                line-height: 48px;
-                border-radius: 20px;
-
-                background-color: black;
-                color: white;
+                line-height: 24px;
+                border-radius: 24px;
+                background-color: #444;
                 text-align: center;
-            }
-            .card-help-inner a:visited {
-                color: #FFF;
+                a {
+                  color: #C33;
+                  text-decoration: none;
+                }
+                position: static;
+                z-index: 1;
             }
             .card-tags {
                 display: flex;

@@ -4,9 +4,9 @@ import {IPlayer} from '../IPlayer';
 import {NeutralPlayer} from '../turmoil/Turmoil';
 import {InputResponse, isSelectDelegateResponse} from '../../common/inputs/InputResponse';
 import {SelectDelegateModel} from '../../common/models/PlayerInputModel';
+import {InputError} from './InputError';
 
 export class SelectDelegate extends BasePlayerInput<IPlayer | NeutralPlayer> {
-  // TODO(kberg): is there any reason to not just accept IDs?
   constructor(
     public players: ReadonlyArray<IPlayer | NeutralPlayer>,
     title: string | Message) {
@@ -24,16 +24,20 @@ export class SelectDelegate extends BasePlayerInput<IPlayer | NeutralPlayer> {
 
   public process(input: InputResponse) {
     if (!isSelectDelegateResponse(input)) {
-      throw new Error('Not a valid SelectDelegateResponse');
+      throw new InputError('Not a valid SelectDelegateResponse');
     }
-    const foundPlayer = this.players.find((player) =>
-      player === input.player ||
-      (typeof(player) === 'object' && (player.id === input.player || player.color === input.player)),
-    );
-    if (foundPlayer === undefined) {
-      throw new Error('Player not available');
+    for (const player of this.players) {
+      if (player === 'NEUTRAL') {
+        if (input.player !== 'NEUTRAL') {
+          continue;
+        }
+      } else {
+        if (input.player !== player.color) {
+          continue;
+        }
+      }
+      return this.cb(player);
     }
-
-    return this.cb(foundPlayer);
+    throw new InputError('Player not available');
   }
 }

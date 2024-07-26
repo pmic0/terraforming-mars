@@ -4,14 +4,16 @@ import {Tag} from '../../../src/common/cards/Tag';
 import {testGame} from '../../TestGame';
 import {Resource} from '../../../src/common/Resource';
 import {TestPlayer} from '../../TestPlayer';
+import {IGame} from '../../../src/server/IGame';
 
 describe('AsteroidDeflectionSystem', function() {
   let card: AsteroidDeflectionSystem;
   let player: TestPlayer;
+  let game: IGame;
 
   beforeEach(function() {
     card = new AsteroidDeflectionSystem();
-    [/* skipped */, player] = testGame(2);
+    [game, player] = testGame(2);
   });
 
   it('Can not play', function() {
@@ -28,7 +30,7 @@ describe('AsteroidDeflectionSystem', function() {
 
   it('Should act', function() {
     player.playedCards.push(card);
-    expect(card.canAct()).is.true;
+    expect(card.canAct(player)).is.true;
 
     while (player.game.projectDeck.discardPile.find((card) => card.tags.includes(Tag.SPACE)) === undefined) {
       card.action(player);
@@ -36,5 +38,15 @@ describe('AsteroidDeflectionSystem', function() {
 
     expect(card.resourceCount).to.eq(1);
     expect(card.getVictoryPoints(player)).to.eq(card.resourceCount);
+  });
+
+  it('Cannot act when the deck is empty', () => {
+    game.projectDeck.drawPile.length = 1;
+
+    expect(card.canAct(player)).is.true;
+
+    game.projectDeck.drawPile.length = 0;
+
+    expect(card.canAct(player)).is.false;
   });
 });

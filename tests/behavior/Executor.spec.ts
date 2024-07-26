@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {Game} from '../../src/server/Game';
+import {IGame} from '../../src/server/IGame';
 import {IPlayer} from '../../src/server/IPlayer';
 import {TestPlayer} from '../TestPlayer';
 import {testGame} from '../TestGame';
@@ -10,7 +10,7 @@ import {Resource} from '../../src/common/Resource';
 import {CardResource} from '../../src/common/CardResource';
 import {Tag} from '../../src/common/cards/Tag';
 import {CardType} from '../../src/common/cards/CardType';
-import {cast, fakeCard, runAllActions} from '../TestingUtils';
+import {cast, fakeCard, formatMessage, runAllActions} from '../TestingUtils';
 import {SelectCard} from '../../src/server/inputs/SelectCard';
 import {SelectPlayer} from '../../src/server/inputs/SelectPlayer';
 import {Tardigrades} from '../../src/server/cards/base/Tardigrades';
@@ -27,6 +27,12 @@ import {Behavior} from '../../src/server/behavior/Behavior';
 import {OrOptions} from '../../src/server/inputs/OrOptions';
 import {StormCraftIncorporated} from '../../src/server/cards/colonies/StormCraftIncorporated';
 import {AndOptions} from '../../src/server/inputs/AndOptions';
+import {SelectSpace} from '../../src/server/inputs/SelectSpace';
+import {UnderworldExpansion} from '../../src/server/underworld/UnderworldExpansion';
+import {SelectResources} from '../../src/server/inputs/SelectResources';
+import {SelectResource} from '../../src/server/inputs/SelectResource';
+import {MicroMills} from '../../src/server/cards/base/MicroMills';
+import {HeatTrappers} from '../../src/server/cards/base/HeatTrappers';
 
 function asUnits(player: IPlayer): Units {
   return {
@@ -40,7 +46,7 @@ function asUnits(player: IPlayer): Units {
 }
 
 describe('Executor', () => {
-  let game: Game;
+  let game: IGame;
   let player: TestPlayer;
   let player2: TestPlayer;
   let player3: TestPlayer;
@@ -50,7 +56,7 @@ describe('Executor', () => {
   beforeEach(() => {
     [game, player, player2, player3] = testGame(3, {venusNextExtension: true, underworldExpansion: true});
 
-    fake = fakeCard({});
+    fake = fakeCard();
     executor = new Executor();
   });
 
@@ -426,6 +432,36 @@ describe('Executor', () => {
     expect(player3.production.titanium).to.eq(0);
   });
 
+  it('standard resource', () => {
+    executor.execute({standardResource: 2}, player, fake);
+    runAllActions(game);
+
+    const selectResource = cast(player.popWaitingFor(), SelectResource);
+    selectResource.cb('titanium');
+
+    expect(player.stock.asUnits()).deep.eq(Units.of({titanium: 2}));
+  });
+
+  it('standard resource, same', () => {
+    executor.execute({standardResource: {count: 3}}, player, fake);
+    runAllActions(game);
+
+    const selectResource = cast(player.popWaitingFor(), SelectResource);
+    selectResource.cb('heat');
+
+    expect(player.stock.asUnits()).deep.eq(Units.of({heat: 3}));
+  });
+
+  it('standard resource, different', () => {
+    executor.execute({standardResource: {count: 3, same: false}}, player, fake);
+    runAllActions(game);
+
+    const selectResources = cast(player.popWaitingFor(), SelectResources);
+    selectResources.cb(Units.of({titanium: 2, plants: 1}));
+
+    expect(player.stock.asUnits()).deep.eq(Units.of({titanium: 2, plants: 1}));
+  });
+
   it('spend - steel', () => {
     const behavior = {spend: {steel: 1}};
     expect(executor.canExecute(behavior, player, fake)).is.false;
@@ -484,7 +520,7 @@ describe('Executor', () => {
 
   it('spend - heat - Stormcraft', () => {
     const stormcraft = new StormCraftIncorporated();
-    player.setCorporationForTest(stormcraft);
+    player.corporations.push(stormcraft);
     const behavior = {spend: {heat: 3}};
     expect(executor.canExecute(behavior, player, fake)).is.false;
     stormcraft.resourceCount = 1;
@@ -508,6 +544,35 @@ describe('Executor', () => {
     expect(executor.canExecute(behavior, player, fake)).is.true;
     executor.execute(behavior, player, fake);
     expect(fake.resourceCount).eq(0);
+  });
+
+  it('spend - cards', () => {
+    const behavior = {spend: {cards: 2}};
+    player.cardsInHand.push(fake);
+    expect(executor.canExecute(behavior, player, fake)).is.false;
+    const microMills = new MicroMills();
+    player.cardsInHand.push(microMills);
+    expect(executor.canExecute(behavior, player, fake)).is.false;
+    const heatTrappers = new HeatTrappers();
+    player.cardsInHand.push(heatTrappers);
+    expect(executor.canExecute(behavior, player, fake)).is.true;
+    const birds = new Birds();
+    player.cardsInHand.push(birds);
+
+    executor.execute(behavior, player, fake);
+    runAllActions(game);
+    const selectCard = cast(player.popWaitingFor(), SelectCard);
+
+    expect(selectCard.cards).has.length(3);
+    expect(selectCard.config.max).eq(2);
+    expect(selectCard.config.min).eq(2);
+
+    selectCard.cb([birds, heatTrappers]);
+    runAllActions(game);
+
+    expect(player.cardsInHand).to.have.members([fake, microMills]);
+    expect(game.projectDeck.discardPile).to.contain(birds);
+    expect(game.projectDeck.discardPile).to.contain(heatTrappers);
   });
 
   it('or, canExecute', () => {
@@ -560,9 +625,57 @@ describe('Executor', () => {
     expect(player.megaCredits).eq(1);
   });
 
+  it('underworld, identify', () => {
+    executor.execute({underworld: {identify: 1}}, player, fake);
+    runAllActions(game);
+    expect(UnderworldExpansion.identifiedSpaces(game)).has.length(0);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
+    selectSpace.cb(selectSpace.spaces[0]);
+    expect(UnderworldExpansion.identifiedSpaces(game)).has.length(1);
+  });
+
   it('underworld, corruption', () => {
     player.underworldData.corruption = 0;
     executor.execute({underworld: {corruption: 2}}, player, fake);
     expect(player.underworldData.corruption).eq(2);
   });
+
+  it('underworkd spend corruption', () => {
+    player.underworldData.corruption = 1;
+    expect(executor.canExecute({spend: {corruption: 2}}, player, fake)).is.false;
+
+    player.underworldData.corruption = 2;
+    expect(executor.canExecute({spend: {corruption: 2}}, player, fake)).is.true;
+
+    player.underworldData.corruption = 3;
+    executor.execute({spend: {corruption: 2}}, player, fake);
+    expect(player.underworldData.corruption).eq(1);
+  });
+
+  const logRuns = [
+    {log: 'Hello', expected: {message: 'Hello', formatted: 'Hello'}},
+    {
+      log: 'Hello, ${player}',
+      expected: {message: 'Hello, ${0}', formatted: 'Hello, blue'},
+    },
+    {
+      log: 'Hello, ${card}',
+      expected: {message: 'Hello, ${1}', formatted: 'Hello, Fake Card'},
+    },
+    {
+      log: '${player} took the ${card} action to gain 1 TR',
+      expected: {
+        message: '${0} took the ${1} action to gain 1 TR',
+        formatted: 'blue took the Fake Card action to gain 1 TR',
+      },
+    },
+  ];
+  for (const run of logRuns) {
+    it('log: ' + run.log, () => {
+      executor.execute({log: run.log}, player, fake);
+      const logMessage = game.gameLog.pop()!;
+      expect(logMessage.message).eq(run.expected.message);
+      expect(formatMessage(logMessage)).eq(run.expected.formatted);
+    });
+  }
 });

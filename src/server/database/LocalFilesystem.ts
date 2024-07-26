@@ -119,10 +119,6 @@ export class LocalFilesystem implements IDatabase {
     return serializedGame.players.length;
   }
 
-  loadCloneableGame(gameId: GameId): Promise<SerializedGame> {
-    return this.getGameVersion(gameId, 0);
-  }
-
   getGameIds(): Promise<Array<GameId>> {
     const gameIds: Array<GameId> = [];
 
@@ -199,11 +195,15 @@ export class LocalFilesystem implements IDatabase {
     readdirSync(this.dbFolder, {withFileTypes: true}).forEach((dirent: Dirent) => {
       const gameId = this.asGameId(dirent);
       if (gameId !== undefined) {
-        const text = readFileSync(this.filename(gameId));
-        const game: SerializedGame = JSON.parse(text.toString());
-        const participantIds: Array<ParticipantId> = game.players.map((p) => p.id);
-        if (game.spectatorId) participantIds.push(game.spectatorId);
-        gameIds.push({gameId, participantIds});
+        try {
+          const text = readFileSync(this.filename(gameId));
+          const game: SerializedGame = JSON.parse(text.toString());
+          const participantIds: Array<ParticipantId> = game.players.map((p) => p.id);
+          if (game.spectatorId) participantIds.push(game.spectatorId);
+          gameIds.push({gameId, participantIds});
+        } catch (e) {
+          console.error(`While reading ${gameId} `, e);
+        }
       }
     });
     return Promise.resolve(gameIds);

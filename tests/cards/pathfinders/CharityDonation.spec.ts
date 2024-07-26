@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {CharityDonation} from '../../../src/server/cards/pathfinders/CharityDonation';
-import {Game} from '../../../src/server/Game';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
 import {AcquiredCompany} from '../../../src/server/cards/base/AcquiredCompany';
 import {BeamFromAThoriumAsteroid} from '../../../src/server/cards/base/BeamFromAThoriumAsteroid';
@@ -15,12 +15,25 @@ describe('CharityDonation', function() {
   let player1: TestPlayer;
   let player2: TestPlayer;
   let player3: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
   beforeEach(function() {
     card = new CharityDonation();
     [game, player1, player2, player3] = testGame(3);
   });
+
+  const canPlayRuns = [
+    {deck: 2, expected: false},
+    {deck: 3, expected: false},
+    {deck: 4, expected: true},
+  ] as const;
+  for (const run of canPlayRuns) {
+    it('canPlay: ' + JSON.stringify(run), () => {
+      game.projectDeck.drawPile.length = run.deck;
+
+      expect(card.canPlay(player1)).eq(run.expected);
+    });
+  }
 
   it('play', function() {
     const acquiredCompany = new AcquiredCompany();

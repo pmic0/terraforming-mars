@@ -1,28 +1,24 @@
-import {Card} from '../Card';
+import {CorporationCard} from '../corporation/CorporationCard';
 import {ICorporationCard} from '../corporation/ICorporationCard';
 import {Tag} from '../../../common/cards/Tag';
 import {IPlayer} from '../../IPlayer';
 import {CardName} from '../../../common/cards/CardName';
-import {CardType} from '../../../common/cards/CardType';
 import {CardRenderer} from '../render/CardRenderer';
-import {played} from '../Options';
-import {IProjectCard} from '../IProjectCard';
-import {IActionCard} from '../ICard';
+import {IActionCard, ICard} from '../ICard';
 import {CardResource} from '../../../common/CardResource';
 import {ColoniesHandler} from '../../colonies/ColoniesHandler';
 import {SelectColony} from '../../inputs/SelectColony';
 import {IColonyTrader} from '../../colonies/IColonyTrader';
 import {IColony} from '../../colonies/IColony';
 import {AddResourcesToCard} from '../../deferredActions/AddResourcesToCard';
-import {newMessage} from '../../logs/MessageBuilder';
+import {message} from '../../logs/MessageBuilder';
 
 function tradeCost(player: IPlayer) {
   return Math.max(0, 3 - player.colonies.tradeDiscount);
 }
-export class CollegiumCopernicus extends Card implements ICorporationCard, IActionCard {
+export class CollegiumCopernicus extends CorporationCard implements IActionCard {
   constructor() {
     super({
-      type: CardType.CORPORATION,
       name: CardName.COLLEGIUM_COPERNICUS,
       tags: [Tag.SCIENCE, Tag.EARTH],
       startingMegaCredits: 33,
@@ -44,10 +40,10 @@ export class CollegiumCopernicus extends Card implements ICorporationCard, IActi
           b.br;
           b.megacredits(33).cards(2, {secondaryTag: Tag.SCIENCE}).br;
           b.effect('When you play a card with a science tag (including this) Add 1 data to ANY card.', (eb) => {
-            eb.science(1, {played}).startEffect.data().asterix();
+            eb.tag(Tag.SCIENCE).startEffect.resource(CardResource.DATA).asterix();
           }).br;
           b.action('Spend 3 data from this card to trade.', (eb) => {
-            eb.data({amount: 3}).startAction.trade();
+            eb.resource(CardResource.DATA, 3).startAction.trade();
           });
         }),
       },
@@ -56,10 +52,9 @@ export class CollegiumCopernicus extends Card implements ICorporationCard, IActi
 
   public onCorpCardPlayed(player: IPlayer, card: ICorporationCard) {
     this.onCardPlayed(player, card);
-    return undefined;
   }
 
-  public onCardPlayed(player: IPlayer, card: IProjectCard | ICorporationCard): void {
+  public onCardPlayed(player: IPlayer, card: ICard): void {
     if (player.tags.cardHasTag(card, Tag.SCIENCE) && player.isCorporation(this.name)) {
       player.game.defer(new AddResourcesToCard(player, CardResource.DATA, {count: 1}));
     }
@@ -101,7 +96,7 @@ export class TradeWithCollegiumCopernicus implements IColonyTrader {
   }
 
   public optionText() {
-    return newMessage('Pay ${0} data (use ${1} action)', (b) => b.number(tradeCost(this.player)).cardName(CardName.COLLEGIUM_COPERNICUS));
+    return message('Pay ${0} data (use ${1} action)', (b) => b.number(tradeCost(this.player)).cardName(CardName.COLLEGIUM_COPERNICUS));
   }
 
   public trade(colony: IColony) {

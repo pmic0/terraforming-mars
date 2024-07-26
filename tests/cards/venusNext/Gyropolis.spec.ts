@@ -3,9 +3,7 @@ import {LunaGovernor} from '../../../src/server/cards/colonies/LunaGovernor';
 import {ResearchNetwork} from '../../../src/server/cards/prelude/ResearchNetwork';
 import {Gyropolis} from '../../../src/server/cards/venusNext/Gyropolis';
 import {testGame} from '../../TestGame';
-import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 import {Resource} from '../../../src/common/Resource';
-import {TileType} from '../../../src/common/TileType';
 import {TestPlayer} from '../../TestPlayer';
 import {EarthEmbassy} from '../../../src/server/cards/moon/EarthEmbassy';
 import {DeepLunarMining} from '../../../src/server/cards/moon/DeepLunarMining';
@@ -13,14 +11,17 @@ import {cast, runAllActions} from '../../TestingUtils';
 import {RoboticWorkforce} from '../../../src/server/cards/base/RoboticWorkforce';
 import {Units} from '../../../src/common/Units';
 import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {assertPlaceCity} from '../../assertions';
+import {IGame} from '../../../src/server/IGame';
 
 describe('Gyropolis', function() {
   let card: Gyropolis;
+  let game: IGame;
   let player: TestPlayer;
 
   beforeEach(function() {
     card = new Gyropolis();
-    [/* skipped */, player] = testGame(2);
+    [game, player] = testGame(2);
   });
 
   it('Should play', function() {
@@ -30,15 +31,11 @@ describe('Gyropolis', function() {
     player.playedCards.push(researchNetwork, lunaGoveror);
     player.production.add(Resource.ENERGY, 2);
 
-    expect(player.simpleCanPlay(card)).is.true;
+    expect(card.canPlay(player)).is.true;
     expect(card.play(player)).is.undefined;
     runAllActions(player.game);
-    const action = cast(player.popWaitingFor(), SelectSpace);
 
-    expect(action.cb(action.spaces[0])).is.undefined;
-    expect(action.spaces[0].player).to.eq(player);
-    expect(action.spaces[0].tile).is.not.undefined;
-    expect(action.spaces[0].tile!.tileType).to.eq(TileType.CITY);
+    assertPlaceCity(player, player.popWaitingFor());
     expect(player.production.energy).to.eq(0);
     expect(player.production.megacredits).to.eq(3);
   });
@@ -75,7 +72,9 @@ describe('Gyropolis', function() {
     player.production.override(Units.of({energy: 2}));
     expect(roboticWorkforce.canPlay(player)).is.true;
 
-    const selectCard = cast(roboticWorkforce.play(player), SelectCard);
+    cast(roboticWorkforce.play(player), undefined);
+    runAllActions(game);
+    const selectCard = cast(player.popWaitingFor(), SelectCard);
     expect(selectCard.cards).deep.eq([card]);
     selectCard.cb([selectCard.cards[0]]);
     expect(player.production.asUnits()).deep.eq(Units.of({megacredits: 2}));

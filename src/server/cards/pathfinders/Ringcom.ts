@@ -1,18 +1,16 @@
-import {Card} from '../Card';
 import {ICorporationCard} from '../corporation/ICorporationCard';
+import {CorporationCard} from '../corporation/CorporationCard';
 import {Tag} from '../../../common/cards/Tag';
 import {IPlayer} from '../../IPlayer';
 import {Resource} from '../../../common/Resource';
 import {CardName} from '../../../common/cards/CardName';
-import {CardType} from '../../../common/cards/CardType';
 import {CardRenderer} from '../render/CardRenderer';
-import {all, played} from '../Options';
-import {IProjectCard} from '../IProjectCard';
+import {all} from '../Options';
+import {ICard} from '../ICard';
 
-export class Ringcom extends Card implements ICorporationCard {
+export class Ringcom extends CorporationCard {
   constructor() {
     super({
-      type: CardType.CORPORATION,
       name: CardName.RINGCOM,
       tags: [Tag.JOVIAN],
       startingMegaCredits: 39,
@@ -36,7 +34,7 @@ export class Ringcom extends Card implements ICorporationCard {
           b.cards(2, {secondaryTag: Tag.JOVIAN});
           b.corpBox('effect', (ce) => {
             ce.effect('When any player plays a card with a Jovian tag (including this) gain 1 titanium.', (eb) => {
-              eb.jovian({all, played}).startEffect.titanium(1);
+              eb.tag(Tag.JOVIAN, {all}).startEffect.titanium(1);
             });
           });
         }),
@@ -52,10 +50,9 @@ export class Ringcom extends Card implements ICorporationCard {
 
   public onCorpCardPlayed(player: IPlayer, card: ICorporationCard) {
     this.onCardPlayed(player, card);
-    return undefined;
   }
 
-  public onCardPlayed(player: IPlayer, card: IProjectCard | ICorporationCard): void {
+  public onCardPlayed(player: IPlayer, card: ICard): void {
     if (card.tags.includes(Tag.JOVIAN)) {
       player.game.getPlayers().forEach((p) => {
         if (p.isCorporation(this.name)) {

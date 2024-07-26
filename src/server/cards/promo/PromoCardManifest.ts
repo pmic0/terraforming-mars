@@ -12,6 +12,7 @@ import {Astrodrill} from './Astrodrill';
 import {BactoviralResearch} from './BactoviralResearch';
 import {BioPrintingFacility} from './BioPrintingFacility';
 import {CarbonNanosystems} from './CarbonNanosystems';
+import {CityPark} from './CityPark';
 import {CometAiming} from './CometAiming';
 import {CorporateArchives} from './CorporateArchives';
 import {CrashSiteCleanup} from './CrashSiteCleanup';
@@ -31,9 +32,10 @@ import {GiantSolarCollector} from './GiantSolarCollector';
 import {GreatDamPromo} from './GreatDamPromo';
 import {Harvest} from './Harvest';
 // import {HeadStart} from './HeadStart';
-import {HermeticOrderofMars} from './HermeticOrderofMars';
+import {HermeticOrderOfMars} from './HermeticOrderofMars';
 import {HiTechLab} from './HiTechLab';
 import {HomeostasisBureau} from './HomeostasisBureau';
+import {IcyImpactors} from './IcyImpactors';
 import {ImportedNutrients} from './ImportedNutrients';
 import {InterplanetaryTrade} from './InterplanetaryTrade';
 import {JovianEmbassy} from './JovianEmbassy';
@@ -68,15 +70,18 @@ import {SaturnSurfing} from './SaturnSurfing';
 import {SelfReplicatingRobots} from './SelfReplicatingRobots';
 import {SmallAsteroid} from './SmallAsteroid';
 import {SnowAlgae} from './SnowAlgae';
+import {SoilEnrichment} from './SoilEnrichment';
 import {SolarLogistics} from './SolarLogistics';
 import {Splice} from './Splice';
 import {StanfordTorus} from './StanfordTorus';
 import {StJosephOfCupertinoMission} from './StJosephOfCupertinoMission';
 import {SubCrustMeasurements} from './SubCrustMeasurements';
 import {Supercapacitors} from './Supercapacitors';
+import {Supermarkets} from './Supermarkets';
 import {Teslaract} from './Teslaract';
 import {TopsoilContract} from './TopsoilContract';
 import {TychoMagnetics} from './TychoMagnetics';
+import {StrategicBasePlanning} from './StrategicBasePlanning';
 
 export const PROMO_CARD_MANIFEST = new ModuleManifest({
   module: 'promo',
@@ -131,7 +136,7 @@ export const PROMO_CARD_MANIFEST = new ModuleManifest({
     [CardName.ST_JOSEPH_OF_CUPERTINO_MISSION]: {Factory: StJosephOfCupertinoMission},
     [CardName.CARBON_NANOSYSTEMS]: {Factory: CarbonNanosystems},
     [CardName.CYBERIA_SYSTEMS]: {Factory: CyberiaSystems},
-    [CardName.HERMETIC_ORDER_OF_MARS]: {Factory: HermeticOrderofMars},
+    [CardName.HERMETIC_ORDER_OF_MARS]: {Factory: HermeticOrderOfMars},
     [CardName.HOMEOSTASIS_BUREAU]: {Factory: HomeostasisBureau},
     [CardName.KAGUYA_TECH]: {Factory: KaguyaTech},
     [CardName.MARS_NOMADS]: {Factory: MarsNomads},
@@ -141,6 +146,10 @@ export const PROMO_CARD_MANIFEST = new ModuleManifest({
     [CardName.SOLAR_LOGISTICS]: {Factory: SolarLogistics},
     [CardName.TESLARACT]: {Factory: Teslaract},
     [CardName.DIRECTED_HEAT_USAGE]: {Factory: DirectedHeatUsage},
+    [CardName.ICY_IMPACTORS]: {Factory: IcyImpactors},
+    [CardName.SOIL_ENRICHMENT]: {Factory: SoilEnrichment},
+    [CardName.CITY_PARK]: {Factory: CityPark},
+    [CardName.SUPERMARKETS]: {Factory: Supermarkets},
   },
 
   preludeCards: {
@@ -152,6 +161,7 @@ export const PROMO_CARD_MANIFEST = new ModuleManifest({
     [CardName.ANTI_DESERTIFICATION_TECHNIQUES]: {Factory: AntidesertificationTechniques},
     // [CardName.ESTABLISHED_METHODS]: {Factory: EstablishedMethods},
     [CardName.GIANT_SOLAR_COLLECTOR]: {Factory: GiantSolarCollector, compatibility: 'venus'},
+    [CardName.STRATEGIC_BASE_PLANNING]: {Factory: StrategicBasePlanning, compatibility: 'colonies'},
   },
 
   cardsToRemove: [

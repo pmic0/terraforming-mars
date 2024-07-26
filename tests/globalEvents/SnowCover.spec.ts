@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import {setTemperature} from '../TestingUtils';
 import {MAX_TEMPERATURE} from '../../src/common/constants';
-import {Game} from '../../src/server/Game';
+import {IGame} from '../../src/server/IGame';
 import {SnowCover} from '../../src/server/turmoil/globalEvents/SnowCover';
 import {Kelvinists} from '../../src/server/turmoil/parties/Kelvinists';
 import {Turmoil} from '../../src/server/turmoil/Turmoil';
@@ -12,7 +12,7 @@ describe('SnowCover', function() {
   let card: SnowCover;
   let player: TestPlayer;
   let player2: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let turmoil: Turmoil;
 
   beforeEach(function() {
@@ -20,11 +20,11 @@ describe('SnowCover', function() {
     [game, player, player2] = testGame(2);
 
     turmoil = Turmoil.newInstance(game);
-    turmoil.chairman = player2.id;
+    turmoil.chairman = player2;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player2.id;
-    turmoil.dominantParty.delegates.add(player2.id);
-    turmoil.dominantParty.delegates.add(player2.id);
+    turmoil.dominantParty.partyLeader = player2;
+    turmoil.dominantParty.delegates.add(player2);
+    turmoil.dominantParty.delegates.add(player2);
   });
 
   it('resolve play', function() {

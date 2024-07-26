@@ -15,13 +15,13 @@ import {IPlayer} from '../IPlayer';
 import {Resource} from '../../common/Resource';
 import {CardResource} from '../../common/CardResource';
 import {Reward} from '../../common/pathfinders/Reward';
-import {SelectResourcesDeferred} from '../deferredActions/SelectResourcesDeferred';
+import {GainResources} from '../inputs/GainResources';
 import {SendDelegateToArea} from '../deferredActions/SendDelegateToArea';
 import {Tag} from '../../common/cards/Tag';
 import {Turmoil} from '../turmoil/Turmoil';
 import {VictoryPointsBreakdown} from '../game/VictoryPointsBreakdown';
 import {GlobalEventName} from '../../common/turmoil/globalEvents/GlobalEventName';
-import {Priority, SimpleDeferredAction} from '../deferredActions/DeferredAction';
+import {Priority} from '../deferredActions/Priority';
 
 export const TRACKS = PlanetaryTracks.initialize();
 
@@ -164,7 +164,7 @@ export class PathfindersExpansion {
     case 'delegate':
       Turmoil.ifTurmoilElse(game,
         (turmoil) => {
-          if (turmoil.hasDelegatesInReserve(player.id)) {
+          if (turmoil.hasDelegatesInReserve(player)) {
             game.defer(new SendDelegateToArea(player));
           }
         },
@@ -204,7 +204,7 @@ export class PathfindersExpansion {
       player.production.add(Resource.PLANTS, 1, {log: true});
       break;
     case 'resource':
-      game.defer(new SelectResourcesDeferred(player, 1, 'Gain 1 resource for your Planetary track bonus.'));
+      player.defer(new GainResources(player, 1, 'Gain 1 resource for your Planetary track bonus.'));
       break;
     case 'steel':
       player.stock.add(Resource.STEEL, 1, {log: true});
@@ -259,11 +259,9 @@ export class PathfindersExpansion {
   public static addToSolBank(player: IPlayer) {
     const solBank = player.getCorporation(CardName.SOLBANK);
     if (solBank !== undefined) {
-      player.game.defer(new SimpleDeferredAction(player, () => {
-        player.addResourceTo(solBank, {qty: 1, log: true});
-        return undefined;
-      }),
-      Priority.GAIN_RESOURCE_OR_PRODUCTION);
+      player.defer(
+        () => player.addResourceTo(solBank, {qty: 1, log: true}),
+        Priority.GAIN_RESOURCE_OR_PRODUCTION);
     }
   }
 }

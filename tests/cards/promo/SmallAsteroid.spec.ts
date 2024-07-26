@@ -1,6 +1,5 @@
 import {expect} from 'chai';
 import {SmallAsteroid} from '../../../src/server/cards/promo/SmallAsteroid';
-import {Game} from '../../../src/server/Game';
 import {OrOptions} from '../../../src/server/inputs/OrOptions';
 import {Resource} from '../../../src/common/Resource';
 import {TestPlayer} from '../../TestPlayer';
@@ -15,7 +14,7 @@ describe('SmallAsteroid', function() {
 
   beforeEach(function() {
     card = new SmallAsteroid();
-    [/* skipped */, player, player2, player3] = testGame(3);
+    [/* game */, player, player2, player3] = testGame(3);
   });
 
   it('Should play', function() {
@@ -34,7 +33,7 @@ describe('SmallAsteroid', function() {
 
   it('Doesn not remove plants in solo mode', function() {
     player.stock.add(Resource.PLANTS, 3);
-    Game.newInstance('gameid', [player], player);
+    testGame(1);
     card.play(player);
     expect(player.plants).to.eq(3);
   });

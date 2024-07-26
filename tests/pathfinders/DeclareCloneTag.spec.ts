@@ -7,13 +7,13 @@ import {SelectOption} from '../../src/server/inputs/SelectOption';
 import {TestPlayer} from '../TestPlayer';
 import {testGame} from '../TestGame';
 import {cast, runAllActions} from '../TestingUtils';
-import {Game} from '../../src/server/Game';
+import {IGame} from '../../src/server/IGame';
 import {CrewTraining} from '../../src/server/cards/pathfinders/CrewTraining';
 import {MartianZoo} from '../../src/server/cards/colonies/MartianZoo';
 
 describe('DeclareCloneTag', function() {
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let card: LobbyHalls;
   let tag: Tag;
 
@@ -45,7 +45,7 @@ describe('DeclareCloneTag', function() {
   });
 
   it('clone tag with expansions', function() {
-    const [/* skipped */, player] = testGame(1, {venusNextExtension: true, moonExpansion: true, pathfindersExpansion: true});
+    const [/* game */, player] = testGame(1, {venusNextExtension: true, moonExpansion: true, pathfindersExpansion: true});
 
     const action = new DeclareCloneTag(player, card).andThen((t) => tag = t);
 

@@ -40,6 +40,7 @@ export type GameOptions = {
   // Variants
   draftVariant: boolean;
   initialDraftVariant: boolean;
+  preludeDraftVariant: boolean;
   // corporationsDraft: boolean;
   startingCorporations: number;
   shuffleMapOption: boolean;
@@ -48,13 +49,19 @@ export type GameOptions = {
   soloTR: boolean; // Solo victory by getting TR 63 by game end
   customCorporationsList: Array<CardName>;
   bannedCards: Array<CardName>;
+  includedCards: Array<CardName>;
   customColoniesList: Array<ColonyName>;
   customPreludes: Array<CardName>;
   customCeos: Array<CardName>;
   startingCeos: number;
-  requiresMoonTrackCompletion: boolean; // Moon must be completed to end the game
-  requiresVenusTrackCompletion: boolean; // Venus must be completed to end the game
+  /** Moon must be completed to end the game */
+  requiresMoonTrackCompletion: boolean;
+  /** Venus must be completed to end the game */
+  requiresVenusTrackCompletion: boolean;
+  /** Standard projects cost more MC and do not require steel or titanium */
   moonStandardProjectVariant: boolean;
+  /** Standard projects can be paid for with steel or titanium at a 1MC loss per alloy */
+  moonStandardProjectVariant1: boolean;
   altVenusBoard: boolean;
   escapeVelocityMode: boolean;
   escapeVelocityThreshold?: number;
@@ -70,6 +77,7 @@ export const DEFAULT_GAME_OPTIONS: GameOptions = {
   aresHazards: true,
   boardName: BoardName.THARSIS,
   bannedCards: [],
+  includedCards: [],
   ceoExtension: false,
   clonedGamedId: undefined,
   coloniesExtension: false,
@@ -91,8 +99,10 @@ export const DEFAULT_GAME_OPTIONS: GameOptions = {
   initialDraftVariant: false,
   moonExpansion: false,
   moonStandardProjectVariant: false,
+  moonStandardProjectVariant1: false,
   pathfindersExpansion: false,
   politicalAgendasExtension: AgendaStyle.STANDARD,
+  preludeDraftVariant: false,
   preludeExtension: false,
   prelude2Expansion: false,
   promoCardsOption: false,

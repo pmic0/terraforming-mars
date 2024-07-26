@@ -12,7 +12,7 @@ describe('MarsDirect', () => {
   let card: MarsDirect;
 
   beforeEach(() => {
-    [/* skipped */, player, player2] = testGame(2);
+    [/* game */, player, player2] = testGame(2);
     card = new MarsDirect();
   });
 
@@ -28,7 +28,7 @@ describe('MarsDirect', () => {
     addOcean(player2);
 
     player.cardsInHand = [powerPlant, controlledBloom];
-    player.setCorporationForTest(card);
+    player.corporations.push(card);
 
     player.tagsForTest = {mars: 0};
     player.megaCredits = 13;

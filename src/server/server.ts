@@ -9,27 +9,24 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as raw_settings from '../genfiles/settings.json';
 import * as prometheus from 'prom-client';
+import * as responses from './server/responses';
 
 import {Database} from './database/Database';
 import {runId, serverId} from './utils/server-ids';
-import {Route} from './routes/Route';
 import {processRequest} from './server/requestProcessor';
 import {timeAsync} from './utils/timer';
-import {registerBehaviorExecutor} from './behavior/BehaviorExecutor';
-import {Executor} from './behavior/Executor';
 import {GameLoader} from './database/GameLoader';
+import {globalInitialize} from './globalInitialize';
 
 process.on('uncaughtException', (err: any) => {
   console.error('UNCAUGHT EXCEPTION', err);
 });
 
-const route = new Route();
-
 function requestHandler(req: http.IncomingMessage, res: http.ServerResponse): void {
   try {
-    processRequest(req, res, route);
+    processRequest(req, res);
   } catch (error) {
-    route.internalServerError(req, res, error);
+    responses.internalServerError(req, res, error);
   }
 }
 
@@ -78,7 +75,7 @@ async function start() {
     app: 'terraforming-mars-app',
   });
   prometheus.collectDefaultMetrics();
-  registerBehaviorExecutor(new Executor());
+  globalInitialize();
 
   const server = createServer();
 

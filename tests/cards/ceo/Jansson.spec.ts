@@ -13,7 +13,7 @@ describe('Jansson', function() {
 
   beforeEach(() => {
     card = new Jansson();
-    [/* skipped */, player] = testGame(2);
+    [/* game */, player] = testGame(2);
   });
 
   it('Can only act once per game', function() {
@@ -42,10 +42,10 @@ describe('Jansson', function() {
     MoonExpansion.addRoadTile(player, spaces[2].id);
     expect(player.steel).eq(1);
     expect(player.titanium).eq(0);
-    expect(player.cardsInHand.length).eq(1);
+    expect(player.cardsInHand).has.length(1);
     card.action(player);
     expect(player.steel).eq(1);
     expect(player.titanium).eq(0);
-    expect(player.cardsInHand.length).eq(1);
+    expect(player.cardsInHand).has.length(1);
   });
 });

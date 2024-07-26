@@ -11,6 +11,7 @@ import {CardName} from '../../../common/cards/CardName';
 import {Resource} from '../../../common/Resource';
 import {CardRenderer} from '../render/CardRenderer';
 import {digit} from '../Options';
+import {message} from '../../logs/MessageBuilder';
 
 export class LocalHeatTrapping extends Card implements IProjectCard {
   constructor() {
@@ -32,7 +33,7 @@ export class LocalHeatTrapping extends Card implements IProjectCard {
         renderData: CardRenderer.builder((b) => {
           b.minus().heat(5, {digit});
           b.plus().plants(4, {digit});
-          b.or().animals(2, {digit}).asterix();
+          b.or().resource(CardResource.ANIMAL, {amount: 2, digit}).asterix();
         }),
         description: 'Spend 5 heat to gain either 4 plants, or to add 2 animals to ANOTHER card.',
       },
@@ -44,7 +45,7 @@ export class LocalHeatTrapping extends Card implements IProjectCard {
     const cardCost = player.getCardCost(this); // Would be nice to use precalculated value.
 
     let heat = player.heat;
-    let floaters = player.getCorporation(CardName.STORMCRAFT_INCORPORATED)?.resourceCount ?? 0;
+    let floaters = player.resourcesOnCard(CardName.STORMCRAFT_INCORPORATED);
 
     // If the card costs anything, determine where that 1MC can come from. Assume it can come from MC first.
     if (cardCost === 1 && player.megaCredits === 0) {
@@ -80,7 +81,7 @@ export class LocalHeatTrapping extends Card implements IProjectCard {
       const targetCard = animalCards[0];
       availableActions.options.push(
         gainPlantsOption,
-        new SelectOption('Add 2 animals to ' + targetCard.name, 'Add animals').andThen(() => {
+        new SelectOption(message('Add ${0} animals to ${1}', (b) => b.number(2).card(targetCard)), 'Add animals').andThen(() => {
           player.addResourceTo(targetCard, {qty: 2, log: true});
           return undefined;
         }));

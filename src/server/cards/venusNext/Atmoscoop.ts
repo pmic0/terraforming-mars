@@ -34,7 +34,7 @@ export class Atmoscoop extends Card implements IProjectCard {
         description: 'Requires 3 science tags. Either raise the temperature 2 steps, or raise Venus 2 steps. Add 2 floaters to ANY card.',
         renderData: CardRenderer.builder((b) => {
           b.temperature(2).or(Size.SMALL).venus(2).br;
-          b.floaters(2).asterix();
+          b.resource(CardResource.FLOATER, 2).asterix();
         }),
       },
     });
@@ -47,6 +47,7 @@ export class Atmoscoop extends Card implements IProjectCard {
 
     if (PartyHooks.shouldApplyPolicy(player, PartyName.REDS, 'rp01')) {
       // TODO(kberg): this is not correct, because the titanium can't be used for the reds cost.
+      // TODO(kberg): this.cost does not take the card discount into account.
       return player.canAfford({
         cost: this.cost + constants.REDS_RULING_POLICY_COST * stepsRaised,
         titanium: true,

@@ -13,6 +13,7 @@ import {Countable, CountableUnits} from './Countable';
 import {PlacementType} from '../boards/PlacementType';
 import {AdjacencyBonus} from '../ares/AdjacencyBonus';
 import {Units} from '../../common/Units';
+import {NoAttributes} from './NoAttributes';
 
 type ValueOf<Obj> = Obj[keyof Obj];
 type OneOnly<Obj, Key extends keyof Obj> = { [key in Exclude<keyof Obj, Key>]: null } & Pick<Obj, Key>;
@@ -20,13 +21,24 @@ type OneOfByKey<Obj> = { [key in keyof Obj]: OneOnly<Obj, key> };
 export type OneOfType<Obj> = ValueOf<OneOfByKey<Obj>>;
 
 
-export interface Spend extends Units {
+export type Spend = Units & {
   /** units or a number of resources from the card. */
   resourcesHere: number,
+
+  /** 1 resource of a type from any card. */
+  resourceFromAnyCard: {
+    type: CardResource,
+  },
+
+  /** corruption from your personal supply. */
+  corruption: number,
+
+  /** discard cards from your hand */
+  cards: number,
 }
 
 /** A set of steps that an action can perform in any specific order. */
-export interface Behavior {
+export type Behavior = {
   /** Select one of these actions */
   or?: OrBehavior;
 
@@ -43,7 +55,12 @@ export interface Behavior {
   stock?: Partial<CountableUnits>;
 
   /** Gain n standard resources */
-  standardResource?: number;
+  standardResource?: number | {
+    /** Number of resources to gain. */
+    count: number,
+    /** Must all resources be the same type? Default is true. */
+    same?: boolean,
+  };
 
   /** Add resources to this card itself */
   addResources?: Countable;
@@ -60,7 +77,7 @@ export interface Behavior {
 
   /** Gain units of TR */
   // TODO(kberg) permit losing TR for TerralabsResearch
-  tr?: number;
+  tr?: Countable;
 
   /** Raise certain global parameters. */
   global?: {
@@ -139,18 +156,27 @@ export interface Behavior {
     /** Places a road tile and also raises the logistics rate */
     roadTile?: PlaceMoonTile,
     /** Places a special tile on the Moon. */
-    tile?: PlaceMoonTile & {type: TileType, title?: string},
+    tile?: PlaceMoonTile & {type: TileType},
     habitatRate?: number,
     miningRate?: number,
     logisticsRate?: number,
   },
 
   underworld?: {
-    // identify?: Countable,
-    // excavate?: number | {count: Countable, ignorePlacementRestrictions?: boolean},
+    identify?: Countable,
+    excavate?: number | {count: Countable, ignorePlacementRestrictions?: boolean},
     corruption?: Countable,
-    // markThisGeneration?: NoAttributes,
+    markThisGeneration?: NoAttributes,
   },
+
+  /**
+   * Log a message using a parameterized string replacement. This is not a normal template.
+   *
+   * Template does not accept traditional parameters ${0} and ${1}, but rather
+   * variables like ${player} and ${card}. These are the only values that can be
+   * replaced since this is the only context known at execution time.
+   */
+  log?: string,
 }
 
 export interface PlaceMoonTile {

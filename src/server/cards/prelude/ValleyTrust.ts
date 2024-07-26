@@ -1,18 +1,14 @@
 import {Tag} from '../../../common/cards/Tag';
 import {IPlayer} from '../../IPlayer';
-import {ICorporationCard} from '../corporation/ICorporationCard';
+import {CorporationCard} from '../corporation/CorporationCard';
 import {IProjectCard} from '../IProjectCard';
-import {Card} from '../Card';
 import {CardName} from '../../../common/cards/CardName';
-import {CardType} from '../../../common/cards/CardType';
 import {CardRenderer} from '../render/CardRenderer';
-import {played} from '../Options';
 import {PreludesExpansion} from '../../preludes/PreludesExpansion';
 
-export class ValleyTrust extends Card implements ICorporationCard {
+export class ValleyTrust extends CorporationCard {
   constructor() {
     super({
-      type: CardType.CORPORATION,
       name: CardName.VALLEY_TRUST,
       tags: [Tag.EARTH],
       startingMegaCredits: 37,
@@ -27,7 +23,7 @@ export class ValleyTrust extends Card implements ICorporationCard {
           b.megacredits(37).nbsp.prelude().asterix();
           b.corpBox('effect', (ce) => {
             ce.effect('When you play a science tag, you pay 2M€ less for it.', (eb) => {
-              eb.science(1, {played}).startEffect.megacredits(-2);
+              eb.tag(Tag.SCIENCE).startEffect.megacredits(-2);
             });
           });
         }),
@@ -40,13 +36,10 @@ export class ValleyTrust extends Card implements ICorporationCard {
     return player.tags.cardTagCount(card, Tag.SCIENCE) * 2;
   }
 
+  // TODO(kberg): find a way to feed warnings for initialAction.
   public initialAction(player: IPlayer) {
     const game = player.game;
-    const cards = [
-      game.preludeDeck.draw(game),
-      game.preludeDeck.draw(game),
-      game.preludeDeck.draw(game),
-    ];
+    const cards = game.preludeDeck.drawN(game, 3);
     return PreludesExpansion.playPrelude(player, cards);
   }
 }

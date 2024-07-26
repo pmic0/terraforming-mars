@@ -1,12 +1,11 @@
 import {expect} from 'chai';
 import {forceGenerationEnd, runAllActions} from '../../TestingUtils';
-import {Game} from '../../../src/server/Game';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
 import {testGame} from '../../TestGame';
 import {Phase} from '../../../src/common/Phase';
 import {Turmoil} from '../../../src/server/turmoil/Turmoil';
 import {PartyName} from '../../../src/common/turmoil/PartyName';
-
 import {Greta} from '../../../src/server/cards/ceos/Greta';
 import {Omnicourt} from '../../../src/server/cards/venusNext/Omnicourt';
 import {BigAsteroid} from '../../../src/server/cards/base/BigAsteroid';
@@ -15,7 +14,7 @@ describe('Greta', function() {
   let card: Greta;
   let player: TestPlayer;
   let player2: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let turmoil: Turmoil;
 
   beforeEach(() => {
@@ -91,12 +90,12 @@ describe('Greta', function() {
     player.setTerraformRating(20);
     player2.setTerraformRating(20);
     player.megaCredits = 0;
-    turmoil.sendDelegateToParty(player.id, PartyName.GREENS, game);
+    turmoil.sendDelegateToParty(player, PartyName.GREENS, game);
 
     card.action();
     turmoil.endGeneration(game);
     runAllActions(game);
-    expect(turmoil.chairman).to.eq(player.id);
+    expect(turmoil.chairman).to.eq(player);
     expect(player.getTerraformRating()).to.eq(20);
     expect(player.megaCredits).to.eq(0);
     expect(player2.getTerraformRating()).to.eq(19);

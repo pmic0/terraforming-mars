@@ -9,25 +9,28 @@ import {TestPlayer} from '../TestPlayer';
 import {restoreTestDatabase, setTestDatabase} from '../utils/setup';
 import {testGame} from '../TestGame';
 import {GameId} from '../../src/common/Types';
+import {statusCode} from '../../src/common/http/statusCode';
+import {cast} from '../TestingUtils';
+import {SelectInitialCards} from '../../src/server/inputs/SelectInitialCards';
 
 /**
  * Describes a database test
  */
-export type DatabaseTestDescriptor = {
+export type DatabaseTestDescriptor<T extends ITestDatabase> = {
   name: string,
-  constructor: () => ITestDatabase,
+  constructor: () => T,
   stats: any,
   omit?: Partial<{
     purgeUnfinishedGames: boolean,
     markFinished: boolean,
     moreCleaning: boolean,
   }>,
-  otherTests?(dbFunction: () => ITestDatabase): void,
+  otherTests?(dbFactory: () => T): void,
 };
 
-export function describeDatabaseSuite(dtor: DatabaseTestDescriptor) {
+export function describeDatabaseSuite<T extends ITestDatabase>(dtor: DatabaseTestDescriptor<T>) {
   describe(dtor.name, () => {
-    let db: ITestDatabase;
+    let db: T;
     beforeEach(() => {
       db = dtor.constructor();
       setTestDatabase(db);
@@ -50,6 +53,7 @@ export function describeDatabaseSuite(dtor: DatabaseTestDescriptor) {
     it('getGameIds - removes duplicates', async () => {
       const player = TestPlayer.BLACK.newPlayer();
       const game = Game.newInstance('game-id-1212', [player], player);
+      cast(player.popWaitingFor(), SelectInitialCards);
       await db.lastSaveGamePromise;
       await db.saveGame(game);
 
@@ -60,6 +64,7 @@ export function describeDatabaseSuite(dtor: DatabaseTestDescriptor) {
     it('getGameIds - includes finished games', async () => {
       const player = TestPlayer.BLACK.newPlayer();
       const game = Game.newInstance('game-id-1212', [player], player);
+      cast(player.popWaitingFor(), SelectInitialCards);
       await db.lastSaveGamePromise;
       Game.newInstance('game-id-2323', [player], player);
       await db.lastSaveGamePromise;
@@ -217,24 +222,15 @@ export function describeDatabaseSuite(dtor: DatabaseTestDescriptor) {
       expect(serialized0.players[0].megaCredits).eq(0);
 
       const serialized1 = await db.getGameVersion(game.id, 1);
-      expect(serialized1.players[0].megaCredits).eq(200);
+      expect(serialized1.players[0].megaCredits).eq(statusCode.ok);
 
       const serialized2 = await db.getGameVersion(game.id, 2);
       expect(serialized2.players[0].megaCredits).eq(300);
 
       const serialized3 = await db.getGameVersion(game.id, 3);
-      expect(serialized3.players[0].megaCredits).eq(400);
-    });
+      expect(serialized3.players[0].megaCredits).eq(statusCode.badRequest);
 
-    it('loadCloneableGame', async () => {
-      await expect(db.loadCloneableGame('game-id-123')).to.be.rejectedWith(/Game game-id-123 not found/);
-
-      const player = TestPlayer.BLACK.newPlayer();
-      const game = Game.newInstance('game-id-123', [player], player);
-      await db.lastSaveGamePromise;
-      const serialized = await db.loadCloneableGame('game-id-123');
-
-      expect(game.id).eq(serialized.id);
+      await expect(db.getGameVersion('game-id-123', 0)).to.be.rejectedWith(/Game game-id-123 not found/);
     });
 
     it('participantIds', async () => {

@@ -1,22 +1,19 @@
-import {Card} from '../Card';
-import {ICorporationCard} from '../corporation/ICorporationCard';
+import {CorporationCard} from '../corporation/CorporationCard';
 import {Tag} from '../../../common/cards/Tag';
 import {IPlayer} from '../../IPlayer';
 import {CardName} from '../../../common/cards/CardName';
-import {CardType} from '../../../common/cards/CardType';
 import {CardRenderer} from '../render/CardRenderer';
 import {CardResource} from '../../../common/CardResource';
 import {AddResourcesToCard} from '../../deferredActions/AddResourcesToCard';
-import {played} from '../Options';
+import {digit} from '../Options';
 import {IProjectCard} from '../IProjectCard';
 import {MAX_OXYGEN_LEVEL, MAX_VENUS_SCALE} from '../../../common/constants';
 import {OrOptions} from '../../inputs/OrOptions';
 import {SelectOption} from '../../inputs/SelectOption';
 
-export class RobinHaulings extends Card implements ICorporationCard {
+export class RobinHaulings extends CorporationCard {
   constructor() {
     super({
-      type: CardType.CORPORATION,
       name: CardName.ROBIN_HAULINGS,
       tags: [Tag.MARS, Tag.VENUS],
       startingMegaCredits: 39,
@@ -32,11 +29,11 @@ export class RobinHaulings extends Card implements ICorporationCard {
         renderData: CardRenderer.builder((b) => {
           b.megacredits(39).br;
           b.effect('Whenever you play a card with a Venus tag add 1 floater to ANY card.', (eb) => {
-            eb.venus(1, {played}).startEffect.floaters(1).asterix();
+            eb.tag(Tag.VENUS).startEffect.resource(CardResource.FLOATER).asterix();
           });
           b.br;
           b.action('Remove 3 floaters from this card to raise Venus 1 step or raise oxygen 1 step', (ab) => {
-            ab.floaters(3, {digit: true}).startAction.venus(1).or().oxygen(1);
+            ab.resource(CardResource.FLOATER, {amount: 3, digit}).startAction.venus(1).or().oxygen(1);
           });
         }),
       },

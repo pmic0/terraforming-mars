@@ -12,7 +12,7 @@ import {OneOrArray} from '../../common/utils/types';
 
 export type CountingMode =
   'raw' | // Count face-up tags literally, including Leavitt Station.
-  'default' | // Like raw, but include the wild tags. Typical when performing an action.
+  'default' | // Like raw, but include the wild tags and other deafult substitutions. Typical when performing an action.
   'milestone' | // Like raw with special conditions for milestones (Chimera)
   'award' | // Like raw with special conditions for awards (Chimera)
   'raw-pf'; // Like raw, but includes Mars Tags when tag is Science (Habitat Marte)
@@ -20,7 +20,7 @@ export type CountingMode =
 export type DistinctCountMode =
   'default' | // Count all tags in played cards, and then add in all the wild tags.
   'milestone' | // Like default with special conditions for milestones (Chimera)
-  'globalEvent'; // Like default, but does not reduce the count size based on max tags in the game. Should be removed.
+  'globalEvent'; // Like default, but does not apply wild tags, which are used in the action phase.
 
 export type MultipleCountMode =
   'default' | // Count each tag individually, add wild tags, and (Moon) Earth Embassy.
@@ -53,7 +53,7 @@ export class Tags {
    * Excludes Clone tags.
    */
   public countAllTags(): Array<TagCount> {
-    const counts = Tags.COUNTED_TAGS.map((tag) => {
+    const counts: Array<TagCount> = Tags.COUNTED_TAGS.map((tag) => {
       return {tag, count: this.count(tag, 'raw')};
     }).filter((tag) => tag.count > 0);
     counts.push({tag: Tag.EVENT, count: this.player.getPlayedEventsCount()});
@@ -110,6 +110,9 @@ export class Tags {
    * Returns true if `card` has `tag`. This does not include wild tags, but it includes
    * Habitat Marte and Earth Embassy exceptions.
    */
+  // TODO(kberg): this performs the same if the card is drawn or played, and that's not
+  // always correct, specifically for Earth Embassy. For instance, you should not be able to
+  // draw a card with an Earth tag and get a card with a Moon card (and no Earth tags.)
   public cardHasTag(card: ICard, target: Tag): boolean {
     for (const tag of card.tags) {
       if (tag === target) return true;
@@ -124,6 +127,10 @@ export class Tags {
         return true;
       }
     }
+    if (target === Tag.EVENT && card.type === CardType.EVENT) {
+      return true;
+    }
+
     return false;
   }
 
@@ -159,22 +166,24 @@ export class Tags {
   }
 
   /**
-   * Return the total number of tags assocaited with these types.
+   * Return the total number of tags associated with these types.
    * Tag substitutions are included, and not counted repeatedly.
     */
   public multipleCount(tags: Array<Tag>, mode: MultipleCountMode = 'default'): number {
+    const includeEvents = this.player.isCorporation(CardName.ODYSSEY);
+
     let tagCount = 0;
     tags.forEach((tag) => {
-      tagCount += this.rawCount(tag, false);
+      tagCount += this.rawCount(tag, includeEvents);
     });
 
     // This is repeated behavior from getTagCount, sigh, OK.
     if (tags.includes(Tag.EARTH) && !tags.includes(Tag.MOON) && this.player.cardIsInEffect(CardName.EARTH_EMBASSY)) {
-      tagCount += this.rawCount(Tag.MOON, false);
+      tagCount += this.rawCount(Tag.MOON, includeEvents);
     }
 
     if (mode !== 'award') {
-      tagCount += this.rawCount(Tag.WILD, false);
+      tagCount += this.rawCount(Tag.WILD, includeEvents);
       // Chimera has 2 wild tags but should only count as one for milestones.
       if (this.player.isCorporation(CardName.CHIMERA) && mode === 'milestone') tagCount--;
     } else {
@@ -228,7 +237,7 @@ export class Tags {
     // Leavitt Station hook
     if (this.player.scienceTagCount > 0) uniqueTags.add(Tag.SCIENCE);
 
-    // TODO(kberg): I think the global event case is unnecessary.
+    // Global events occur outside the action phase. Stop counting here, before wild tags apply.
     if (mode === 'globalEvent') return uniqueTags.size;
 
     if (mode === 'milestone' && this.player.isCorporation(CardName.CHIMERA)) wildTagCount--;

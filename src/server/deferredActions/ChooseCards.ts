@@ -1,11 +1,12 @@
 import {IPlayer} from '../IPlayer';
 import {IProjectCard} from '../cards/IProjectCard';
-import {DeferredAction, Priority} from './DeferredAction';
+import {DeferredAction} from './DeferredAction';
+import {Priority} from './Priority';
 import {SelectCard} from '../inputs/SelectCard';
 import {SelectPaymentDeferred} from './SelectPaymentDeferred';
 import {LogHelper} from '../LogHelper';
 import {oneWayDifference} from '../../common/utils/utils';
-import {newMessage} from '../logs/MessageBuilder';
+import {message} from '../logs/MessageBuilder';
 
 export enum LogType {
   DREW = 'drew',
@@ -22,7 +23,7 @@ export type ChooseOptions = {
 export class ChooseCards extends DeferredAction {
   public constructor(
     player: IPlayer,
-    public cards: Array<IProjectCard>,
+    public cards: ReadonlyArray<IProjectCard>,
     public options: ChooseOptions = {},
   ) {
     super(player, Priority.DRAW_CARDS);
@@ -54,7 +55,7 @@ export class ChooseCards extends DeferredAction {
     const min = options.paying ? 0 : options.keepMax;
 
     const button = max === 0 ? 'Ok' : (options.paying ? 'Buy' : 'Select');
-    const cb = (selected: Array<IProjectCard>) => {
+    const cb = (selected: ReadonlyArray<IProjectCard>) => {
       if (selected.length > max) {
         throw new Error('Selected too many cards');
       }
@@ -65,7 +66,7 @@ export class ChooseCards extends DeferredAction {
           new SelectPaymentDeferred(
             player,
             cost,
-            {title: newMessage('Select how to spend ${0} M€ for ${1} cards', (b) => b.number(cost).number(selected.length))})
+            {title: message('Select how to spend ${0} M€ for ${1} cards', (b) => b.number(cost).number(selected.length))})
             .andThen(() => keep(player, selected, unselected, LogType.BOUGHT)));
       } else if (options.logDrawnCard === true) {
         keep(player, selected, unselected, LogType.DREW_VERBOSE);

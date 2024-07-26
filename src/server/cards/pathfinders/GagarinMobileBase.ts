@@ -1,22 +1,19 @@
-import {Card} from '../Card';
-import {ICorporationCard} from '../corporation/ICorporationCard';
+import {CorporationCard} from '../corporation/CorporationCard';
 import {CardName} from '../../../common/cards/CardName';
-import {CardType} from '../../../common/cards/CardType';
 import {CardRenderer} from '../render/CardRenderer';
 import {IPlayer} from '../../IPlayer';
 import {SpaceType} from '../../../common/boards/SpaceType';
-import {SpaceBonus} from '../../../common/boards/SpaceBonus';
 import {Tag} from '../../../common/cards/Tag';
 import {Space} from '../../boards/Space';
 import {SelectSpace} from '../../inputs/SelectSpace';
 import {IActionCard} from '../ICard';
 import {BoardType} from '../../boards/BoardType';
 import {Board} from '../../boards/Board';
+import {message} from '../../logs/MessageBuilder';
 
-export class GagarinMobileBase extends Card implements IActionCard, ICorporationCard {
+export class GagarinMobileBase extends CorporationCard implements IActionCard {
   constructor() {
     super({
-      type: CardType.CORPORATION,
       name: CardName.GAGARIN_MOBILE_BASE,
       tags: [Tag.SCIENCE],
       startingMegaCredits: 42,
@@ -69,14 +66,14 @@ export class GagarinMobileBase extends Card implements IActionCard, ICorporation
     const visited = player.game.gagarinBase;
     const availableSpaces = board.spaces
       .filter((space) => space.spaceType !== SpaceType.COLONY)
-      .filter((space) => !space.bonus.includes(SpaceBonus.RESTRICTED))
+      .filter((space) => space.spaceType !== SpaceType.RESTRICTED)
       .filter((space) => space.tile === undefined)
       .filter((space) => !visited.includes(space.id));
 
     if (visited[0] === undefined) {
       return availableSpaces;
     }
-    const currentSpace = board.getSpace(visited[0]);
+    const currentSpace = board.getSpaceOrThrow(visited[0]);
     return this.closestSpaces(board, availableSpaces, currentSpace);
   }
 
@@ -87,7 +84,8 @@ export class GagarinMobileBase extends Card implements IActionCard, ICorporation
   public action(player: IPlayer) {
     const spaces = this.availableSpaces(player);
     if (spaces.length > 0) {
-      return new SelectSpace('Select new space for Gagarin Mobile Base', this.availableSpaces(player))
+      return new SelectSpace(
+        message('Select new space for ${0}', (b) => b.card(this)), this.availableSpaces(player))
         .andThen((space) => {
           player.game.gagarinBase.unshift(space.id);
           player.game.grantSpaceBonuses(player, space);
@@ -109,7 +107,7 @@ export class GagarinMobileBase extends Card implements IActionCard, ICorporation
       return;
     }
     if (space.id === activePlayer.game.gagarinBase[0]) {
-      cardOwner.defer(this.action(activePlayer));
+      cardOwner.defer(this.action(cardOwner));
     }
   }
 }

@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {Game} from '../../../src/server/Game';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
 import {testGame} from '../../TestGame';
 
@@ -12,7 +12,7 @@ import {Politician} from '../../../src/server/awards/terraCimmeria/Politician';
 describe('Zan', function() {
   let card: Zan;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
   beforeEach(() => {
     card = new Zan();
@@ -39,17 +39,17 @@ describe('Zan', function() {
   it('Takes OPG action', function() {
     const turmoil = game.turmoil!;
     player.megaCredits = 0;
-    const expectedMegagredits = turmoil.getAvailableDelegateCount(player.id);
+    const expectedMegagredits = turmoil.getAvailableDelegateCount(player);
     card.action(player);
     while (game.deferredActions.length) {
       game.deferredActions.pop()!.execute();
     }
 
-    expect(turmoil.getAvailableDelegateCount(player.id)).eq(0);
+    expect(turmoil.getAvailableDelegateCount(player)).eq(0);
     expect(player.megaCredits).eq(expectedMegagredits);
 
     expect(turmoil.dominantParty.name).eq(PartyName.REDS);
-    expect(turmoil.dominantParty.partyLeader).eq(player.id);
+    expect(turmoil.dominantParty.partyLeader).eq(player);
     expect(card.isDisabled).is.true;
   });
 

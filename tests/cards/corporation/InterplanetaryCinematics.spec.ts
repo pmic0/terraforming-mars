@@ -11,7 +11,7 @@ describe('InterplanetaryCinematics', function() {
 
   beforeEach(function() {
     card = new InterplanetaryCinematics();
-    [/* skipped */, player] = testGame(2);
+    [/* game */, player] = testGame(2);
   });
 
   it('Should play', function() {
@@ -20,7 +20,7 @@ describe('InterplanetaryCinematics', function() {
   });
 
   it('Has onCardPlayed', function() {
-    player.setCorporationForTest(card);
+    player.corporations.push(card);
     card.onCardPlayed(player, new Bushes());
     expect(player.megaCredits).to.eq(0);
     card.onCardPlayed(player, new Virus());

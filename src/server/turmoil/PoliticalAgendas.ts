@@ -1,9 +1,9 @@
 import {ChoosePoliticalAgenda} from '../deferredActions/ChoosePoliticalAgenda';
 import {IGame} from '../IGame';
-import {Bonus} from './Bonus';
+import {IBonus} from './Bonus';
 import {IParty} from './parties/IParty';
 import {PartyName} from '../../common/turmoil/PartyName';
-import {Policy} from './Policy';
+import {IPolicy} from './Policy';
 import {Turmoil} from './Turmoil';
 import {Agenda, AgendaStyle} from '../../common/turmoil/Types';
 
@@ -40,8 +40,8 @@ export class PoliticalAgendas {
   }
 
   private static getRandomAgenda(party: IParty): Agenda {
-    const bonus: Bonus = PoliticalAgendas.randomElement(party.bonuses);
-    const policy: Policy = PoliticalAgendas.randomElement(party.policies);
+    const bonus: IBonus = PoliticalAgendas.randomElement(party.bonuses);
+    const policy: IPolicy = PoliticalAgendas.randomElement(party.policies);
 
     return {bonusId: bonus.id, policyId: policy.id};
   }
@@ -74,7 +74,7 @@ export class PoliticalAgendas {
     if (politicalAgendasData.agendaStyle === AgendaStyle.CHAIRMAN && chairman !== 'NEUTRAL') {
       const agenda = this.getAgenda(turmoil, rulingParty.name);
       game.defer(new ChoosePoliticalAgenda(
-        game.getPlayerById(chairman),
+        chairman,
         rulingParty,
         (bonusId) => {
           agenda.bonusId = bonusId;
@@ -104,7 +104,7 @@ export class PoliticalAgendas {
   }
 
   // Overridable for tests
-  public static defaultRandomElement<T>(list: Array<T>): T {
+  public static defaultRandomElement<T>(list: ReadonlyArray<T>): T {
     const rng = Math.floor(Math.random() * list.length);
     return list[rng];
   }

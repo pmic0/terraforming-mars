@@ -8,9 +8,8 @@ import {OrOptions} from '../../inputs/OrOptions';
 import {SelectOption} from '../../inputs/SelectOption';
 import {CardName} from '../../../common/cards/CardName';
 import {CardResource} from '../../../common/CardResource';
-import {SimpleDeferredAction} from '../../deferredActions/DeferredAction';
 import {CardRenderer} from '../render/CardRenderer';
-import {played} from '../Options';
+import {message} from '../../logs/MessageBuilder';
 
 export class ViralEnhancers extends Card implements IProjectCard {
   constructor() {
@@ -23,10 +22,10 @@ export class ViralEnhancers extends Card implements IProjectCard {
       metadata: {
         cardNumber: '074',
         renderData: CardRenderer.builder((b) => {
-          b.plants(1, {played}).slash().microbes(1, {played}).slash().animals(1, {played}).br;
+          b.tag(Tag.PLANT).slash().tag(Tag.MICROBE).slash().tag(Tag.ANIMAL).br;
           b.effect('When you play a plant, microbe, or an animal tag, including this, gain 1 plant or add 1 resource to THAT CARD.', (eb) => {
             eb.empty().startEffect;
-            eb.plants(1).slash().microbes(1).asterix().slash().animals(1).asterix();
+            eb.plants(1).slash().resource(CardResource.MICROBE).asterix().slash().resource(CardResource.ANIMAL).asterix();
           });
         }),
       },
@@ -44,19 +43,18 @@ export class ViralEnhancers extends Card implements IProjectCard {
     }
 
     for (let i = 0; i < resourceCount; i++) {
-      player.game.defer(new SimpleDeferredAction(
-        player,
+      player.defer(
         () => new OrOptions(
-          new SelectOption('Add resource to card ' + card.name, 'Add resource').andThen(() => {
+          new SelectOption(message('Add resource to card ${0}', (b) => b.card(card)), 'Add resource').andThen(() => {
             player.addResourceTo(card);
             return undefined;
           }),
-          new SelectOption('Gain plant', 'Save').andThen(() => {
+          new SelectOption('Gain plant').andThen(() => {
             player.plants++;
             return undefined;
           }),
         ),
-      ));
+      );
     }
     return undefined;
   }

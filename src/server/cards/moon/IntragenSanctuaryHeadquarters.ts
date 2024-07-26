@@ -1,19 +1,17 @@
 import {CardName} from '../../../common/cards/CardName';
 import {IPlayer} from '../../IPlayer';
-import {CardType} from '../../../common/cards/CardType';
 import {Tag} from '../../../common/cards/Tag';
 import {ICorporationCard} from '../corporation/ICorporationCard';
+import {CorporationCard} from '../corporation/CorporationCard';
 import {CardRenderer} from '../render/CardRenderer';
-import {IProjectCard} from '../IProjectCard';
 import {CardResource} from '../../../common/CardResource';
-import {Card} from '../Card';
-import {all, played} from '../Options';
+import {all} from '../Options';
 import {AltSecondaryTag} from '../../../common/cards/render/AltSecondaryTag';
+import {ICard} from '../ICard';
 
-export class IntragenSanctuaryHeadquarters extends Card implements ICorporationCard {
+export class IntragenSanctuaryHeadquarters extends CorporationCard {
   constructor() {
     super({
-      type: CardType.CORPORATION,
       name: CardName.INTRAGEN_SANCTUARY_HEADQUARTERS,
       tags: [Tag.ANIMAL, Tag.MOON],
       startingMegaCredits: 38,
@@ -37,7 +35,7 @@ export class IntragenSanctuaryHeadquarters extends Card implements ICorporationC
         renderData: CardRenderer.builder((b) => {
           b.megacredits(38).moonHabitat({secondaryTag: AltSecondaryTag.MOON_HABITAT_RATE}).br;
           b.effect('When any player plays an animal tag (including this), add 1 animal on this card.', (eb) => {
-            eb.animals(1, {played, all}).startEffect.animals(1);
+            eb.tag(Tag.ANIMAL, {all}).startEffect.resource(CardResource.ANIMAL);
           }).br;
         }),
       },
@@ -46,12 +44,10 @@ export class IntragenSanctuaryHeadquarters extends Card implements ICorporationC
 
   public onCorpCardPlayed(player: IPlayer, card: ICorporationCard) {
     this.onCardPlayed(player, card);
-    return undefined;
   }
 
-  public onCardPlayed(player: IPlayer, card: IProjectCard | ICorporationCard) {
+  public onCardPlayed(player: IPlayer, card: ICard) {
     const count = player.tags.cardTagCount(card, Tag.ANIMAL);
-    player.addResourceTo(this, count);
-    return undefined;
+    player.addResourceTo(this, {qty: count, log: true});
   }
 }

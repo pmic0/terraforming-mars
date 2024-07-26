@@ -15,7 +15,6 @@ export class MetallicAsteroid extends Card implements IProjectCard {
       name: CardName.METALLIC_ASTEROID,
       tags: [Tag.SPACE],
       cost: 13,
-      tilesBuilt: [TileType.METALLIC_ASTEROID],
 
       behavior: {
         stock: {titanium: 1},
@@ -24,7 +23,6 @@ export class MetallicAsteroid extends Card implements IProjectCard {
         tile: {
           type: TileType.METALLIC_ASTEROID,
           on: 'land',
-          title: 'Select space for Metallic Asteroid tile',
           adjacencyBonus: {bonus: [SpaceBonus.TITANIUM]},
         },
       },

@@ -1,16 +1,13 @@
 import {CardName} from '../../../common/cards/CardName';
 import {IPlayer} from '../../IPlayer';
-import {Card} from '../Card';
-import {CardType} from '../../../common/cards/CardType';
-import {ICorporationCard} from '../corporation/ICorporationCard';
+import {CorporationCard} from '../corporation/CorporationCard';
 import {IProjectCard} from '../IProjectCard';
 import {CardRenderer} from '../render/CardRenderer';
 import {Tag} from '../../../common/cards/Tag';
 
-export class CrescentResearchAssociation extends Card implements ICorporationCard {
+export class CrescentResearchAssociation extends CorporationCard {
   constructor() {
     super({
-      type: CardType.CORPORATION,
       name: CardName.CRESCENT_RESEARCH_ASSOCIATION,
       tags: [Tag.SCIENCE, Tag.MOON],
       startingMegaCredits: 50,
@@ -23,7 +20,7 @@ export class CrescentResearchAssociation extends Card implements ICorporationCar
         renderData: CardRenderer.builder((b) => {
           b.megacredits(50).br;
           b.effect('When you play a Moon tag, you pay 1 M€ less for each Moon tag you have.', (eb) => {
-            eb.moon().startEffect.megacredits(1).slash().moon();
+            eb.tag(Tag.MOON).startEffect.megacredits(1).slash().tag(Tag.MOON);
           });
         }),
       },

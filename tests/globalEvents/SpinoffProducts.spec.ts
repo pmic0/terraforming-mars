@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {Research} from '../../src/server/cards/base/Research';
-import {Game} from '../../src/server/Game';
+import {IGame} from '../../src/server/IGame';
 import {SpinoffProducts} from '../../src/server/turmoil/globalEvents/SpinoffProducts';
 import {Kelvinists} from '../../src/server/turmoil/parties/Kelvinists';
 import {Turmoil} from '../../src/server/turmoil/Turmoil';
@@ -11,7 +11,7 @@ import {DesignedOrganisms} from '../../src/server/cards/pathfinders/DesignedOrga
 
 describe('SpinoffProducts', function() {
   let card: SpinoffProducts;
-  let game: Game;
+  let game: IGame;
   let player: TestPlayer;
   let player2: TestPlayer;
   let turmoil: Turmoil;
@@ -27,11 +27,11 @@ describe('SpinoffProducts', function() {
     player2.playedCards.push(new Research());
     player2.playedCards.push(new Research());
 
-    turmoil.chairman = player2.id;
+    turmoil.chairman = player2;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player2.id;
-    turmoil.dominantParty.delegates.add(player2.id);
-    turmoil.dominantParty.delegates.add(player2.id);
+    turmoil.dominantParty.partyLeader = player2;
+    turmoil.dominantParty.delegates.add(player2);
+    turmoil.dominantParty.delegates.add(player2);
 
     card.resolve(game, turmoil);
     expect(player.megaCredits).to.eq(4);
@@ -39,14 +39,14 @@ describe('SpinoffProducts', function() {
   });
 
   it('resolve play, with Habitat Marte', function() {
-    player.setCorporationForTest(new HabitatMarte());
+    player.corporations.push(new HabitatMarte());
     player.playedCards.push(new Research(), new DesignedOrganisms());
 
-    turmoil.chairman = player2.id;
+    turmoil.chairman = player2;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player2.id;
-    turmoil.dominantParty.delegates.add(player2.id);
-    turmoil.dominantParty.delegates.add(player2.id);
+    turmoil.dominantParty.partyLeader = player2;
+    turmoil.dominantParty.delegates.add(player2);
+    turmoil.dominantParty.delegates.add(player2);
 
     card.resolve(game, turmoil);
 

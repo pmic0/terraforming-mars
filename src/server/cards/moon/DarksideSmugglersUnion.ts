@@ -10,7 +10,7 @@ import {IColonyTrader} from '../../colonies/IColonyTrader';
 import {IColony} from '../../colonies/IColony';
 import {ColoniesHandler} from '../../colonies/ColoniesHandler';
 import {SelectColony} from '../../inputs/SelectColony';
-import {newMessage} from '../../logs/MessageBuilder';
+import {message} from '../../logs/MessageBuilder';
 
 export class DarksideSmugglersUnion extends Card implements IProjectCard, IActionCard {
   constructor() {
@@ -37,13 +37,14 @@ export class DarksideSmugglersUnion extends Card implements IProjectCard, IActio
   }
 
   public canAct(player: IPlayer): boolean {
-    return player.colonies.canTrade() && ColoniesHandler.tradeableColonies(player.game).length > 0;
+    return player.colonies.canTrade();
   }
 
   public action(player: IPlayer) {
     const tradeableColonies = ColoniesHandler.tradeableColonies(player.game);
     return new SelectColony('Select colony tile to trade with for free', 'Select', tradeableColonies)
       .andThen((colony: IColony) => {
+        player.game.log('${0} traded with ${1}', (b) => b.player(player).colony(colony));
         colony.trade(player);
         return undefined;
       });
@@ -59,7 +60,7 @@ export class TradeWithDarksideSmugglersUnion implements IColonyTrader {
   }
 
   public optionText() {
-    return newMessage('Trade for free (use ${0} action)', (b) => b.cardName(CardName.DARKSIDE_SMUGGLERS_UNION));
+    return message('Trade for free (use ${0} action)', (b) => b.cardName(CardName.DARKSIDE_SMUGGLERS_UNION));
   }
 
   public trade(colony: IColony) {

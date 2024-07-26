@@ -11,14 +11,17 @@ export class NobelPrize extends PreludeCard {
       name: CardName.NOBEL_PRIZE,
       tags: [Tag.WILD],
       victoryPoints: 2,
-      startingMegacredits: 2,
+
+      behavior: {
+        stock: {megacredits: 5},
+      },
 
       metadata: {
         cardNumber: '',
         renderData: CardRenderer.builder((b) => {
-          b.megacredits(2).cards(2, {secondaryTag: AltSecondaryTag.REQ});
+          b.megacredits(5).cards(2, {secondaryTag: AltSecondaryTag.REQ});
         }),
-        description: 'Gain 2 M€. Draw 2 cards with requirements.',
+        description: 'Gain 5 M€. Draw 2 cards with requirements.',
       },
     });
   }

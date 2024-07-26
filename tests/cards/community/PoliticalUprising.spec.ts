@@ -1,21 +1,20 @@
 import {expect} from 'chai';
 import {PoliticalUprising} from '../../../src/server/cards/community/PoliticalUprising';
-import {Game} from '../../../src/server/Game';
+import {IGame} from '../../../src/server/IGame';
 import {SelectParty} from '../../../src/server/inputs/SelectParty';
 import {PartyName} from '../../../src/common/turmoil/PartyName';
 import {cast} from '../../TestingUtils';
 import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestingUtils';
 
 describe('PoliticalUprising', function() {
   let card: PoliticalUprising;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
   beforeEach(function() {
     card = new PoliticalUprising();
-    player = TestPlayer.BLUE.newPlayer();
-    const redPlayer = TestPlayer.RED.newPlayer();
-    game = Game.newInstance('gameid', [player, redPlayer], player, {turmoilExtension: true});
+    [game, player/* , player2 */] = testGame(2, {turmoilExtension: true});
   });
 
   it('Should play', function() {
@@ -30,7 +29,7 @@ describe('PoliticalUprising', function() {
 
     const turmoil = game.turmoil!;
     const marsFirst = turmoil.getPartyByName(PartyName.MARS);
-    expect(marsFirst.delegates.get(player.id)).eq(4);
+    expect(marsFirst.delegates.get(player)).eq(4);
     expect(player.cardsInHand).has.lengthOf(1);
   });
 });

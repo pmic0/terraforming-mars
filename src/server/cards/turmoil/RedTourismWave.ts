@@ -9,7 +9,7 @@ import {CardRenderer} from '../render/CardRenderer';
 import {Size} from '../../../common/cards/render/Size';
 import {Card} from '../Card';
 import {isHazardTileType} from '../../../common/AresTileType';
-import {Space} from '../../..//server/boards/Space';
+import {Space} from '../../../server/boards/Space';
 import {SpaceType} from '../../../common/boards/SpaceType';
 
 export class RedTourismWave extends Card implements IProjectCard {
@@ -33,7 +33,7 @@ export class RedTourismWave extends Card implements IProjectCard {
 
   public override bespokePlay(player: IPlayer) {
     const amount = RedTourismWave.getAdjacentEmptySpacesCount(player);
-    player.stock.add(Resource.MEGACREDITS, amount);
+    player.stock.add(Resource.MEGACREDITS, amount, {log: true});
     return undefined;
   }
 

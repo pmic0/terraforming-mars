@@ -3,10 +3,7 @@ import {IDatabase} from '../../src/server/database/IDatabase';
 import {SerializedGame} from '../../src/server/SerializedGame';
 import {IGameLoader} from '../../src/server/database/IGameLoader';
 import {GameLoader} from '../../src/server/database/GameLoader';
-import {registerBehaviorExecutor} from '../../src/server/behavior/BehaviorExecutor';
-import {Executor} from '../../src/server/behavior/Executor';
-
-registerBehaviorExecutor(new Executor());
+import {globalInitialize} from '../../src/server/globalInitialize';
 
 const FAKE_DATABASE: IDatabase = {
   markFinished: () => Promise.resolve(),
@@ -18,7 +15,6 @@ const FAKE_DATABASE: IDatabase = {
   getGameIds: () => Promise.resolve([]),
   getSaveIds: () => Promise.resolve([]),
   initialize: () => Promise.resolve(),
-  loadCloneableGame: () => Promise.resolve({} as SerializedGame),
   saveGameResults: () => {},
   saveGame: () => Promise.resolve(),
   purgeUnfinishedGames: () => Promise.resolve([]),
@@ -47,3 +43,4 @@ export function setTestGameLoader(gameLoader: IGameLoader) {
   gameLoaderUnderTest = gameLoader;
 }
 GameLoader.getInstance = () => gameLoaderUnderTest;
+globalInitialize();

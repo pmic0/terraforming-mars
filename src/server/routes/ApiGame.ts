@@ -1,3 +1,4 @@
+import * as responses from '../server/responses';
 import {Handler} from './Handler';
 import {Context} from './IHandler';
 import {Server} from '../models/ServerModel';
@@ -15,7 +16,7 @@ export class ApiGame extends Handler {
   public override async get(req: Request, res: Response, ctx: Context): Promise<void> {
     const gameId = ctx.url.searchParams.get('id');
     if (!gameId) {
-      ctx.route.badRequest(req, res, 'missing id parameter');
+      responses.badRequest(req, res, 'missing id parameter');
       return;
     }
 
@@ -24,9 +25,10 @@ export class ApiGame extends Handler {
       game = await ctx.gameLoader.getGame(gameId);
     }
     if (game === undefined) {
-      ctx.route.notFound(req, res, 'game not found');
+      responses.notFound(req, res, 'game not found');
       return;
     }
+
     const bot = ctx.url.searchParams.get('bot');
     if(!bot){
       const model = Server.getSimpleGameModel(game);
@@ -35,5 +37,6 @@ export class ApiGame extends Handler {
       const model = Server.getSimpleGameModelBot(game);
       ctx.route.writeJson(res, model);
     }
+
   }
 }

@@ -1,10 +1,10 @@
 import {expect} from 'chai';
-import {Game} from '../../../src/server/Game';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
 import {TestPlayer} from '../../TestPlayer';
 import {LunaTradeFederation} from '../../../src/server/cards/moon/LunaTradeFederation';
 import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
 // import {IMoonData} from '../../../src/server/moon/IMoonData';
-import {testGame} from '../../TestGame';
 // import {cast, fakeCard, runAllActions} from '../../TestingUtils';
 import {fakeCard, runAllActions} from '../../TestingUtils';
 import {Units} from '../../../src/common/Units';
@@ -12,7 +12,7 @@ import {Units} from '../../../src/common/Units';
 import {Tag} from '../../../src/common/cards/Tag';
 
 describe('LunaTradeFederation', () => {
-  let game: Game;
+  let game: IGame;
   let player: TestPlayer;
   let player2: TestPlayer;
   let lunaTradeFederation: LunaTradeFederation;
@@ -33,7 +33,7 @@ describe('LunaTradeFederation', () => {
   });
 
   // it('initialAction', () => {
-  //   player.setCorporationForTest(lunaTradeFederation);
+  //   player.corporations.push(lunaTradeFederation);
   //   player.production.override(Units.EMPTY);
   //   expect(moonData.miningRate).eq(0);
   //   expect(player.getTerraformRating()).eq(20);
@@ -42,7 +42,7 @@ describe('LunaTradeFederation', () => {
 
   //   runAllActions(game);
   //   const selectSpace = cast(player.popWaitingFor(), SelectSpace);
-  //   selectSpace.cb(moonData.moon.getSpace('m02'));
+  //   selectSpace.cb(moonData.moon.getSpaceOrThrow('m02'));
   //   runAllActions(game);
 
   //   expect(moonData.miningRate).eq(1);
@@ -51,7 +51,7 @@ describe('LunaTradeFederation', () => {
   // });
 
   it('onTilePlaced', () => {
-    player.setCorporationForTest(lunaTradeFederation);
+    player.corporations.push(lunaTradeFederation);
 
     MoonExpansion.addRoadTile(player, 'm07');
     expect(player.production.asUnits()).deep.eq(Units.of({}));
@@ -68,7 +68,7 @@ describe('LunaTradeFederation', () => {
   });
 
   it('can use titanium to pay for space project cards as normal', () => {
-    player.setCorporationForTest(lunaTradeFederation);
+    player.corporations.push(lunaTradeFederation);
     lunaTradeFederation.play(player);
     expect(player.canUseTitaniumAsMegacredits).is.true;
 
@@ -84,7 +84,7 @@ describe('LunaTradeFederation', () => {
   });
 
   it('can use titanium to pay for non-space project cards at a discount', () => {
-    player.setCorporationForTest(lunaTradeFederation);
+    player.corporations.push(lunaTradeFederation);
     lunaTradeFederation.play(player);
     expect(player.canUseTitaniumAsMegacredits).is.true;
 

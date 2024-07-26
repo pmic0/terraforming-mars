@@ -12,7 +12,7 @@ import {CardResource} from '../../../common/CardResource';
 import {OrOptions} from '../../inputs/OrOptions';
 import {SelectOption} from '../../inputs/SelectOption';
 import {Size} from '../../../common/cards/render/Size';
-import {newMessage} from '../../logs/MessageBuilder';
+import {message} from '../../logs/MessageBuilder';
 import {SelectResource} from '../../inputs/SelectResource';
 import {Units} from '../../../common/Units';
 
@@ -30,7 +30,7 @@ export class CloneTroopers extends Card implements IActionCard, IProjectCard {
       metadata: {
         cardNumber: 'SW02',
         renderData: CardRenderer.builder((b) => {
-          b.arrow(Size.SMALL).cloneTrooper().or().cloneTrooper().arrow(Size.SMALL).text('STEAL', Size.SMALL).wild(1, {all});
+          b.arrow(Size.SMALL).resource(CardResource.CLONE_TROOPER).or().resource(CardResource.CLONE_TROOPER).arrow(Size.SMALL).text('STEAL', Size.SMALL).wild(1, {all});
           b.br;
           b.text('(Action: Add one Clone Trooper to this card OR remove one Clone Trooper from this card to steal one standard resource from any player.)', Size.TINY, false, false);
         }),
@@ -51,23 +51,27 @@ export class CloneTroopers extends Card implements IActionCard, IProjectCard {
         return undefined;
       }));
       if (player.game.isSoloMode()) {
-        options.options.push(new SelectResource('Steal a resource', Units.keys,
-          (resource) => {
+        options.options.push(new SelectResource('Steal a resource')
+          .andThen((resource) => {
             player.stock.add(Units.ResourceMap[resource], 1);
             player.removeResourceFrom(this, 1);
             return undefined;
-          },
-        ));
+          }));
       } else {
-        const allPlayers = player.game.getPlayers().filter((p) => p.id !== player.id);
+        const allPlayers = player.getOpponents();
         ALL_RESOURCES.forEach((resource) => {
-          allPlayers.forEach((p) => {
-            if (p.stock.get(resource) > 0) {
+          allPlayers.forEach((target) => {
+            if (target.stock.get(resource) > 0) {
               // TODO(kberg): Included protected resources
               options.options.push(new SelectOption(
-                newMessage('Steal 1 ${0} from ${1}', (b) => b.string(resource).player(p)), 'steal').andThen(() => {
-                p.stock.steal(resource, 1, player);
-                player.removeResourceFrom(this, 1);
+                message('Steal 1 ${0} from ${1}', (b) => b.string(resource).player(target)), 'steal').andThen(() => {
+                target.maybeBlockAttack(player, (proceed) => {
+                  if (proceed) {
+                    target.stock.steal(resource, 1, player);
+                    player.removeResourceFrom(this, 1);
+                  }
+                  return undefined;
+                });
                 return undefined;
               }));
             }

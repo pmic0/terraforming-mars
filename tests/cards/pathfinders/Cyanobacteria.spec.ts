@@ -1,8 +1,7 @@
 import {expect} from 'chai';
 import {Cyanobacteria} from '../../../src/server/cards/pathfinders/Cyanobacteria';
-import {Game} from '../../../src/server/Game';
 import {TestPlayer} from '../../TestPlayer';
-import {cast, maxOutOceans, runAllActions} from '../../TestingUtils';
+import {cast, maxOutOceans, runAllActions, testGame} from '../../TestingUtils';
 import {AndOptions} from '../../../src/server/inputs/AndOptions';
 import {GHGProducingBacteria} from '../../../src/server/cards/base/GHGProducingBacteria';
 import {Tardigrades} from '../../../src/server/cards/base/Tardigrades';
@@ -18,8 +17,7 @@ describe('Cyanobacteria', function() {
 
   beforeEach(function() {
     card = new Cyanobacteria();
-    player = TestPlayer.BLUE.newPlayer();
-    Game.newInstance('gameid', [player], player);
+    [/* game */, player] = testGame(1);
     ghgProducingBacteria = new GHGProducingBacteria();
     tardigrades = new Tardigrades();
     ants = new Ants();
@@ -65,7 +63,7 @@ describe('Cyanobacteria', function() {
 
     const options = cast(player.game.deferredActions.peek()!.execute(), AndOptions);
 
-    expect(options.options.length).eq(3);
+    expect(options.options).has.length(3);
     options?.options[0].cb(1);
     options?.options[1].cb(3);
     options?.options[2].cb(5);
@@ -81,7 +79,7 @@ describe('Cyanobacteria', function() {
 
     card.play(player);
     const options = cast(player.game.deferredActions.peek()!.execute(), AndOptions);
-    expect(options?.options.length).eq(3);
+    expect(options?.options).has.length(3);
 
     options?.options[0].cb(1);
     options?.options[1].cb(3);

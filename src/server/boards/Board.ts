@@ -5,10 +5,9 @@ import {SpaceType} from '../../common/boards/SpaceType';
 import {BASE_OCEAN_TILES, CITY_TILES, GREENERY_TILES, OCEAN_TILES, TileType} from '../../common/TileType';
 import {SerializedBoard, SerializedSpace} from './SerializedBoard';
 import {CardName} from '../../common/cards/CardName';
-import {SpaceBonus} from '../../common/boards/SpaceBonus';
 import {AresHandler} from '../ares/AresHandler';
 import {Units} from '../../common/Units';
-import {HazardSeverity, hazardSeverity} from '../../common/AresTileType';
+import {HazardSeverity, hazardSeverity, isHazardTileType} from '../../common/AresTileType';
 import {TRSource} from '../../common/cards/TRSource';
 import {sum} from '../../common/utils/utils';
 
@@ -31,7 +30,10 @@ export abstract class Board {
   // stores adjacent spaces in clockwise order starting from the top left
   private readonly adjacentSpaces = new Map<SpaceId, ReadonlyArray<Space>>();
 
-  protected constructor(public spaces: ReadonlyArray<Space>) {
+  protected constructor(
+    public readonly spaces: ReadonlyArray<Space>,
+    public readonly noctisCitySpaceId: SpaceId | undefined,
+    public readonly volcanicSpaceIds: ReadonlyArray<SpaceId>) {
     this.maxX = Math.max(...spaces.map((s) => s.x));
     this.maxY = Math.max(...spaces.map((s) => s.y));
     spaces.forEach((space) => {
@@ -43,16 +45,8 @@ export abstract class Board {
     });
   }
 
-  public getVolcanicSpaceIds(): ReadonlyArray<SpaceId> {
-    return [];
-  }
-
-  public getNoctisCitySpaceId(): SpaceId | undefined {
-    return undefined;
-  }
-
   /* Returns the space given a Space ID. */
-  public getSpace(id: SpaceId): Space {
+  public getSpaceOrThrow(id: SpaceId): Space {
     const space = this.map.get(id);
     if (space === undefined) {
       throw new Error(`Can't find space with id ${id}`);
@@ -129,9 +123,7 @@ export abstract class Board {
   }
 
   public getSpaceByTileCard(cardName: CardName): Space | undefined {
-    return this.spaces.find(
-      (space) => space.tile !== undefined && space.tile.card === cardName,
-    );
+    return this.spaces.find((space) => space.tile?.card === cardName);
   }
 
   public getSpaces(spaceType: SpaceType, _player: IPlayer): ReadonlyArray<Space> {
@@ -210,13 +202,14 @@ export abstract class Board {
   }
 
   public getAvailableSpacesOnLand(player: IPlayer, canAffordOptions?: CanAffordOptions): ReadonlyArray<Space> {
+    // Does this also apply to cove spaces?
     const landSpaces = this.getSpaces(SpaceType.LAND, player).filter((space) => {
-      if (space.bonus.includes(SpaceBonus.RESTRICTED)) {
+      // A space is available if it doesn't have a player marker on it, or it belongs to |player|
+      if (space.player !== undefined && space.player !== player) {
         return false;
       }
 
-      // A space is available if it doesn't have a player marker on it, or it belongs to |player|
-      if (space.player !== undefined && space.player !== player) {
+      if (space.id === this.noctisCitySpaceId) {
         return false;
       }
 
@@ -263,7 +256,7 @@ export abstract class Board {
   }
 
   public canPlaceTile(space: Space): boolean {
-    return space.tile === undefined && space.spaceType === SpaceType.LAND && space.bonus.includes(SpaceBonus.RESTRICTED) === false;
+    return space.tile === undefined && space.spaceType === SpaceType.LAND && space.id !== this.noctisCitySpaceId;
   }
 
   public static isCitySpace(space: Space): boolean {
@@ -296,6 +289,10 @@ export abstract class Board {
     return Board.ownedBy(player)(space);
   }
 
+  public getHazards(): ReadonlyArray<Space> {
+    return this.spaces.filter((space) => space.tile && isHazardTileType(space.tile.tileType));
+  }
+
   public serialize(): SerializedBoard {
     return {
       spaces: this.spaces.map((space) => {
@@ -315,16 +312,23 @@ export abstract class Board {
         if (space.excavator !== undefined) {
           serialized.excavator = space.excavator.id;
         }
+        if (space.coOwner !== undefined) {
+          serialized.coOwner = space.coOwner.id;
+        }
 
         return serialized;
       }),
     };
   }
 
+  private static findPlayer(players: ReadonlyArray<IPlayer>, playerId: PlayerId | undefined) {
+    return players.find((p) => p.id === playerId);
+  }
+
   public static deserializeSpace(serialized: SerializedSpace, players: ReadonlyArray<IPlayer>): Space {
-    const playerId: PlayerId | undefined = serialized.player;
-    const player = players.find((p) => p.id === playerId);
-    const excavator = players.find((p) => p.id === serialized.excavator);
+    const player = this.findPlayer(players, serialized.player);
+    const excavator = this.findPlayer(players, serialized.excavator);
+    const coOwner = this.findPlayer(players, serialized.coOwner);
     const space: Space = {
       id: serialized.id,
       spaceType: serialized.spaceType,
@@ -348,11 +352,15 @@ export abstract class Board {
     if (excavator !== undefined) {
       space.excavator = excavator;
     }
+    if (coOwner !== undefined) {
+      space.coOwner = coOwner;
+    }
     return space;
   }
 
-  public static deserializeSpaces(spaces: ReadonlyArray<SerializedSpace>, players: ReadonlyArray<IPlayer>): Array<Space> {
-    return spaces.map((space) => Board.deserializeSpace(space, players));
+  public static deserialize(board: SerializedBoard, players: ReadonlyArray<IPlayer>): {spaces: Array<Space>} {
+    const spaces = board.spaces.map((space) => Board.deserializeSpace(space, players));
+    return {spaces};
   }
 }
 

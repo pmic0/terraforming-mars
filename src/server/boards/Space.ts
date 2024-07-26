@@ -8,7 +8,12 @@ import {UndergroundResourceToken} from '../../common/underworld/UndergroundResou
 
 export type Space = {
   /** The unique ID of this space*/
-  id: SpaceId;
+  readonly id: SpaceId;
+  /** The x-coordinate of this space, or -1 if it is not the main board (e.g. colony) */
+  readonly x: number;
+  /** The y-coordinate of this space, or -1 if it is not the main board (e.g. colony) */
+  readonly y: number;
+
   /** The type of space: ocean, space colony, etc. */
   spaceType: SpaceType;
   /** The tile placed on top of the space. Could be a hazard tile. */
@@ -20,22 +25,11 @@ export type Space = {
   /** The bonuses granted to players when placing tiles NEXT TO this space. */
   adjacency?: AdjacencyBonus,
 
-  /** The x-coordinate of this space, or -1 if it is not the main board (e.g. colony) */
-  x: number;
-  /** The y-coordinate of this space, or -1 if it is not the main board (e.g. colony) */
-  y: number;
-
   /** Optional underworld expansion resource token. */
   undergroundResources?: UndergroundResourceToken;
   /** Optional underworld player who excavated this resource token. */
   excavator?: IPlayer;
-}
 
-export function newSpace(
-  id: SpaceId,
-  spaceType: SpaceType,
-  x: number,
-  y: number,
-  bonus: Array<SpaceBonus>): Space {
-  return {id, spaceType, x, y, bonus};
+  /** This tile's co-owner. Used for The Moon's Hostile Takeover card. */
+  coOwner?: IPlayer;
 }

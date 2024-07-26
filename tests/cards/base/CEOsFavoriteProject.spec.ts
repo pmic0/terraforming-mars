@@ -10,6 +10,9 @@ import {SelectCard} from '../../../src/server/inputs/SelectCard';
 import {TestPlayer} from '../../TestPlayer';
 import {ICard} from '../../../src/server/cards/ICard';
 import {testGame} from '../../TestGame';
+import {MicroMills} from '../../../src/server/cards/base/MicroMills';
+import {CardName} from '../../../src/common/cards/CardName';
+import {Tardigrades} from '../../../src/server/cards/base/Tardigrades';
 
 describe('CEOsFavoriteProject', function() {
   let card: CEOsFavoriteProject;
@@ -17,11 +20,28 @@ describe('CEOsFavoriteProject', function() {
 
   beforeEach(function() {
     card = new CEOsFavoriteProject();
-    [/* skipped */, player] = testGame(2);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Can not play', function() {
-    expect(card.canPlay(player)).is.not.true;
+  it('Can not play - no cards', function() {
+    expect(card.canPlay(player)).is.false;
+  });
+
+  it('Can not play - no cards that take resources', function() {
+    player.playedCards.push(new MicroMills());
+    expect(card.canPlay(player)).is.false;
+  });
+
+  it('Can not play - no cards that have r esources', function() {
+    player.playedCards.push(new MicroMills(), new SecurityFleet());
+    expect(card.canPlay(player)).is.false;
+  });
+
+  it('Can play', function() {
+    const securityFleet = new SecurityFleet();
+    player.playedCards.push(new MicroMills(), securityFleet);
+    securityFleet.resourceCount = 1;
+    expect(card.canPlay(player)).is.true;
   });
 
   it('Should play', function() {
@@ -54,11 +74,11 @@ describe('CEOsFavoriteProject', function() {
     const srr = new SelfReplicatingRobots();
     const birds = new Birds();
     player.playedCards.push(srr);
-    srr.targetCards.push({card: birds, resourceCount: 1});
+    srr.targetCards.push(birds);
+    birds.resourceCount = 1;
     cast(card.play(player), undefined);
     runAllActions(player.game);
-    const action = cast(player.popWaitingFor(), SelectCard<ICard>);
-    action.cb([birds]);
+    cast(player.popWaitingFor(), undefined);
     expect(srr.targetCards[0].resourceCount).to.eq(2);
   });
 
@@ -66,12 +86,16 @@ describe('CEOsFavoriteProject', function() {
     const birds = new Birds();
     const securityFleet = new SecurityFleet();
     securityFleet.resourceCount++;
-    player.playedCards.push(securityFleet, birds);
+    const tardigrades = new Tardigrades();
+    tardigrades.resourceCount++;
+    player.playedCards.push(securityFleet, birds, tardigrades);
     cast(card.play(player), undefined);
     runAllActions(player.game);
     const action = cast(player.popWaitingFor(), SelectCard<ICard>);
     expect(action.cards).does.not.contain(birds);
     expect(action.cards).does.contain(securityFleet);
-    expect(() => action.cb([birds])).to.throw(Error, /Invalid card/);
+    expect(action.cards).does.contain(tardigrades);
+    // This line really just tests SelectCard, but that's OK.
+    expect(() => action.process({type: 'card', cards: [CardName.BIRDS]})).to.throw(Error, /Card Birds not found/);
   });
 });

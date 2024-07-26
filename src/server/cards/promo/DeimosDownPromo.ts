@@ -27,7 +27,6 @@ export class DeimosDownPromo extends Card implements IProjectCard {
       name,
       tags: [Tag.SPACE],
       cost: 31,
-      tilesBuilt: [TileType.DEIMOS_DOWN],
       metadata,
       behavior: {
         stock: {steel: 4},
@@ -35,7 +34,7 @@ export class DeimosDownPromo extends Card implements IProjectCard {
         removeAnyPlants: 6,
         tile: {
           type: TileType.DEIMOS_DOWN,
-          on: 'city',
+          on: 'away-from-cities',
           adjacencyBonus: adjacencyBonus,
         },
       },

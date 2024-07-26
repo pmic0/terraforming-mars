@@ -12,17 +12,17 @@ describe('MassConverter', function() {
 
   beforeEach(function() {
     card = new MassConverter();
-    [/* skipped */, player] = testGame(2);
+    [/* game */, player] = testGame(2);
   });
 
   it('Can not play', function() {
     player.tagsForTest = {science: 4};
-    expect(player.simpleCanPlay(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
   });
 
   it('Can play', function() {
     player.tagsForTest = {science: 5};
-    expect(player.simpleCanPlay(card)).is.true;
+    expect(card.canPlay(player)).is.true;
   });
 
   it('Should play', function() {

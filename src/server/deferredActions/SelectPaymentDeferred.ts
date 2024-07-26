@@ -1,10 +1,11 @@
 import {IPlayer} from '../IPlayer';
 import {SelectPayment} from '../inputs/SelectPayment';
 import {Payment} from '../../common/inputs/Payment';
-import {DeferredAction, Priority} from './DeferredAction';
+import {DeferredAction} from './DeferredAction';
+import {Priority} from './Priority';
 import {CardName} from '../../common/cards/CardName';
 import {Message} from '../../common/logs/Message';
-import {newMessage} from '../logs/MessageBuilder';
+import {message} from '../logs/MessageBuilder';
 
 export type Options = {
   canUseSteel?: boolean;
@@ -42,7 +43,6 @@ export class SelectPaymentDeferred extends DeferredAction<Payment> {
     if (this.options.canUseAsteroids && this.player.resourcesOnCard(CardName.KUIPER_COOPERATIVE) > 0) {
       return false;
     }
-    // HOOK: Luna Trade Federation
     if (this.player.isCorporation(CardName.LUNA_TRADE_FEDERATION) && this.player.titanium > 0) {
       return false;
     }
@@ -71,7 +71,7 @@ export class SelectPaymentDeferred extends DeferredAction<Payment> {
     }
 
     return new SelectPayment(
-      this.options.title || newMessage('Select how to spend ${0} M€', (b) => b.number(this.amount)),
+      this.options.title || message('Select how to spend ${0} M€', (b) => b.number(this.amount)),
       this.amount,
       {
         steel: this.options.canUseSteel || false,

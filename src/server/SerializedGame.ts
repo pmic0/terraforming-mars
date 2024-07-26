@@ -33,9 +33,8 @@ export type SerializedGame = {
     createdTimeMs: number;
     deferredActions: Array<DeferredAction>;
     donePlayers: Array<PlayerId>;
-    draftedPlayers: Array<PlayerId>;
     draftRound: number;
-    first: SerializedPlayer | PlayerId;
+    first: PlayerId;
     fundedAwards: Array<SerializedFundedAward>;
     gagarinBase: Array<SpaceId>;
     gameAge: number;
@@ -66,8 +65,9 @@ export type SerializedGame = {
     tradeEmbargo?: boolean;
     turmoil?: SerializedTurmoil;
     undoCount: number;
-    underworldData?: UnderworldData;
-    unDraftedCards: Array<[PlayerId, Array<CardName>]>;
+    underworldData: UnderworldData;
+    // TODO(kberg): remove unDraftedCards after 2024-08-01
+    unDraftedCards?: Array<[PlayerId, Array<CardName>]>;
     venusScaleLevel: number;
 }
 

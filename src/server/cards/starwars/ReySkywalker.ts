@@ -7,6 +7,9 @@ import {CardName} from '../../../common/cards/CardName';
 import {CardRenderer} from '../render/CardRenderer';
 import {SelectSpace} from '../../inputs/SelectSpace';
 import {TileType} from '../../../common/TileType';
+import {message} from '../../logs/MessageBuilder';
+import {CardResource} from '../../../common/CardResource';
+import {AresHandler} from '../../ares/AresHandler';
 
 export class ReySkywalker extends Card implements IProjectCard {
   constructor() {
@@ -27,20 +30,19 @@ export class ReySkywalker extends Card implements IProjectCard {
         cardNumber: 'SW09',
         renderData: CardRenderer.builder((b) => {
           b.production((pb) => pb.megacredits(4)).nbsp;
-          b.emptyTile().resourceCube();
+          b.emptyTile().resource(CardResource.RESOURCE_CUBE).asterix();
         }),
-        description: 'Raise your M€ production 4 steps. Place a bronze cube on an empty unreserved space on Mars. No tile may be placed on that space for the rest of the game. (NOTE: currently using the Restricted Area tile instead of a bronze cube.)',
+        description: 'Raise your M€ production 4 steps. Place a bronze cube on an empty unreserved space on Mars. No tile may be placed on that space for the rest of the game.',
       },
     });
   }
 
   public override bespokePlay(player: Player) {
     return new SelectSpace(
-      'Select an empty space to make unavailable for the rest of the game',
-      player.game.board.getAvailableSpacesOnLand(player))
+      message('Select space for ${0}', (b) => b.card(this)),
+      player.game.board.getAvailableSpacesOnLand(player).filter((space) => !AresHandler.hasHazardTile(space)))
       .andThen((space) => {
-        // TODO(kberg): Don't use Restricted Area.
-        space.tile = {tileType: TileType.RESTRICTED_AREA, protectedHazard: true};
+        player.game.simpleAddTile(player, space, {tileType: TileType.REY_SKYWALKER});
         return undefined;
       });
   }

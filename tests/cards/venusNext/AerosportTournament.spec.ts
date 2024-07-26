@@ -10,18 +10,18 @@ describe('AerosportTournament', function() {
   let card: AerosportTournament;
 
   beforeEach(function() {
-    [/* skipped */, player] = testGame(2);
+    [/* game */, player] = testGame(2);
     card = new AerosportTournament();
   });
 
   it('Can play', function() {
     const corp = new Celestic();
-    const [/* skipped */, player] = testGame(2);
-    player.setCorporationForTest(corp);
+    const [/* game */, player] = testGame(2);
+    player.corporations.push(corp);
     corp.resourceCount = 4;
-    expect(player.simpleCanPlay(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
     corp.resourceCount = 5;
-    expect(player.simpleCanPlay(card)).is.true;
+    expect(card.canPlay(player)).is.true;
   });
   it('Play', function() {
     addCity(player, '03');

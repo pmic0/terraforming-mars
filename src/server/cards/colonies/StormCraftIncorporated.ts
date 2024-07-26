@@ -1,26 +1,23 @@
-import {ICorporationCard} from '../corporation/ICorporationCard';
+import {ActiveCorporationCard} from '../corporation/CorporationCard';
 import {IPlayer} from '../../IPlayer';
 import {Tag} from '../../../common/cards/Tag';
 import {CardResource} from '../../../common/CardResource';
 import {AndOptions} from '../../inputs/AndOptions';
 import {SelectAmount} from '../../inputs/SelectAmount';
 import {CardName} from '../../../common/cards/CardName';
-import {CardType} from '../../../common/cards/CardType';
 import {CardRenderer} from '../render/CardRenderer';
 import {Size} from '../../../common/cards/render/Size';
 import {PlayerInput} from '../../PlayerInput';
 import {Resource} from '../../../common/Resource';
-import {ActionCard} from '../ActionCard';
-import {newMessage} from '../../logs/MessageBuilder';
+import {message} from '../../logs/MessageBuilder';
 
-export class StormCraftIncorporated extends ActionCard implements ICorporationCard {
+export class StormCraftIncorporated extends ActiveCorporationCard {
   constructor() {
     super({
       name: CardName.STORMCRAFT_INCORPORATED,
       tags: [Tag.JOVIAN],
       startingMegaCredits: 48,
       resourceType: CardResource.FLOATER,
-      type: CardType.CORPORATION,
 
       action: {
         addResourcesToAnyCard: {type: CardResource.FLOATER, count: 1, autoSelect: true},
@@ -35,11 +32,11 @@ export class StormCraftIncorporated extends ActionCard implements ICorporationCa
           b.corpBox('action', (ce) => {
             ce.vSpace(Size.LARGE);
             ce.action('Add a floater to ANY card.', (eb) => {
-              eb.empty().startAction.floaters(1).asterix();
+              eb.empty().startAction.resource(CardResource.FLOATER).asterix();
             });
             ce.vSpace();
             ce.effect('Floaters on this card may be used as 2 heat each.', (eb) => {
-              eb.startEffect.floaters(1).equals().heat(2);
+              eb.startEffect.resource(CardResource.FLOATER).equals().heat(2);
             });
           });
         }),
@@ -77,7 +74,7 @@ export class StormCraftIncorporated extends ActionCard implements ICorporationCa
       player.stock.deduct(Resource.HEAT, heatAmount);
       return cb();
     });
-    options.title = newMessage('Select how to spend ${0} heat', (b) => b.number(targetAmount));
+    options.title = message('Select how to spend ${0} heat', (b) => b.number(targetAmount));
     return options;
   }
 }

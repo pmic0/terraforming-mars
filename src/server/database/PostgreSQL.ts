@@ -2,7 +2,7 @@ import type * as pg from 'pg';
 import {IDatabase} from './IDatabase';
 import {IGame, Score} from '../IGame';
 import {GameOptions} from '../game/GameOptions';
-import {GameId, ParticipantId} from '../../common/Types';
+import {GameId, ParticipantId, isGameId, safeCast} from '../../common/Types';
 import {SerializedGame} from '../SerializedGame';
 import {daysAgoToSeconds} from './utils';
 import {GameIdLedger} from './IDatabase';
@@ -89,10 +89,6 @@ export class PostgreSQL implements IDatabase {
     return res.rows.map((row) => row.game_id);
   }
 
-  public loadCloneableGame(gameId: GameId): Promise<SerializedGame> {
-    return this.getGameVersion(gameId, 0);
-  }
-
   public async getGame(gameId: GameId): Promise<SerializedGame> {
     // Retrieve last save from database
     const res = await this.client.query('SELECT game game FROM games WHERE game_id = $1 ORDER BY save_id DESC LIMIT 1', [gameId]);
@@ -164,17 +160,21 @@ export class PostgreSQL implements IDatabase {
   async purgeUnfinishedGames(maxGameDays: string | undefined = process.env.MAX_GAME_DAYS): Promise<Array<GameId>> {
     const dateToSeconds = daysAgoToSeconds(maxGameDays, 10);
     const selectResult = await this.client.query('SELECT DISTINCT game_id FROM games WHERE created_time < to_timestamp($1)', [dateToSeconds]);
-    const gameIds = selectResult.rows.slice(0, 1000).map((row) => row.game_id);
-    console.log(`${gameIds.length} games to be purged.`);
+    let gameIds = selectResult.rows.map((row) => row.game_id);
     if (gameIds.length > 1000) {
-      gameIds.length = 1000;
       console.log('Truncated purge to 1000 games.');
+      gameIds = gameIds.slice(0, 1000);
+    } else {
+      console.log(`${gameIds.length} games to be purged.`);
     }
-    // https://github.com/brianc/node-postgres/wiki/FAQ#11-how-do-i-build-a-where-foo-in--query-to-find-rows-matching-an-array-of-values
-    const deleteGamesResult = await this.client.query('DELETE FROM games WHERE game_id = ANY($1)', [gameIds]);
-    console.log(`Purged ${deleteGamesResult.rowCount} rows from games`);
-    const deleteParticipantsResult = await this.client.query('DELETE FROM participants WHERE game_id = ANY($1)', [gameIds]);
-    console.log(`Purged ${deleteParticipantsResult.rowCount} rows from participants`);
+
+    if (gameIds.length > 0) {
+      // https://github.com/brianc/node-postgres/wiki/FAQ#11-how-do-i-build-a-where-foo-in--query-to-find-rows-matching-an-array-of-values
+      const deleteGamesResult = await this.client.query('DELETE FROM games WHERE game_id = ANY($1)', [gameIds]);
+      console.log(`Purged ${deleteGamesResult.rowCount} rows from games`);
+      const deleteParticipantsResult = await this.client.query('DELETE FROM participants WHERE game_id = ANY($1)', [gameIds]);
+      console.log(`Purged ${deleteParticipantsResult.rowCount} rows from participants`);
+    }
     return gameIds;
   }
 
@@ -274,7 +274,7 @@ export class PostgreSQL implements IDatabase {
   public async getParticipants(): Promise<Array<{gameId: GameId, participantIds: Array<ParticipantId>}>> {
     const res = await this.client.query('select game_id, participants from participants');
     return res.rows.map((row) => {
-      return {gameId: row.game_id as GameId, participantIds: row.participants as Array<ParticipantId>};
+      return {gameId: safeCast(row.game_id, isGameId), participantIds: row.participants as Array<ParticipantId>};
     });
   }
 

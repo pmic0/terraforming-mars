@@ -23,7 +23,7 @@ export class NobelLabs extends Card implements IProjectCard, IActionCard {
         cardNumber: 'Pf55',
         renderData: CardRenderer.builder((b) => {
           b.action('Add 2 microbes OR 2 data OR 2 floaters to ANY card.', (eb) => {
-            eb.empty().startAction.microbes(2, {digit}).slash().data({amount: 2, digit}).slash().floaters(2, {digit}).asterix();
+            eb.empty().startAction.resource(CardResource.MICROBE, {amount: 2, digit}).slash().resource(CardResource.DATA, {amount: 2, digit}).slash().resource(CardResource.FLOATER, {amount: 2, digit}).asterix();
           });
         }),
         description: 'Requires 4 science tags.',
@@ -31,7 +31,7 @@ export class NobelLabs extends Card implements IProjectCard, IActionCard {
     });
   }
 
-  private static RESOURCE_TYPES: Array<CardResource> = [CardResource.MICROBE, CardResource.DATA, CardResource.FLOATER];
+  private static RESOURCE_TYPES: Array<CardResource> = [CardResource.MICROBE, CardResource.DATA, CardResource.FLOATER, CardResource.WARE];
   private static PREDICATE = (card: ICard) => card.resourceType !== undefined && NobelLabs.RESOURCE_TYPES.includes(card.resourceType);
 
   public canAct(player: IPlayer) {
