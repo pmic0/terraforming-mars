@@ -39,6 +39,9 @@ export enum Phase {
   /** Does some cleanup and also executes the rulebook's turn order phase. */
   INTERGENERATION = 'intergeneration',
 
+   INITIALRESEARCH = 'initial_research',
+    FINALGREEN = 'final_green',
+
   /** The game is over. */
   END = 'end',
 

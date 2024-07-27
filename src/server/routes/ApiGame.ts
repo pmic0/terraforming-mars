@@ -32,10 +32,10 @@ export class ApiGame extends Handler {
     const bot = ctx.url.searchParams.get('bot');
     if(!bot){
       const model = Server.getSimpleGameModel(game);
-      ctx.route.writeJson(res, model);
+      responses.writeJson(res, model);
     } else {
       const model = Server.getSimpleGameModelBot(game);
-      ctx.route.writeJson(res, model);
+      responses.writeJson(res, model);
     }
 
   }
