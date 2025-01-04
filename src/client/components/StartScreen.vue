@@ -17,6 +17,7 @@
       <div class="start-screen-version-cont">
         <div class="nowrap start-screen-date"><span v-i18n>deployed</span>: {{raw_settings.builtAt}}</div>
         <div class="nowrap start-screen-version"><span v-i18n>version</span>: {{raw_settings.head}}</div>
+        <div class="nowrap"><span v-i18n>Wersja dla Pepo 11.08.2024</span></div>
       </div>
       <div class="source-code">
         <a href="https://github.com/terraforming-mars/terraforming-mars" target="_blank" class="source-code-text">

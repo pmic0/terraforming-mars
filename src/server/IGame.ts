@@ -168,7 +168,7 @@ export interface IGame extends Logger {
   increaseTemperature(player: IPlayer, increments: -2 | -1 | 1 | 2 | 3): undefined;
   getTemperature(): number;
   getGeneration(): number;
-  getPassedPlayers():ReadonlyArray<Color>;
+  getPassedPlayers():Array<Color>;
   /**
    * Add `tile` to `space` for `player`. Triggers all effects that come with placing a tile.
    *
