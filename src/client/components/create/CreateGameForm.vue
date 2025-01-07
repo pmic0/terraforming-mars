@@ -12,12 +12,16 @@
                     <div class="create-game-page-container">
                         <div class="create-game-page-column">
                             <h4 v-i18n>№ of Players</h4>
-                            <div v-for="pCount in [1,2,3,4,5,6]" v-bind:key="pCount">
-                              <input type="radio" :value="pCount" name="playersCount" v-model="playersCount" :id="pCount+'-radio'">
-                              <label :for="pCount+'-radio'">
-                                  {{ getPlayersCountText(pCount) }}
-                              </label>
-                            </div>
+
+                            <template v-for="pCount in [1,2,3,4,5,6,7,8]">
+                              <div v-bind:key="pCount">
+                                <input type="radio" :value="pCount" name="playersCount" v-model="playersCount" :id="pCount+'-radio'">
+                                <label :for="pCount+'-radio'">
+                                    {{ getPlayersCountText(pCount) }}
+                                </label>
+                              </div>
+                            </template>
+
                         </div>
 
                         <div class="create-game-page-column">
@@ -421,7 +425,9 @@
                                               <input class="form-input form-inline create-game-player-name" :placeholder="getPlayerNamePlaceholder(index)" v-model="newPlayer.name" />
                                           </div>
                                           <div class="create-game-page-color-row">
-                                              <template v-for="color in PLAYER_COLORS">
+
+                                              <template v-for="color in ['Red', 'Green', 'Yellow', 'Blue', 'Black', 'Purple', 'Orange', 'Pink', 'Lred', 'Lyellow', 'Lgreen', 'Lblue']">
+
                                                 <div v-bind:key="color">
                                                   <input type="radio" :value="color" :name="'playerColor' + (index + 1)" v-model="newPlayer.color" :id="'radioBox' + color + (index + 1)">
                                                   <label :for="'radioBox' + color + (index + 1)">
@@ -568,14 +574,18 @@ export default (Vue as WithRefs<Refs>).extend({
       firstIndex: 1,
       playersCount: 1,
       players: [
-        {name: '', color: Color.RED, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.GREEN, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.YELLOW, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.BLUE, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.BLACK, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.PURPLE, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.ORANGE, beginner: false, handicap: 0, first: false},
-        {name: '', color: Color.PINK, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.RED, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.GREEN, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.YELLOW, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.BLUE, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.BLACK, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.PURPLE, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.ORANGE, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.PINK, beginner: false, handicap: 0, first: false},
+        {name: '', color: Color.LRED, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.LYELLOW, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.LGREEN, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.LBLUE, beginner: false, handicap: 0, first: false},              
       ],
       expansions: {...DEFAULT_EXPANSIONS},
       draftVariant: true,

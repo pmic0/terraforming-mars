@@ -5,7 +5,7 @@
       <div class="start-screen-title-top">TERRAFORMING</div>
       <div class="start-screen-title-bottom">MARS</div>
     </div>
-    <a class="start-screen-link start-screen-link--new-game" href="new-game" v-i18n>New game</a>
+    <a class="start-screen-link start-screen-link--new-game" href="new-game" v-i18n>Niu Gejm</a>
     <a class="start-screen-link start-screen-link--how-to-play" href="https://github.com/terraforming-mars/terraforming-mars/wiki/Rulebooks" target="_blank" v-i18n>How to Play</a>
     <a class="start-screen-link start-screen-link--cards-list" href="cards" target="_blank" v-i18n>Cards list</a>
     <a class="start-screen-link start-screen-link--board-game" href="https://boardgamegeek.com/boardgame/167791/terraforming-mars" target="_blank" v-i18n>Board game</a>
@@ -17,6 +17,7 @@
       <div class="start-screen-version-cont">
         <div class="nowrap start-screen-date"><span v-i18n>deployed</span>: {{raw_settings.builtAt}}</div>
         <div class="nowrap start-screen-version"><span v-i18n>version</span>: {{raw_settings.head}}</div>
+        <div class="nowrap"><span v-i18n>Wersja dla Pepo 11.08.2024</span></div>
       </div>
       <div class="source-code">
         <a href="https://github.com/terraforming-mars/terraforming-mars" target="_blank" class="source-code-text">
