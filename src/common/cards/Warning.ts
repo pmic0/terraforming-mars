@@ -12,4 +12,6 @@ export type Warning =
  'preludeFizzle' |
  'underworldMustExcavateEnergy' |
  'deckTooSmall' |
- 'cannotAffordBoardOfDirectors';
+ 'cannotAffordBoardOfDirectors' |
+ 'marsIsTerraformed' |
+ 'ineffectiveDoubleDown';

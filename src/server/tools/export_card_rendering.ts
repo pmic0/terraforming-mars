@@ -3,8 +3,8 @@ import * as fs from 'fs';
 
 import {ALL_MODULE_MANIFESTS} from '../cards/AllManifests';
 import {CardManifest, GlobalEventManifest, ModuleManifest} from '../cards/ModuleManifest';
-import {ICard} from '../cards/ICard';
-import {GameModule} from '../../common/cards/GameModule';
+import {ICard, isIActionCard} from '../cards/ICard';
+import {Expansion, GameModule} from '../../common/cards/GameModule';
 import {IGlobalEvent} from '../turmoil/globalEvents/IGlobalEvent';
 import {IClientGlobalEvent} from '../../common/turmoil/IClientGlobalEvent';
 import {ClientCard} from '../../common/cards/ClientCard';
@@ -43,7 +43,7 @@ class CardProcessor {
     }
   }
 
-  private static processCard(module: GameModule, card: ICard, compatibility: undefined | OneOrArray<GameModule>) {
+  private static processCard(module: GameModule, card: ICard, compatibility: undefined | OneOrArray<Expansion>) {
     if (card.type === CardType.PROXY) return;
     let startingMegaCredits = undefined;
     let cardCost = undefined;
@@ -71,6 +71,7 @@ class CardProcessor {
       startingMegaCredits: startingMegaCredits,
       cardCost: cardCost,
       compatibility: [],
+      hasAction: isIActionCard(card),
     };
 
     if (Array.isArray(compatibility)) {

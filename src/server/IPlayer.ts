@@ -34,6 +34,7 @@ import {Stock} from './player/Stock';
 import {UnderworldPlayerData} from './underworld/UnderworldData';
 import {AlliedParty} from './turmoil/AlliedParty';
 import {IParty} from './turmoil/parties/IParty';
+import {Message} from '../common/logs/Message';
 
 export type ResourceSource = IPlayer | GlobalEventName | ICard;
 
@@ -50,7 +51,7 @@ export type CanAffordOptions = Partial<PaymentOptions> & {
  *   only play the card (used for replaying a card)
  *   or do nothing.
  */
-export type CardAction = 'add' | 'discard' | 'nothing' | 'action-only';
+export type CardAction = 'add' | 'discard' | 'nothing' | 'double-down';
 
 export interface IPlayer {
   readonly id: PlayerId;
@@ -102,7 +103,7 @@ export interface IPlayer {
   dealtCeoCards: Array<ICeoCard>;
   dealtProjectCards: Array<IProjectCard>;
   cardsInHand: Array<IProjectCard>;
-  preludeCardsInHand: Array<IProjectCard>;
+  preludeCardsInHand: Array<IPreludeCard>;
   ceoCardsInHand: Array<IProjectCard>;
   playedCards: Array<IProjectCard>;
   cardCost: number;
@@ -120,6 +121,7 @@ export interface IPlayer {
   turmoilPolicyActionUsed: boolean;
   politicalAgendasActionUsedCount: number;
 
+  /** Lakefront Resorts increases ocean adjacency to 3 MC  */
   oceanBonus: number;
 
   // Custom cards
@@ -135,6 +137,12 @@ export interface IPlayer {
   // removedFromPlayCards is a bit of a misname: it's a temporary storage for
   // cards that provide 'next card' discounts. This will clear between turns.
   removedFromPlayCards: Array<IProjectCard>;
+  /**
+   * When true, Preservation Program is in effect, and the player has not triggered a TR gain this generation.
+   *
+   * False when the player does not have Preservation Program, or after the first TR in the action phase.
+   */
+  preservationProgram: boolean;
 
   // The number of actions a player can take this round.
   // It's almost always 2, but certain cards can change this value.
@@ -165,6 +173,10 @@ export interface IPlayer {
    * Return the corporation card this player has played by the given name, or throw an Error.
    */
   getCorporationOrThrow(corporationName: CardName): ICorporationCard;
+  /**
+   * Return the card this player has played by the given name, or `undefined`.
+   */
+  getPlayedCard(cardName: CardName): ICard | undefined;
   getTitaniumValue(): number;
   increaseTitaniumValue(): void;
   decreaseTitaniumValue(): void;
@@ -181,6 +193,7 @@ export interface IPlayer {
   getActionsThisGeneration(): Set<CardName>;
   addActionThisGeneration(cardName: CardName): void;
   getVictoryPoints(): IVictoryPointsBreakdown;
+  /* A card is in effect if it is played. This does not apply to corporations. It could. */
   cardIsInEffect(cardName: CardName): boolean;
   hasProtectedHabitats(): boolean;
   plantsAreProtected(): boolean;
@@ -192,14 +205,13 @@ export interface IPlayer {
    * isn't protected.
    */
   canHaveProductionReduced(resource: Resource, minQuantity: number, attacker: IPlayer): boolean;
-  maybeBlockAttack(perpetrator: IPlayer, cb: (proceed: boolean) => PlayerInput | undefined): void;
-
   /**
-   * Return true if this player cannot have their production reduced.
-   *
-   * It can if this player is attacking themselves, or if this player has played Private Security.
+   * Give this player a chance to block an attack made by `perpetrator`. Call `cb` with true if the attack
+   * is not blocked.
    */
-  productionIsProtected(attacker: IPlayer): boolean;
+  maybeBlockAttack(perpetrator: IPlayer, message: Message | string, cb: (proceed: boolean) => PlayerInput | undefined): void;
+  attack(perpetrator: IPlayer, type: Resource, count: number, options?: {log?: boolean, stealing?: boolean}): void;
+
   /**
    * In the multiplayer game, after an attack, the attacked player makes a claim
    * for insurance. If Mons Insurance is in the game, the claimant will receive
@@ -234,6 +246,11 @@ export interface IPlayer {
    */
   getGlobalParameterRequirementBonus(parameter: GlobalParameter): number;
   /**
+   * Called when this player is responsible for increasing a global parameter.
+   */
+  onGlobalParameterIncrease(parameter: GlobalParameter, steps: number): void;
+  readonly globalParameterSteps: Record<GlobalParameter, number>;
+  /**
    * Remove resources from this player's played card
    */
   removeResourceFrom(card: ICard, count?: number, options?: {removingPlayer? : IPlayer, log?: boolean}): void;
@@ -266,7 +283,6 @@ export interface IPlayer {
   getUsableOPGCeoCards(): Array<ICeoCard>;
   runProductionPhase(): void;
   finishProductionPhase(): void;
-  worldGovernmentTerraforming(): void;
 
   runResearchPhase(): void;
   getCardCost(card: IProjectCard): number;

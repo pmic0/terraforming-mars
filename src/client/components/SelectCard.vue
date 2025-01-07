@@ -125,7 +125,15 @@ export default Vue.extend({
       return cards;
     },
     hasCardWarning() {
+      // This is pretty clunky, to be honest.
       if (Array.isArray(this.cards)) {
+        if (this.cards.length === 1) {
+          this.warnings = this.cards[0].warnings;
+          if (this.cards[0].warning !== undefined) {
+            this.warning = this.cards[0].warning;
+            return true;
+          }
+        }
         return false;
       } else if (typeof this.cards === 'object') {
         this.warnings = this.cards.warnings;
@@ -138,6 +146,16 @@ export default Vue.extend({
     },
     getData(): Array<CardName> {
       return Array.isArray(this.$data.cards) ? this.$data.cards.map((card) => card.name) : [this.$data.cards.name];
+    },
+    canSave() {
+      const len = this.getData().length;
+      if (len > this.playerinput.min) {
+        return false;
+      }
+      if (len < this.playerinput.max) {
+        return false;
+      }
+      return true;
     },
     saveData() {
       this.onsave({type: 'card', cards: this.getData()});

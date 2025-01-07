@@ -58,6 +58,7 @@ import {LunarEmbassy} from './LunarEmbassy';
 import {LuxuryEstate} from './LuxuryEstate';
 import {MagneticFieldStimulationDelays} from './MagneticFieldStimulationDelays';
 import {MarsDirect} from './MarsDirect';
+import {MarsFrontierAlliance} from './MarsFrontierAlliance';
 import {MarsMaths} from './MarsMaths';
 import {MartianCulture} from './MartianCulture';
 import {MartianDustProcessingPlant} from './MartianDustProcessingPlant';
@@ -113,7 +114,6 @@ import {VeneraBase} from './VeneraBase';
 import {VenusFirst} from './VenusFirst';
 import {VitalColony} from './VitalColony';
 import {Wetlands} from './Wetlands';
-import {MarsFrontierAlliance} from './MarsFrontierAlliance';
 
 export const PATHFINDERS_CARD_MANIFEST = new ModuleManifest({
   module: 'pathfinders',

@@ -19,7 +19,7 @@ export class HiredRaiders extends Card implements IProjectCard {
       cost: 1,
 
       metadata: {
-        cardNumber: 'U00',
+        cardNumber: 'UX02',
         renderData: CardRenderer.builder((b) => {
           b.text('steal', Size.MEDIUM, true).megacredits(3, {all})
             .plus().megacredits(2, {all}).slash().corruption();
@@ -46,12 +46,7 @@ export class HiredRaiders extends Card implements IProjectCard {
         const optionTitle = message('Steal ${0} M€ from ${1}', (b) => b.number(amountStolen).player(target));
 
         availableActions.options.push(new SelectOption(optionTitle).andThen(() => {
-          target.maybeBlockAttack(player, (proceed) => {
-            if (proceed) {
-              target.stock.steal(Resource.MEGACREDITS, amountStolen, player);
-            }
-            return undefined;
-          });
+          target.attack(player, Resource.MEGACREDITS, amountStolen, {log: true, stealing: true});
           return undefined;
         }));
       }

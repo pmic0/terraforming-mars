@@ -33,6 +33,7 @@ import {Tile} from './Tile';
 import {Logger} from './logs/Logger';
 import {GlobalParameter} from '../common/GlobalParameter';
 import {UnderworldData} from './underworld/UnderworldData';
+import {OrOptions} from './inputs/OrOptions';
 
 export interface Score {
   corporation: String;
@@ -81,9 +82,10 @@ export interface IGame extends Logger {
   underworldData: UnderworldData;
 
   // Card-specific data
-  // Mons Insurance promo corp
+
+  /* An optimization to see if anyone owns Mons Insurance */
   monsInsuranceOwner?: PlayerId; // Not serialized
-  // Crash Site promo project
+  /* For the promo Crash Site. */
   someoneHasRemovedOtherPlayersPlants: boolean;
   // Syndicate Pirate Raids
   syndicatePirateRaider?: PlayerId;
@@ -103,6 +105,9 @@ export interface IGame extends Logger {
   /** True when Behold The Emperor is in effect this coming Turmoil phase */
   beholdTheEmperor: boolean;
 
+  /* Double Down: tracking when an action is due to double down. Does not need to be serialized. */
+  inDoubleDown: boolean;
+
   /** The set of tags available in this game. */
   readonly tags: ReadonlyArray<Tag>;
   // Function use to properly start the game: with project draft or with research phase
@@ -111,7 +116,6 @@ export interface IGame extends Logger {
   gotoInitialResearchPhase(): void;
   gotoResearchPhase(): void;
   save(): void;
-  toJSON(): string;
   serialize(): SerializedGame;
   isSoloMode() :boolean;
   // Retrieve a player by it's id
@@ -137,7 +141,6 @@ export interface IGame extends Logger {
   readonly first: IPlayer;
   gameIsOver(): boolean;
   isDoneWithFinalProduction(): boolean;
-  doneWorldGovernmentTerraforming(): void;
   playerHasPassed(player: IPlayer): void;
   hasResearched(player: IPlayer): boolean;
   playerIsFinishedWithResearchPhase(player: IPlayer): void;
@@ -161,6 +164,9 @@ export interface IGame extends Logger {
    * If nobody can add a greenery, end the game.
    */
   /* for testing */ takeNextFinalGreeneryAction(): void;
+  /* for testing */ worldGovernmentTerraforming(): void;
+  /* for World Government Advisor */
+  worldGovernmentTerraformingInput(player: IPlayer): OrOptions;
   increaseOxygenLevel(player: IPlayer, increments: -2 | -1 | 1 | 2): void;
   getOxygenLevel(): number;
   increaseVenusScaleLevel(player: IPlayer, increments: -1 | 1 | 2 | 3): number;
@@ -187,7 +193,7 @@ export interface IGame extends Logger {
    *
    * This includes bonuses on the map, from oceans, Ares tiles, Turmoil, Colonies, etc.
    */
-  grantPlacementBonuses(player: IPlayer, space: Space, coveringExistingTile: boolean): void
+  grantPlacementBonuses(player: IPlayer, space: Space, coveringExistingTile?: boolean): void
 
   /**
    * Gives all the bonuses from a space on the map.
@@ -201,7 +207,7 @@ export interface IGame extends Logger {
   addOcean(player: IPlayer, space: Space): void;
   removeTile(spaceId: string): void;
   getPlayers(): ReadonlyArray<IPlayer>;
-  // Players returned in play order starting with first player this generation.
+  /* Players returned in play order starting with first player this generation. */
   getPlayersInGenerationOrder(): ReadonlyArray<IPlayer>;
   /**
    * Returns the Player holding this card, or throws.

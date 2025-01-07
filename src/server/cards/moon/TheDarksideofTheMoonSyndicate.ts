@@ -28,7 +28,7 @@ export class TheDarksideofTheMoonSyndicate extends CorporationCard {
       },
 
       metadata: {
-        cardNumber: '',
+        cardNumber: 'MC3',
         renderData: CardRenderer.builder((b) => {
           b.megacredits(40).resource(CardResource.SYNDICATE_FLEET, 2).br;
           b.text('You start with 40 M€ and 2 syndicate fleets on this card.', Size.SMALL, false, false).br;
@@ -64,12 +64,7 @@ export class TheDarksideofTheMoonSyndicate extends CorporationCard {
       orOptions.options.push(new SelectOption('Remove 1 syndicate fleet from this card to steal 2M€ from every opponent.', 'Remove syndicate fleet').andThen(() => {
         player.removeResourceFrom(this);
         for (const target of player.getOpponents()) {
-          target.maybeBlockAttack(player, (proceed) => {
-            if (proceed) {
-              target.stock.steal(Resource.MEGACREDITS, 2, player);
-            }
-            return undefined;
-          });
+          target.attack(player, Resource.MEGACREDITS, 2, {stealing: true});
         }
         return undefined;
       }));
