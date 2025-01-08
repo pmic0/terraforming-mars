@@ -27,10 +27,10 @@ export type GameOptions = {
   communityCardsOption: boolean;
   aresExtension: boolean;
   aresHazards: boolean;
+  aresExtremeVariant: boolean;
   politicalAgendasExtension: AgendaStyle;
   solarPhaseOption: boolean;
   removeNegativeGlobalEventsOption: boolean;
-  includeVenusMA: boolean;
   moonExpansion: boolean;
   pathfindersExpansion: boolean;
   ceoExtension: boolean;
@@ -46,6 +46,7 @@ export type GameOptions = {
   shuffleMapOption: boolean;
   randomMA: RandomMAOptionType;
   includeFanMA: boolean;
+  modularMA: boolean;
   soloTR: boolean; // Solo victory by getting TR 63 by game end
   customCorporationsList: Array<CardName>;
   bannedCards: Array<CardName>;
@@ -54,6 +55,8 @@ export type GameOptions = {
   customPreludes: Array<CardName>;
   customCeos: Array<CardName>;
   startingCeos: number;
+  // TODO(maserion): Remove '?' by 2025-01-01
+  startingPreludes?: number;
   /** Moon must be completed to end the game */
   requiresMoonTrackCompletion: boolean;
   /** Venus must be completed to end the game */
@@ -75,6 +78,7 @@ export const DEFAULT_GAME_OPTIONS: GameOptions = {
   altVenusBoard: false,
   aresExtension: false,
   aresHazards: true,
+  aresExtremeVariant: false,
   boardName: BoardName.THARSIS,
   bannedCards: [],
   includedCards: [],
@@ -94,9 +98,9 @@ export const DEFAULT_GAME_OPTIONS: GameOptions = {
   escapeVelocityPeriod: constants.DEFAULT_ESCAPE_VELOCITY_PERIOD, // VP a player loses for every `escapeVelocityPenalty` minutes after `escapeVelocityThreshold`.
   escapeVelocityPenalty: constants.DEFAULT_ESCAPE_VELOCITY_PENALTY,
   fastModeOption: false,
-  includeVenusMA: true,
   includeFanMA: false,
   initialDraftVariant: false,
+  modularMA: false,
   moonExpansion: false,
   moonStandardProjectVariant: false,
   moonStandardProjectVariant1: false,
@@ -115,8 +119,9 @@ export const DEFAULT_GAME_OPTIONS: GameOptions = {
   shuffleMapOption: false,
   solarPhaseOption: false,
   soloTR: false,
-  startingCeos: 3,
-  startingCorporations: 2,
+  startingCeos: constants.CEO_CARDS_DEALT_PER_PLAYER,
+  startingCorporations: constants.CORPORATION_CARDS_DEALT_PER_PLAYER,
+  startingPreludes: constants.PRELUDE_CARDS_DEALT_PER_PLAYER,
   starWarsExpansion: false,
   turmoilExtension: false,
   underworldExpansion: false,

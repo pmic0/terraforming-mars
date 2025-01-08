@@ -4,7 +4,7 @@ import {CardName} from '../../../common/cards/CardName';
 import {CardRenderer} from '../render/CardRenderer';
 import {Card} from '../Card';
 import {IPlayer} from '../../IPlayer';
-import {SelectSpace} from '../../inputs/SelectSpace';
+import {PlaceCityTile} from '../../deferredActions/PlaceCityTile';
 import {Tag} from '../../../common/cards/Tag';
 
 export class GaiaCity extends Card implements IProjectCard {
@@ -25,7 +25,7 @@ export class GaiaCity extends Card implements IProjectCard {
         }),
         description: 'Reduce your energy production one step and increase your M€ production 2 steps. ' +
         'Place a city in a space with ANY player\'s excavation marker. ' +
-        'Its placement bonus is doubled (including adjacencies.)',
+        'Its placement bonus is doubled (including adjacencies.) Regular placement restriction still apply.',
       },
     });
   }
@@ -41,13 +41,13 @@ export class GaiaCity extends Card implements IProjectCard {
   }
 
   public override bespokePlay(player: IPlayer) {
-    return new SelectSpace(
-      'Select space for a city tile',
-      this.availableSpaces(player))
-      .andThen((space) => {
-        player.game.addCity(player, space);
-        player.game.grantPlacementBonuses(player, space, /* coveringExistingTile= */false);
-        return undefined;
-      });
+    player.game.defer(new PlaceCityTile(player, {
+      spaces: this.availableSpaces(player),
+    })).andThen((space) => {
+      if (space) {
+        player.game.grantPlacementBonuses(player, space);
+      }
+    });
+    return undefined;
   }
 }

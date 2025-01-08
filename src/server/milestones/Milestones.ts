@@ -18,18 +18,16 @@ import {RimSettler} from './RimSettler';
 import {Networker} from './Networker';
 import {OneGiantStep} from '../moon/OneGiantStep';
 import {Lunarchitect} from '../moon/Lunarchitect';
-import {Economizer} from './Economizer';
-import {Pioneer} from './Pioneer';
-import {LandSpecialist} from './LandSpecialist';
-import {Martian} from './Martian';
-import {Businessperson} from './Businessperson';
+import {Economizer} from './arabiaTerra/Economizer';
+import {Pioneer} from './arabiaTerra/Pioneer';
+import {LandSpecialist} from './arabiaTerra/LandSpecialist';
+import {Martian} from './arabiaTerra/Martian';
 import {Capitalist} from './Capitalist';
-import {Electrician} from './Electrician';
+import {VElectrician} from './VElectrician';
 import {Irrigator} from './Irrigator';
 import {Smith} from './Smith';
 import {Tradesman} from './Tradesman';
 import {Colonizer} from './amazonisPlanitia/Colonizer';
-import {Farmer} from './amazonisPlanitia/Farmer';
 import {Minimalist} from './amazonisPlanitia/Minimalist';
 import {Terran} from './amazonisPlanitia/Terran';
 import {Tropicalist} from './amazonisPlanitia/Tropicalist';
@@ -40,6 +38,23 @@ import {Spacefarer} from './terraCimmeria/Spacefarer';
 import {TerraPioneer} from './terraCimmeria/TerraPioneer';
 import {Risktaker} from './underworld/Risktaker';
 import {Tunneler} from './underworld/Tunneler';
+import {Forester} from './modular/Forester';
+import {Fundraiser} from './modular/Fundraiser';
+import {Geologist} from './modular/Geologist';
+import {Landshaper} from './modular/Landshaper';
+import {Philantropist} from './modular/Philantropist';
+import {Planetologist} from './modular/Planetologist';
+import {Producer} from './modular/Producer';
+import {Researcher} from './modular/Researcher';
+import {Sponsor} from './modular/Sponsor';
+import {Lobbyist} from './modular/Lobbyist';
+import {Breeder} from './modular/Breeder';
+// import {Briber} from './modular/Briber';
+import {ThermoEngineer} from './modular/ThermoEngineer';
+import {Hydrologist} from './modular/Hydrologist';
+import {Thawer} from './modular/Thawer';
+import {Purifier} from './Purifier';
+// import {Merchant} from './modular/Merchant';
 
 export const THARSIS_MILESTONES = [
   new Terraformer(),
@@ -79,6 +94,7 @@ export const HELLAS_MILESTONES = [
 
 export const ARES_MILESTONES = [
   new Networker(),
+  new Purifier(),
 ];
 
 export const MOON_MILESTONES = [
@@ -88,7 +104,7 @@ export const MOON_MILESTONES = [
 
 export const AMAZONIS_PLANITIA_MILESTONES = [
   new Colonizer(),
-  new Farmer(),
+  new Forester(),
   new Minimalist(),
   new Terran(),
   new Tropicalist(),
@@ -99,7 +115,7 @@ export const ARABIA_TERRA_MILESTONES = [
   new Pioneer(),
   new LandSpecialist(),
   new Martian(),
-  new Businessperson(),
+  new Terran(), // Duplicate of Amazonis Planitia
 ];
 
 export const TERRA_CIMMERIA_MILESTONES = [
@@ -111,7 +127,7 @@ export const TERRA_CIMMERIA_MILESTONES = [
 ];
 
 export const VASTITAS_BOREALIS_MILESTONES = [
-  new Electrician(),
+  new VElectrician(),
   new Smith(),
   new Tradesman(),
   new Irrigator(),
@@ -121,6 +137,24 @@ export const VASTITAS_BOREALIS_MILESTONES = [
 export const UNDERWORLD_MILESTONES = [
   new Risktaker(),
   new Tunneler(),
+];
+
+export const MODULAR_MILESTONES = [
+  new Breeder(),
+  // new Briber(),
+  new Fundraiser(),
+  new Geologist(),
+  new Hydrologist(),
+  new Landshaper(),
+  new Lobbyist(),
+  // new Merchant(),
+  new Philantropist(),
+  new Planetologist(),
+  new Producer(),
+  new Researcher(),
+  new Sponsor(),
+  new Thawer(),
+  new ThermoEngineer(),
 ];
 
 export const ALL_MILESTONES = [
@@ -136,17 +170,18 @@ export const ALL_MILESTONES = [
   ...TERRA_CIMMERIA_MILESTONES,
   ...VASTITAS_BOREALIS_MILESTONES,
   ...UNDERWORLD_MILESTONES,
+  ...MODULAR_MILESTONES,
 ];
 
 // Remove namespace and rename function
-export namespace Milestones {
-  export const ALL = ALL_MILESTONES;
+export function getMilestoneByName(name: string): IMilestone | undefined {
+  return ALL_MILESTONES.find((m) => m.name === name);
+}
 
-  export function getByName(name: string): IMilestone {
-    const milestone = ALL_MILESTONES.find((m) => m.name === name);
-    if (milestone) {
-      return milestone;
-    }
-    throw new Error(`Milestone ${name} not found.`);
+export function getMilestoneByNameOrThrow(name: string): IMilestone {
+  const milestone = getMilestoneByName(name);
+  if (milestone) {
+    return milestone;
   }
+  throw new Error(`Milestone ${name} not found.`);
 }

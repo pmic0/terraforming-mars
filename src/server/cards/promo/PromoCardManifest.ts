@@ -12,6 +12,7 @@ import {Astrodrill} from './Astrodrill';
 import {BactoviralResearch} from './BactoviralResearch';
 import {BioPrintingFacility} from './BioPrintingFacility';
 import {CarbonNanosystems} from './CarbonNanosystems';
+import {Casinos} from './Casinos';
 import {CityPark} from './CityPark';
 import {CometAiming} from './CometAiming';
 import {CorporateArchives} from './CorporateArchives';
@@ -62,6 +63,7 @@ import {Philares} from './Philares';
 import {Potatoes} from './Potatoes';
 import {ProjectInspection} from './ProjectInspection';
 import {Psyche} from './16Psyche';
+import {PublicBaths} from './PublicBaths';
 import {Recyclon} from './Recyclon';
 import {RedShips} from './RedShips';
 import {RegoPlastics} from './RegoPlastics';
@@ -82,6 +84,7 @@ import {Teslaract} from './Teslaract';
 import {TopsoilContract} from './TopsoilContract';
 import {TychoMagnetics} from './TychoMagnetics';
 import {StrategicBasePlanning} from './StrategicBasePlanning';
+import {Hospitals} from './Hospitals';
 
 export const PROMO_CARD_MANIFEST = new ModuleManifest({
   module: 'promo',
@@ -150,6 +153,9 @@ export const PROMO_CARD_MANIFEST = new ModuleManifest({
     [CardName.SOIL_ENRICHMENT]: {Factory: SoilEnrichment},
     [CardName.CITY_PARK]: {Factory: CityPark},
     [CardName.SUPERMARKETS]: {Factory: Supermarkets},
+    [CardName.HOSPITALS]: {Factory: Hospitals},
+    [CardName.CASINOS]: {Factory: Casinos},
+    [CardName.PUBLIC_BATHS]: {Factory: PublicBaths},
   },
 
   preludeCards: {
@@ -159,7 +165,7 @@ export const PROMO_CARD_MANIFEST = new ModuleManifest({
     [CardName.DOUBLE_DOWN]: {Factory: DoubleDown, compatibility: 'prelude'},
     // [CardName.HEAD_START]: {Factory: HeadStart}, // Head Start is disabled because it's not working well.
     [CardName.ANTI_DESERTIFICATION_TECHNIQUES]: {Factory: AntidesertificationTechniques},
-    // [CardName.ESTABLISHED_METHODS]: {Factory: EstablishedMethods},
+    // [CardName.ESTABLISHED_METHODS]: {Factory: EstablishedMethods}, // X54
     [CardName.GIANT_SOLAR_COLLECTOR]: {Factory: GiantSolarCollector, compatibility: 'venus'},
     [CardName.STRATEGIC_BASE_PLANNING]: {Factory: StrategicBasePlanning, compatibility: 'colonies'},
   },

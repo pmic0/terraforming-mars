@@ -18,27 +18,42 @@ import {Contractor} from './Contractor';
 import {Entrepreneur} from './Entrepreneur';
 import {FullMoon} from '../moon/FullMoon';
 import {LunarMagnate} from '../moon/LunarMagnate';
-import {CosmicSettler} from './CosmicSettler';
-import {Botanist} from './Botanist';
-import {Coordinator} from './Coordinator';
-import {Zoologist} from './Zoologist';
-import {Manufacturer} from './Manufacturer';
-import {Adapter} from './Adapter';
+import {CosmicSettler} from './arabiaTerra/CosmicSettler';
+import {Botanist} from './arabiaTerra/Botanist';
+import {Promoter} from './arabiaTerra/Promoter';
+import {Zoologist} from './arabiaTerra/Zoologist';
+import {AManufacturer} from './arabiaTerra/Manufacturer';
+import {Forecaster} from './Forecaster';
 import {Edgedancer} from './Edgedancer';
-import {Hoarder} from './Hoarder';
+import {Visionary} from './Visionary';
 import {Naturalist} from './Naturalist';
 import {Voyager} from './Voyager';
 import {Curator} from './amazonisPlanitia/Curator';
-import {Engineer} from './amazonisPlanitia/Engineer';
+import {AmazonisEngineer} from './amazonisPlanitia/AmazonisEngineer';
 import {Tourist} from './amazonisPlanitia/Tourist';
 import {Biologist} from './terraCimmeria/Biologist';
 import {Economizer2} from './terraCimmeria/Economizer2';
-import {Politician} from './terraCimmeria/Politician';
+import {TPolitician} from './terraCimmeria/TPolitician';
 import {Urbanist} from './terraCimmeria/Urbanist';
 import {Warmonger} from './terraCimmeria/Warmonger';
 import {Zoologist2} from './amazonisPlanitia/Zoologist';
 import {Kingpin} from './underworld/Kingpin';
 import {EdgeLord} from './underworld/EdgeLord';
+import {Administrator} from './modular/Administrator';
+import {Constructor} from './modular/Constructor';
+import {Founder} from './modular/Founder';
+import {Highlander} from './modular/Highlander';
+import {Investor} from './modular/Investor';
+import {Landscaper} from './modular/Landscaper';
+import {Metropolist} from './modular/Metropolist';
+import {Mogul} from './modular/Mogul';
+import {Traveller} from './modular/Traveller';
+import {Electrician} from './modular/Electrician';
+import {Collector} from './modular/Collector';
+import {Politician} from './modular/Politician';
+import {Manufacturer} from './modular/Manufacturer';
+import {Incorporator} from './modular/Incorporator';
+import {Rugged} from './Rugged';
 
 export const THARSIS_AWARDS = [
   new Landlord(),
@@ -78,6 +93,7 @@ export const HELLAS_AWARDS = [
 
 export const ARES_AWARDS = [
   new Entrepreneur(),
+  new Rugged(),
 ];
 
 export const MOON_AWARDS = [
@@ -87,8 +103,8 @@ export const MOON_AWARDS = [
 
 export const AMAZONIS_PLANITIA_AWARDS = [
   new Curator(),
-  new Engineer(),
-  new Coordinator(),
+  new AmazonisEngineer(),
+  new Promoter(),
   new Tourist(),
   new Zoologist2(),
 ];
@@ -96,23 +112,23 @@ export const AMAZONIS_PLANITIA_AWARDS = [
 export const ARABIA_TERRA_AWARDS = [
   new CosmicSettler(),
   new Botanist(),
-  new Coordinator(),
+  new Promoter(),
   new Zoologist(),
-  new Manufacturer(),
+  new AManufacturer(),
 ];
 
 export const TERRA_CIMMERIA_AWARDS = [
   new Biologist(),
   new Economizer2(),
-  new Politician(),
+  new TPolitician(),
   new Urbanist(),
   new Warmonger(),
 ];
 
 export const VASTITAS_BOREALIS_AWARDS = [
-  new Adapter(),
+  new Forecaster(),
   new Edgedancer(),
-  new Hoarder(),
+  new Visionary(),
   new Naturalist(),
   new Voyager(),
 ];
@@ -120,6 +136,23 @@ export const VASTITAS_BOREALIS_AWARDS = [
 export const UNDERWORLD_AWARDS = [
   new Kingpin(),
   new EdgeLord(),
+];
+
+export const MODULAR_AWARDS = [
+  new Administrator(),
+  new Collector(),
+  new Constructor(),
+  new Electrician(),
+  new Founder(),
+  new Highlander(),
+  new Investor(),
+  new Incorporator(),
+  new Landscaper(),
+  new Manufacturer(),
+  new Metropolist(),
+  new Mogul(),
+  new Politician(),
+  new Traveller(),
 ];
 
 export const ALL_AWARDS = [
@@ -135,17 +168,18 @@ export const ALL_AWARDS = [
   ...TERRA_CIMMERIA_AWARDS,
   ...VASTITAS_BOREALIS_AWARDS,
   ...UNDERWORLD_AWARDS,
+  ...MODULAR_AWARDS,
 ];
 
 // Remove namespace and rename function
-export namespace Awards {
-  export const ALL = ALL_AWARDS;
+export function getAwardByName(name: string): IAward | undefined {
+  return ALL_AWARDS.find((a) => a.name === name);
+}
 
-  export function getByName(name: string): IAward {
-    const award = ALL_AWARDS.find((a) => a.name === name);
-    if (award) {
-      return award;
-    }
-    throw new Error(`Award ${name} not found.`);
+export function getAwardByNameOrThrow(name: string): IAward {
+  const award = getAwardByName(name);
+  if (award) {
+    return award;
   }
+  throw new Error(`Award ${name} not found.`);
 }

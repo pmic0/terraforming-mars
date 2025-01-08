@@ -4,7 +4,7 @@ import * as constants from '../../../src/common/constants';
 import {testGame} from '../../TestGame';
 import {SelectAmount} from '../../../src/server/inputs/SelectAmount';
 import {TestPlayer} from '../../TestPlayer';
-import {cast, churnAction} from '../../TestingUtils';
+import {cast, churn} from '../../TestingUtils';
 
 describe('StormCraftIncorporated', function() {
   let card: StormCraftIncorporated;
@@ -17,10 +17,9 @@ describe('StormCraftIncorporated', function() {
   });
 
   it('Should play', function() {
-    const play = card.play(player);
-    expect(play).is.undefined;
+    cast(card.play(player), undefined);
 
-    expect(churnAction(card, player)).is.undefined;
+    expect(churn(card.action(player), player)).is.undefined;
 
     expect(card.resourceCount).to.eq(1);
   });
@@ -29,7 +28,7 @@ describe('StormCraftIncorporated', function() {
     player.heat = 10;
     card.resourceCount = 10;
     const options = card.spendHeat(player, constants.HEAT_FOR_TEMPERATURE);
-    expect(options.options.length).to.eq(2);
+    expect(options.options).has.length(2);
     const heatOption = cast(options.options[0], SelectAmount);
     expect(heatOption.max).to.eq(constants.HEAT_FOR_TEMPERATURE);
     const floaterOption = cast(options.options[1], SelectAmount);

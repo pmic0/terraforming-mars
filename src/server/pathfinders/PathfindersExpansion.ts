@@ -29,6 +29,7 @@ export class PathfindersExpansion {
   private constructor() {
   }
 
+  // TODO(kberg): Make VenusNext and Moon reference the tags in game.tags and not the expansions.
   public static initialize(gameOptions: GameOptions): PathfindersData {
     return {
       venus: gameOptions.venusNextExtension ? 0 : -1,
@@ -106,22 +107,22 @@ export class PathfindersExpansion {
             PathfindersExpansion.grant(reward, from, tag);
           });
         }
-        rewards.everyone.forEach((reward) => {
-          game.getPlayers().forEach((p) => {
+      }
+      rewards.everyone.forEach((reward) => {
+        game.getPlayers().forEach((p) => {
+          PathfindersExpansion.grant(reward, p, tag);
+        });
+      });
+      if (rewards.mostTags.length > 0) {
+        const players = PathfindersExpansion.playersWithMostTags(
+          tag,
+          game.getPlayers().slice(),
+          (typeof(from) === 'object') ? from : undefined);
+        rewards.mostTags.forEach((reward) => {
+          players.forEach((p) => {
             PathfindersExpansion.grant(reward, p, tag);
           });
         });
-        if (rewards.mostTags.length > 0) {
-          const players = PathfindersExpansion.playersWithMostTags(
-            tag,
-            game.getPlayers().slice(),
-            (typeof(from) === 'object') ? from : undefined);
-          rewards.mostTags.forEach((reward) => {
-            players.forEach((p) => {
-              PathfindersExpansion.grant(reward, p, tag);
-            });
-          });
-        }
       }
       // game.indentation--;
     }

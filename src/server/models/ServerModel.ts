@@ -32,6 +32,7 @@ import {SpaceId} from '../../common/Types';
 import {cardsToModel, coloniesToModel} from './ModelUtils';
 import {runId} from '../utils/server-ids';
 import {UnderworldExpansion} from '../underworld/UnderworldExpansion';
+import {toName} from '../../common/utils/utils';
 
 export class Server {
   public static getSimpleGameModel(game: IGame): SimpleGameModel {
@@ -78,7 +79,7 @@ export class Server {
       awards: this.getAwards(game),
       colonies: coloniesToModel(game, game.colonies, false, true),
       deckSize: game.projectDeck.drawPile.length,
-      discardedColonies: game.discardedColonies.map((c) => c.name),
+      discardedColonies: game.discardedColonies.map(toName),
       expectedPurgeTimeMs: game.expectedPurgeTimeMs(),
       gameAge: game.gameAge,
       gameOptions: this.getGameOptionsAsModel(game.gameOptions),
@@ -216,7 +217,10 @@ export class Server {
     if (waitingFor === undefined) {
       return undefined;
     }
-    return waitingFor.toModel(player);
+    // TODO(kberg): in theory this should be in all the other toModel calls.
+    const model = waitingFor.toModel(player);
+    model.warning = waitingFor.warning;
+    return model;
     // showReset: player.game.inputsThisRound > 0 && player.game.resettable === true && player.game.phase === Phase.ACTION,
   }
 
@@ -394,30 +398,36 @@ export class Server {
   public static getGameOptionsAsModel(options: GameOptions): GameOptionsModel {
     return {
       altVenusBoard: options.altVenusBoard,
-      aresExtension: options.aresExtension,
+      aresExtremeVariant: options.aresExtremeVariant,
       boardName: options.boardName,
       bannedCards: options.bannedCards,
-      includedCards: options.includedCards,
-      ceoExtension: options.ceoExtension,
-      coloniesExtension: options.coloniesExtension,
-      communityCardsOption: options.communityCardsOption,
-      corporateEra: options.corporateEra,
       draftVariant: options.draftVariant,
       escapeVelocityMode: options.escapeVelocityMode,
       escapeVelocityThreshold: options.escapeVelocityThreshold,
       escapeVelocityBonusSeconds: options.escapeVelocityBonusSeconds,
       escapeVelocityPeriod: options.escapeVelocityPeriod,
       escapeVelocityPenalty: options.escapeVelocityPenalty,
+      expansions: {
+        corpera: options.corporateEra,
+        promo: options.promoCardsOption,
+        venus: options.venusNextExtension,
+        colonies: options.coloniesExtension,
+        prelude: options.preludeExtension,
+        prelude2: options.prelude2Expansion,
+        turmoil: options.turmoilExtension,
+        community: options.communityCardsOption,
+        ares: options.aresExtension,
+        moon: options.moonExpansion,
+        pathfinders: options.pathfindersExpansion,
+        ceo: options.ceoExtension,
+        starwars: options.starWarsExpansion,
+        underworld: options.underworldExpansion,
+      },
       fastModeOption: options.fastModeOption,
+      includedCards: options.includedCards,
       includeFanMA: options.includeFanMA,
-      includeVenusMA: options.includeVenusMA,
       initialDraftVariant: options.initialDraftVariant,
-      moonExpansion: options.moonExpansion,
-      pathfindersExpansion: options.pathfindersExpansion,
       preludeDraftVariant: options.preludeDraftVariant,
-      preludeExtension: options.preludeExtension,
-      prelude2Expansion: options.prelude2Expansion,
-      promoCardsOption: options.promoCardsOption,
       politicalAgendasExtension: options.politicalAgendasExtension,
       removeNegativeGlobalEvents: options.removeNegativeGlobalEventsOption,
       showOtherPlayersVP: options.showOtherPlayersVP,
@@ -428,11 +438,8 @@ export class Server {
       randomMA: options.randomMA,
       requiresMoonTrackCompletion: options.requiresMoonTrackCompletion,
       requiresVenusTrackCompletion: options.requiresVenusTrackCompletion,
-      turmoilExtension: options.turmoilExtension,
       twoCorpsVariant: options.twoCorpsVariant,
-      venusNextExtension: options.venusNextExtension,
       undoOption: options.undoOption,
-      underworldExpansion: options.underworldExpansion,
     };
   }
 

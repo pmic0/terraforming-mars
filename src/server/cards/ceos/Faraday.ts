@@ -39,17 +39,6 @@ export class Faraday extends CeoCard {
     return false;
   }
 
-  // This _could_ save CPU cycles instead of running multiple finds?
-  private countTags(player: IPlayer): Record<Tag, number> {
-    const record: Partial<Record<Tag, number>> = {};
-    for (const entry of player.tags.countAllTags()) {
-      record[entry.tag] = entry.count;
-    }
-    // This is safe because countAllTags returns all tags. I wish it were easy to initialize a Record type.
-    // Actually it doesn't return Clone tags.
-    return record as Record<Tag, number>;
-  }
-
   private gainedMultiple(tagsOnCard: number, total: number): boolean {
     const priorTagCount = total - tagsOnCard;
     // Modulo 5 what the tag count was before the card was played.
@@ -71,7 +60,7 @@ export class Faraday extends CeoCard {
   }
 
   private processTags(player: IPlayer, tags: ReadonlyArray<Tag>) {
-    const counts = this.countTags(player);
+    const counts = player.tags.countAllTags();
 
     const tagsOnCard = MultiSet.from(tags);
     tagsOnCard.forEachMultiplicity((countOnCard, tagOnCard) => {
@@ -85,7 +74,7 @@ export class Faraday extends CeoCard {
   public effectOptions(player: IPlayer, tag: Tag) {
     if (!player.canAfford(3)) return;
     return new OrOptions(
-      new SelectOption(message('Pay 3 M€ to draw a ${1} card', (b) => b.string(tag))).andThen(() => {
+      new SelectOption(message('Pay 3 M€ to draw a ${0} card', (b) => b.string(tag))).andThen(() => {
         player.game.defer(new SelectPaymentDeferred(player, 3, {title: TITLES.payForCardAction(this.name)}))
           .andThen(() => player.drawCard(1, {tag: tag}));
         return undefined;

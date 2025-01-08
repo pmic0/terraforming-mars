@@ -18,9 +18,14 @@ export class PreludesExpansion {
     });
   }
 
-  public static playPrelude(
+  /**
+   * Return a `SelectCard` that asks a `player` to choose one of the `cards` to play,
+   * and then plays it.
+   */
+  public static selectPreludeToPlay(
     player: IPlayer,
     cards: Array<IPreludeCard>,
+    remainders: undefined | 'discard' = undefined,
     cardAction: CardAction = 'add'): SelectCard<IPreludeCard> {
     // This preps the warning attribute in preludes.
     // All preludes can be presented. Unplayable ones just fizzle.
@@ -28,6 +33,9 @@ export class PreludesExpansion {
       card.warnings.clear();
       if (!card.canPlay(player)) {
         card.warnings.add('preludeFizzle');
+      }
+      if (card.behavior?.addResources && player.game.inDoubleDown) {
+        card.warnings.add('ineffectiveDoubleDown');
       }
     }
 
@@ -38,6 +46,13 @@ export class PreludesExpansion {
           PreludesExpansion.fizzle(player, card);
         } else {
           player.playCard(card, undefined, cardAction);
+        }
+        if (remainders === 'discard') {
+          for (const c of cards) {
+            if (c !== card) {
+              player.game.preludeDeck.discard(c);
+            }
+          }
         }
         return undefined;
       });

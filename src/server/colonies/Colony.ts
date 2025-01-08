@@ -30,6 +30,7 @@ import {message} from '../logs/MessageBuilder';
 import {PlaceHazardTile} from '../deferredActions/PlaceHazardTile';
 import {TileType} from '../../../src/common/TileType';
 import {ErodeSpacesDeferred} from '../underworld/ErodeSpacesDeferred';
+import {CardName} from '../../common/cards/CardName';
 
 export enum ShouldIncreaseTrack { YES, NO, ASK }
 export abstract class Colony implements IColony {
@@ -155,6 +156,10 @@ export abstract class Colony implements IColony {
     if (options.usesTradeFleet !== false) {
       this.visitor = player.id;
       player.colonies.tradesThisGeneration++;
+    }
+
+    if (player.cardIsInEffect(CardName.VENUS_TRADE_HUB)) {
+      player.stock.add(Resource.MEGACREDITS, 3, {log: true});
     }
 
     // !== false because default is true.
@@ -315,8 +320,10 @@ export abstract class Colony implements IColony {
       break;
 
     case ColonyBenefit.LOSE_RESOURCES:
-      if (resource === undefined) throw new Error('Resource cannot be undefined');
-      player.stock.deduct(resource, quantity);
+      if (resource === undefined) {
+        throw new Error('Resource cannot be undefined');
+      }
+      player.stock.deduct(resource, Math.min(player.stock.get(resource), quantity), {log: true});
       break;
 
     case ColonyBenefit.OPPONENT_DISCARD:

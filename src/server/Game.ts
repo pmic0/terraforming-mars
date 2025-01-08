@@ -1,3 +1,4 @@
+
 import * as constants from '../common/constants';
 import {BeginnerCorporation} from './cards/corporation/BeginnerCorporation';
 import {Board} from './boards/Board';
@@ -19,8 +20,8 @@ import {Tile} from './Tile';
 import {LogMessageBuilder} from './logs/LogMessageBuilder';
 import {LogHelper} from './LogHelper';
 import {LogMessage} from '../common/logs/LogMessage';
-import {ALL_MILESTONES} from './milestones/Milestones';
-import {ALL_AWARDS} from './awards/Awards';
+import {getMilestoneByName} from './milestones/Milestones';
+import {getAwardByName} from './awards/Awards';
 import {PartyHooks} from './turmoil/parties/PartyHooks';
 import {Phase} from '../common/Phase';
 import {IPlayer} from './IPlayer';
@@ -65,7 +66,7 @@ import {DEFAULT_GAME_OPTIONS, GameOptions} from './game/GameOptions';
 import {TheNewSpaceRace} from './cards/pathfinders/TheNewSpaceRace';
 import {CorporationDeck, PreludeDeck, ProjectDeck, CeoDeck} from './cards/Deck';
 import {Logger} from './logs/Logger';
-import {addDays, dayStringToDays} from './database/utils';
+import {addDays, stringToNumber} from './database/utils';
 import {ALL_TAGS, Tag} from '../common/cards/Tag';
 import {IGame, Score} from './IGame';
 import {MarsBoard} from './boards/MarsBoard';
@@ -75,6 +76,15 @@ import {SpaceType} from '../common/boards/SpaceType';
 import {SendDelegateToArea} from './deferredActions/SendDelegateToArea';
 import {BuildColony} from './deferredActions/BuildColony';
 import {newInitialDraft, newPreludeDraft, newStandardDraft} from './Draft';
+import {toName} from '../common/utils/utils';
+import {OrOptions} from './inputs/OrOptions';
+import {SelectOption} from './inputs/SelectOption';
+import {SelectSpace} from './inputs/SelectSpace';
+import {maybeRenamedMilestone} from '../common/ma/MilestoneName';
+import {maybeRenamedAward} from '../common/ma/AwardName';
+import {Eris} from './cards/community/Eris';
+import {AresHazards} from './ares/AresHazards';
+import {hazardSeverity} from '../common/AresTileType';
 
 // Can be overridden by tests
 
@@ -162,9 +172,17 @@ export class Game implements IGame, Logger {
   public tradeEmbargo: boolean = false;
   // Behold The Emperor
   public beholdTheEmperor: boolean = false;
+  // Double Down
+  public inDoubleDown: boolean = false;
 
-  // The set of tags available in this game.
+  /* The set of tags available in this game. */
   public readonly tags: ReadonlyArray<Tag>;
+
+  /*
+   * An optimized list of the players, in generation order. This is erased every time first placer changes,
+   * and refilled on calls to getPlayersInGenerationOrder
+   */
+  playersInGenerationOrder: Array<IPlayer> = [];
 
   private constructor(
     id: GameId,
@@ -183,17 +201,17 @@ export class Game implements IGame, Logger {
     this.players = players;
     const playerIds = players.map((p) => p.id);
     if (playerIds.includes(first.id) === false) {
-      throw new Error('Cannot find first player ' + first.id + ' in ' + playerIds);
+      throw new Error('Cannot find first player ' + first.id + ' in [' + playerIds + ']');
     }
     if (playerIds.includes(activePlayer) === false) {
-      throw new Error('Cannot find active player ' + activePlayer + ' in ' + playerIds);
+      throw new Error('Cannot find active player ' + activePlayer + ' in [' + playerIds + ']');
     }
     if (new Set(playerIds).size !== players.length) {
-      throw new Error('Duplicate player found: ' + playerIds);
+      throw new Error('Duplicate player found: [' + playerIds + ']');
     }
     const colors = players.map((p) => p.color);
     if (new Set(colors).size !== players.length) {
-      throw new Error('Duplicate color found: ' + colors);
+      throw new Error('Duplicate color found: [' + colors + ']');
     }
 
     this.activePlayer = activePlayer;
@@ -347,9 +365,11 @@ export class Game implements IGame, Logger {
           player.dealtProjectCards.push(...projectDeck.drawN(game, 10));
         }
         if (gameOptions.preludeExtension) {
-          player.dealtPreludeCards.push(...preludeDeck.drawN(game, constants.PRELUDE_CARDS_DEALT_PER_PLAYER));
+          gameOptions.startingPreludes = Math.max(gameOptions.startingPreludes ?? 0, constants.PRELUDE_CARDS_DEALT_PER_PLAYER);
+          player.dealtPreludeCards.push(...preludeDeck.drawN(game, gameOptions.startingPreludes));
         }
         if (gameOptions.ceoExtension) {
+          gameOptions.startingCeos = Math.max(gameOptions.startingCeos ?? 0, constants.CEO_CARDS_DEALT_PER_PLAYER);
           player.dealtCeoCards.push(...ceoDeck.drawN(game, gameOptions.startingCeos));
         }
       } else {
@@ -388,14 +408,10 @@ export class Game implements IGame, Logger {
     GameLoader.getInstance().saveGame(this);
   }
 
-  public toJSON(): string {
-    return JSON.stringify(this.serialize());
-  }
-
   public serialize(): SerializedGame {
     const result: SerializedGame = {
       activePlayer: this.activePlayer,
-      awards: this.awards.map((a) => a.name),
+      awards: this.awards.map(toName),
       beholdTheEmperor: this.beholdTheEmperor,
       board: this.board.serialize(),
       claimedMilestones: serializeClaimedMilestones(this.claimedMilestones),
@@ -420,7 +436,7 @@ export class Game implements IGame, Logger {
       id: this.id,
       initialDraftIteration: this.initialDraftIteration,
       lastSaveId: this.lastSaveId,
-      milestones: this.milestones.map((m) => m.name),
+      milestones: this.milestones.map(toName),
       moonData: MoonData.serialize(this.moonData),
       oxygenLevel: this.oxygenLevel,
       passedPlayers: Array.from(this.passedPlayers),
@@ -542,6 +558,12 @@ export class Game implements IGame, Logger {
       return false;
     }
 
+    // Ares Extreme: Solo player must remove all unprotected hazards to win
+    if (this.gameOptions.aresExtension && this.gameOptions.aresExtremeVariant) {
+      const unprotectedHazardsRemaining = Eris.getAllUnprotectedHazardSpaces(this);
+      if (unprotectedHazardsRemaining.length > 0) return false;
+    }
+
     // This last conditional doesn't make much sense to me. It's only ever really used
     // on the client at components/GameEnd.ts. Which is probably why it doesn't make
     // obvious sense why when this generation is earlier than the last generation
@@ -621,6 +643,7 @@ export class Game implements IGame, Logger {
     }
     firstIndex = (firstIndex + 1) % this.players.length;
     this.first = this.players[firstIndex];
+    this.playersInGenerationOrder.length = 0;
   }
 
   // Only used in the prelude The New Space Race.
@@ -629,6 +652,7 @@ export class Game implements IGame, Logger {
       throw new Error(`player ${newFirstPlayer.id} is not part of this game`);
     }
     this.first = newFirstPlayer;
+    this.playersInGenerationOrder.length = 0;
   }
 
 
@@ -705,6 +729,15 @@ export class Game implements IGame, Logger {
 
     // solar Phase Option
     this.phase = Phase.SOLAR;
+
+    // Maybe spawn a new hazard on Mars every 3 generations
+    if (this.gameOptions.aresExtension && this.gameOptions.aresExtremeVariant && this.generation % 3 === 0) {
+      const direction = Math.floor(this.rng.nextInt(2)) === 0 ? 1 : -1;
+      const tileType = this.board.getOceanSpaces().length >= 3 ? TileType.EROSION_MILD : TileType.DUST_STORM_MILD;
+
+      AresHazards.randomlyPlaceHazard(this, tileType, direction);
+    }
+
     if (this.gameOptions.solarPhaseOption && ! this.marsIsTerraformed()) {
       this.gotoWorldGovernmentTerraforming();
       return;
@@ -725,6 +758,11 @@ export class Game implements IGame, Logger {
   }
 
   private gotoEndGeneration() {
+    if (this.deferredActions.length > 0) {
+      this.deferredActions.runAll(() => this.gotoEndGeneration());
+      return;
+    }
+
     this.endGenerationForColonies();
 
     Turmoil.ifTurmoil(this, (turmoil) => {
@@ -778,6 +816,9 @@ export class Game implements IGame, Logger {
 
     this.players.forEach((player) => {
       player.hasIncreasedTerraformRatingThisGeneration = false;
+      if (player.cardIsInEffect(CardName.PRESERVATION_PROGRAM)) {
+        player.preservationProgram = true;
+      }
     });
 
     if (this.gameOptions.draftVariant) {
@@ -788,12 +829,106 @@ export class Game implements IGame, Logger {
   }
 
   private gotoWorldGovernmentTerraforming() {
-    this.first.worldGovernmentTerraforming();
+    this.worldGovernmentTerraforming();
   }
 
-  public doneWorldGovernmentTerraforming() {
-    // Carry on to next phase
-    this.gotoEndGeneration();
+  public worldGovernmentTerraformingInput(player: IPlayer): OrOptions {
+    const orOptions = new OrOptions();
+    orOptions.title = 'Select action for World Government Terraforming';
+    orOptions.buttonLabel = 'Confirm';
+    if (this.getTemperature() < constants.MAX_TEMPERATURE) {
+      orOptions.options.push(
+        new SelectOption('Increase temperature', 'Increase').andThen(() => {
+          this.increaseTemperature(player, 1);
+          this.log('${0} acted as World Government and increased temperature', (b) => b.player(player));
+          return undefined;
+        }),
+      );
+    }
+    if (this.getOxygenLevel() < constants.MAX_OXYGEN_LEVEL) {
+      orOptions.options.push(
+        new SelectOption('Increase oxygen', 'Increase').andThen(() => {
+          this.increaseOxygenLevel(player, 1);
+          this.log('${0} acted as World Government and increased oxygen level', (b) => b.player(player));
+          return undefined;
+        }),
+      );
+    }
+    if (this.canAddOcean()) {
+      orOptions.options.push(
+        new SelectSpace('Add an ocean', this.board.getAvailableSpacesForOcean(player))
+          .andThen((space) => {
+            this.addOcean(player, space);
+            this.log('${0} acted as World Government and placed an ocean', (b) => b.player(player));
+            return undefined;
+          }),
+      );
+    }
+    if (this.getVenusScaleLevel() < constants.MAX_VENUS_SCALE && this.gameOptions.venusNextExtension) {
+      orOptions.options.push(
+        new SelectOption('Increase Venus scale', 'Increase').andThen(() => {
+          this.increaseVenusScaleLevel(player, 1);
+          this.log('${0} acted as World Government and increased Venus scale', (b) => b.player(player));
+          return undefined;
+        }),
+      );
+    }
+
+    if (this.gameOptions.aresExtension && this.gameOptions.aresExtremeVariant && this.isSoloMode()) {
+      // TODO(kberg): move the eris method elsewhere
+      const unprotectedHazardSpaces = Eris.getAllUnprotectedHazardSpaces(this);
+
+      if (unprotectedHazardSpaces.length > 0) {
+        orOptions.options.push(
+          new SelectSpace(
+            'Remove an unprotected hazard',
+            unprotectedHazardSpaces).andThen((space) => {
+            space.tile = undefined;
+            this.log('${0} acted as World Government and removed a hazard tile', (b) => b.player(player));
+            return undefined;
+          }),
+        );
+      }
+    }
+
+    MoonExpansion.ifMoon(this, (moonData) => {
+      if (moonData.habitatRate < constants.MAXIMUM_HABITAT_RATE) {
+        orOptions.options.push(
+          new SelectOption('Increase the Moon habitat rate', 'Increase').andThen(() => {
+            MoonExpansion.raiseHabitatRate(player, 1);
+            return undefined;
+          }),
+        );
+      }
+
+      if (moonData.miningRate < constants.MAXIMUM_MINING_RATE) {
+        orOptions.options.push(
+          new SelectOption('Increase the Moon mining rate', 'Increase').andThen(() => {
+            MoonExpansion.raiseMiningRate(player, 1);
+            return undefined;
+          }),
+        );
+      }
+
+      if (moonData.logisticRate < constants.MAXIMUM_LOGISTICS_RATE) {
+        orOptions.options.push(
+          new SelectOption('Increase the Moon logistics rate', 'Increase').andThen(() => {
+            MoonExpansion.raiseLogisticRate(player, 1);
+            return undefined;
+          }),
+        );
+      }
+    });
+
+    return orOptions;
+  }
+
+  public worldGovernmentTerraforming(): void {
+    const player = this.first;
+    const input = this.worldGovernmentTerraformingInput(player);
+    player.setWaitingFor(input, () => {
+      this.gotoEndGeneration();
+    });
   }
 
   private allPlayersHavePassed(): boolean {
@@ -883,7 +1018,7 @@ export class Game implements IGame, Logger {
 
     const scores: Array<Score> = [];
     this.players.forEach((player) => {
-      const corporation = player.corporations.map((c) => c.name).join('|');
+      const corporation = player.corporations.map(toName).join('|');
       const vpb = player.getVictoryPoints();
       scores.push({corporation: corporation, playerScore: vpb.total});
     });
@@ -965,6 +1100,7 @@ export class Game implements IGame, Logger {
 
     if (this.phase !== Phase.SOLAR) {
       TurmoilHandler.onGlobalParameterIncrease(player, GlobalParameter.OXYGEN, steps);
+      player.onGlobalParameterIncrease(GlobalParameter.OXYGEN, steps);
       player.increaseTerraformRating(steps);
     }
     if (this.oxygenLevel < constants.OXYGEN_LEVEL_FOR_TEMPERATURE_BONUS &&
@@ -1018,7 +1154,9 @@ export class Game implements IGame, Logger {
           this.defer(new GrantVenusAltTrackBonusDeferred(player, standardResourcesGranted, grantWildResource));
         }
       }
+      player.playedCards.forEach((card) => card.onGlobalParameterIncrease?.(player, GlobalParameter.VENUS, steps));
       TurmoilHandler.onGlobalParameterIncrease(player, GlobalParameter.VENUS, steps);
+      player.onGlobalParameterIncrease(GlobalParameter.VENUS, steps);
       player.increaseTerraformRating(steps);
     }
 
@@ -1062,6 +1200,7 @@ export class Game implements IGame, Logger {
       }
 
       player.playedCards.forEach((card) => card.onGlobalParameterIncrease?.(player, GlobalParameter.TEMPERATURE, steps));
+      player.onGlobalParameterIncrease(GlobalParameter.TEMPERATURE, steps);
       TurmoilHandler.onGlobalParameterIncrease(player, GlobalParameter.TEMPERATURE, steps);
       player.increaseTerraformRating(steps);
     }
@@ -1133,7 +1272,7 @@ export class Game implements IGame, Logger {
     TurmoilHandler.resolveTilePlacementCosts(player);
 
     // Part 3. Setup for bonuses
-    const initialTileTypeForAres = space.tile?.tileType;
+    const initialTileType = space.tile?.tileType;
     const coveringExistingTile = space.tile !== undefined;
     const arcadianCommunityBonus = space.player === player && player.isCorporation(CardName.ARCADIAN_COMMUNITIES);
 
@@ -1145,7 +1284,7 @@ export class Game implements IGame, Logger {
       this.grantPlacementBonuses(player, space, coveringExistingTile, arcadianCommunityBonus);
 
       AresHandler.ifAres(this, (aresData) => {
-        AresHandler.maybeIncrementMilestones(aresData, player, space);
+        AresHandler.maybeIncrementMilestones(aresData, player, space, hazardSeverity(initialTileType));
       });
     } else {
       space.player = undefined;
@@ -1157,9 +1296,11 @@ export class Game implements IGame, Logger {
       });
     });
 
-    AresHandler.ifAres(this, () => {
-      AresHandler.grantBonusForRemovingHazard(player, initialTileTypeForAres);
-    });
+    if (initialTileType !== undefined) {
+      AresHandler.ifAres(this, () => {
+        AresHandler.grantBonusForRemovingHazard(player, initialTileType);
+      });
+    }
 
     if (this.gameOptions.underworldExpansion) {
       if (space.spaceType !== SpaceType.COLONY && space.player === player) {
@@ -1168,7 +1309,7 @@ export class Game implements IGame, Logger {
     }
   }
 
-  public grantPlacementBonuses(player: IPlayer, space: Space, coveringExistingTile: boolean, arcadianCommunityBonus: boolean = false) {
+  public grantPlacementBonuses(player: IPlayer, space: Space, coveringExistingTile: boolean = false, arcadianCommunityBonus: boolean = false) {
     if (!coveringExistingTile) {
       this.grantSpaceBonuses(player, space);
     }
@@ -1179,6 +1320,8 @@ export class Game implements IGame, Logger {
       }
     });
 
+    // TODO(kberg): these might not apply for some bonuses, e.g. Frontier Town.
+    // https://boardgamegeek.com/thread/3344366/article/44658730#44658730
     if (space.tile !== undefined) {
       AresHandler.ifAres(this, () => {
         AresHandler.earnAdjacencyBonuses(player, space);
@@ -1319,6 +1462,7 @@ export class Game implements IGame, Logger {
     });
     if (this.phase !== Phase.SOLAR) {
       TurmoilHandler.onGlobalParameterIncrease(player, GlobalParameter.OCEANS);
+      player.onGlobalParameterIncrease(GlobalParameter.OCEANS, 1);
       player.increaseTerraformRating();
     }
     AresHandler.ifAres(this, (aresData) => {
@@ -1338,17 +1482,12 @@ export class Game implements IGame, Logger {
 
   // Players returned in play order starting with first player this generation.
   public getPlayersInGenerationOrder(): ReadonlyArray<IPlayer> {
-    const ret: Array<IPlayer> = [];
-    let insertIdx = 0;
-    for (const p of this.players) {
-      if (p.id === this.first.id || insertIdx > 0) {
-        ret.splice(insertIdx, 0, p);
-        insertIdx ++;
-      } else {
-        ret.push(p);
-      }
+    if (this.playersInGenerationOrder.length === 0) {
+      const e = [...this.players, ...this.players];
+      const idx = e.findIndex((p) => p.id === this.first.id);
+      this.playersInGenerationOrder = e.slice(idx, idx + this.players.length);
     }
-    return ret;
+    return this.playersInGenerationOrder;
   }
 
   /**
@@ -1453,7 +1592,7 @@ export class Game implements IGame, Logger {
     if (this.createdTime.getTime() === 0) {
       return 0;
     }
-    const days = dayStringToDays(process.env.MAX_GAME_DAYS, 10);
+    const days = stringToNumber(process.env.MAX_GAME_DAYS, 10);
     return addDays(this.createdTime, days).getTime();
   }
 
@@ -1482,11 +1621,11 @@ export class Game implements IGame, Logger {
     game.createdTime = new Date(d.createdTimeMs);
 
     const milestones: Array<IMilestone> = [];
-    d.milestones.forEach((element: IMilestone | string) => {
-      const milestoneName = typeof element === 'string' ? element : element.name;
-      const foundMilestone = ALL_MILESTONES.find((milestone) => milestone.name === milestoneName);
-      if (foundMilestone !== undefined) {
-        milestones.push(foundMilestone);
+    d.milestones.forEach((milestoneName) => {
+      milestoneName = maybeRenamedMilestone(milestoneName);
+      const milestone = getMilestoneByName(milestoneName);
+      if (milestone !== undefined) {
+        milestones.push(milestone);
       }
     });
 
@@ -1494,11 +1633,11 @@ export class Game implements IGame, Logger {
     game.claimedMilestones = deserializeClaimedMilestones(d.claimedMilestones, players, milestones);
 
     const awards: Array<IAward> = [];
-    d.awards.forEach((element: IAward | string) => {
-      const awardName = typeof element === 'string' ? element : element.name;
-      const foundAward = ALL_AWARDS.find((award) => award.name === awardName);
-      if (foundAward !== undefined) {
-        awards.push(foundAward);
+    d.awards.forEach((awardName) => {
+      awardName = maybeRenamedAward(awardName);
+      const award = getAwardByName(awardName);
+      if (award !== undefined) {
+        awards.push(award);
       }
     });
 
