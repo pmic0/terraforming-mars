@@ -54,9 +54,14 @@ export class Server {
 
 
   public static getSimpleGameModelBot(game: IGame): SimpleBotGameModel {
+    const activeColor = game.getPlayerById(game.activePlayer).color;
+    const players: Array<PublicPlayerModel> = game.getPlayersInGenerationOrder().map(this.getPlayer);
+    const thisPlayerIndex = players.findIndex((p) => p.color === activeColor);
+    const thisPlayer: PublicPlayerModel = players[thisPlayerIndex];
     return {
-      activePlayer: game.getPlayerById(game.activePlayer).color,
+      activePlayer: activeColor,
       activePlayerName: game.getPlayerById(game.activePlayer).name,
+      activePlayerData: thisPlayer,
       id: game.id,
       phase: game.phase,
       players: game.getPlayersInGenerationOrder().map((player) => ({

@@ -5,6 +5,7 @@ import {Phase} from '../Phase';
 import {GameOptionsModel} from './GameOptionsModel';
 import {TurmoilModel} from './TurmoilModel';
 import {PlayerInputModel} from './PlayerInputModel';
+import { PublicPlayerModel} from '../../common/models/PlayerModel';
 
 export type SimpleGameModel = {
     activePlayer: Color;
@@ -20,6 +21,7 @@ export type SimpleGameModel = {
 export type SimpleBotGameModel = {
     activePlayer: Color;
     activePlayerName: string;
+    activePlayerData: PublicPlayerModel | undefined;
     id: GameId;
     phase: Phase;
     players: Array<SimplePlayerModelBot>;
