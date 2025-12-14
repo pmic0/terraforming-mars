@@ -1,32 +1,29 @@
-import GameEnd from '@/client/components/GameEnd.vue';
+import * as constants from '@/common/constants';
+import * as raw_settings from '@/genfiles/settings.json';
+import AdminHome from '@/client/components/admin/AdminHome.vue';
+import CardList from '@/client/components/cardlist/CardList.vue';
 import CreateGameForm from '@/client/components/create/CreateGameForm.vue';
+import GameEnd from '@/client/components/GameEnd.vue';
 import GameHome from '@/client/components/GameHome.vue';
 import GamesOverview from '@/client/components/GamesOverview.vue';
+import Help from '@/client/components/help/Help.vue';
+import LoginHome from '@/client/components/auth/LoginHome.vue';
+import LoadGameForm from '@/client/components/LoadGameForm.vue';
 import PlayerHome from '@/client/components/PlayerHome.vue';
 import PlayerInputFactory from '@/client/components/PlayerInputFactory.vue';
 import SpectatorHome from '@/client/components/SpectatorHome.vue';
-import {ViewModel, PlayerViewModel} from '@/common/models/PlayerModel';
 import StartScreen from '@/client/components/StartScreen.vue';
-import LoadGameForm from '@/client/components/LoadGameForm.vue';
-import CardList from '@/client/components/cardlist/CardList.vue';
-import {SimpleGameModel} from '@/common/models/SimpleGameModel';
-import Help from '@/client/components/help/Help.vue';
-import AdminHome from '@/client/components/admin/AdminHome.vue';
-
 import {$t, setTranslationContext} from '@/client/directives/i18n';
-
-import * as constants from '@/common/constants';
-import * as raw_settings from '@/genfiles/settings.json';
 import {paths} from '@/common/app/paths';
+import {PlayerViewModel, ViewModel} from '@/common/models/PlayerModel';
+import {SimpleGameModel} from '@/common/models/SimpleGameModel';
 import {SpectatorModel} from '@/common/models/SpectatorModel';
 import {isPlayerId, isSpectatorId} from '@/common/Types';
 import {hasShowModal, showModal, windowHasHTMLDialogElement} from './HTMLDialogElementCompatibility';
-import {statusCode} from '@/common/http/statusCode';
 
 const dialogPolyfill = require('dialog-polyfill');
 
-export interface MainAppData {
-    screen: 'admin' |
+type Screen = 'admin' |
             'create-game-form' |
             'cards' |
             'empty' |
@@ -34,10 +31,13 @@ export interface MainAppData {
             'games-overview' |
             'help' |
             'load' |
+            'login-home' |
             'player-home' |
             'spectator-home' |
             'start-screen' |
             'the-end';
+export interface MainAppData {
+    screen: Screen;
     /**
      * player or spectator are set once the app component has loaded.
      * Vue only watches properties that exist initially. When we
@@ -54,31 +54,34 @@ export interface MainAppData {
     isServerSideRequestInProgress: boolean;
     componentsVisibility: {[x: string]: boolean};
     game: SimpleGameModel | undefined;
+    login: string | undefined;
 }
+
+const data: MainAppData = {
+  screen: 'empty',
+  playerkey: 0,
+  settings: raw_settings,
+  isServerSideRequestInProgress: false,
+  componentsVisibility: {
+    'milestones': true,
+    'awards_list': true,
+    'tags_concise': false,
+    'pinned_player_0': false,
+    'pinned_player_1': false,
+    'pinned_player_2': false,
+    'pinned_player_3': false,
+    'pinned_player_4': false,
+    'turmoil_parties': false,
+  } as {[x: string]: boolean},
+  game: undefined as SimpleGameModel | undefined,
+  playerView: undefined,
+  spectator: undefined,
+  login: undefined,
+};
 
 export const mainAppSettings = {
   'el': '#app',
-  'data': {
-    screen: 'empty',
-    playerkey: 0,
-    settings: raw_settings,
-    isServerSideRequestInProgress: false,
-    componentsVisibility: {
-      'milestones': true,
-      'awards_list': true,
-      'tags_concise': false,
-      'pinned_player_0': false,
-      'pinned_player_1': false,
-      'pinned_player_2': false,
-      'pinned_player_3': false,
-      'pinned_player_4': false,
-      'turmoil_parties': false,
-    } as {[x: string]: boolean},
-    game: undefined as SimpleGameModel | undefined,
-    playerView: undefined,
-    spectator: undefined,
-    logPaused: false,
-  } as MainAppData,
+  'data': data,
   'components': {
     // These component keys match the screen values, and their entries in index.html.
     'player-input-factory': PlayerInputFactory,
@@ -93,14 +96,17 @@ export const mainAppSettings = {
     'card-list': CardList,
     'help': Help,
     'admin-home': AdminHome,
+    'login-home': LoginHome,
   },
   'methods': {
-    showAlert(message: string, cb: () => void = () => {}): void {
+    showAlert(title: string, message: string, cb: () => void = () => {}): void {
       const dialogElement: HTMLElement | null = document.getElementById('alert-dialog');
       const buttonElement: HTMLElement | null = document.getElementById('alert-dialog-button');
       const messageElement: HTMLElement | null = document.getElementById('alert-dialog-message');
-      if (buttonElement !== null && messageElement !== null && dialogElement !== null && hasShowModal(dialogElement)) {
+      const titleElement: HTMLElement | null = document.getElementById('alert-dialog-title');
+      if (buttonElement !== null && titleElement !== null && messageElement !== null && dialogElement !== null && hasShowModal(dialogElement)) {
         messageElement.innerHTML = $t(message);
+        titleElement.textContent = $t(title);
         const handler = () => {
           buttonElement.removeEventListener('click', handler);
           cb();
@@ -121,60 +127,56 @@ export const mainAppSettings = {
     },
     update(path: typeof paths.PLAYER | typeof paths.SPECTATOR): void {
       const currentPathname = getLastPathSegment();
-      const xhr = new XMLHttpRequest();
       const app = this as unknown as MainAppData;
 
       const url = 'api/' + path + window.location.search.replace('&noredirect', '');
-      xhr.open('GET', url);
-      xhr.onerror = function() {
-        alert('Error getting game data');
-      };
-      xhr.onload = function() {
-        try {
-          if (xhr.status === statusCode.ok) {
-            const model = xhr.response as ViewModel;
-            if (path === paths.PLAYER) {
-              app.playerView = model as PlayerViewModel;
-              setTranslationContext(app.playerView);
-            } else if (path === paths.SPECTATOR) {
-              app.spectator = model as SpectatorModel;
-            }
-            app.playerkey++;
-            if (
-              model.game.phase === 'end' &&
+
+      fetch(url)
+        .then((resp) => {
+          if (!resp.ok) {
+            throw new Error(`Error getting game data: ${resp.statusText}`);
+          }
+          return resp.json();
+        })
+        .then((model: ViewModel) => {
+          if (path === paths.PLAYER) {
+            app.playerView = model as PlayerViewModel;
+            setTranslationContext(app.playerView);
+          } else if (path === paths.SPECTATOR) {
+            app.spectator = model as SpectatorModel;
+          }
+          app.playerkey++;
+          if (
+            model.game.phase === 'end' &&
               window.location.search.includes('&noredirect') === false
-            ) {
-              app.screen = 'the-end';
-              if (currentPathname !== paths.THE_END) {
-                window.history.replaceState(
-                  xhr.response,
-                  `${constants.APP_NAME} - Player`,
-                  `${paths.THE_END}?id=${model.id}`,
-                );
-              }
-            } else {
-              if (path === paths.PLAYER) {
-                app.screen = 'player-home';
-              } else if (path === paths.SPECTATOR) {
-                app.screen = 'spectator-home';
-              }
-              if (currentPathname !== path) {
-                window.history.replaceState(
-                  xhr.response,
-                  `${constants.APP_NAME} - Game`,
-                  `${path}?id=${model.id}`,
-                );
-              }
+          ) {
+            app.screen = 'the-end';
+            if (currentPathname !== paths.THE_END) {
+              window.history.replaceState(
+                model,
+                `${constants.APP_NAME} - Player`,
+                `${paths.THE_END}?id=${model.id}`,
+              );
             }
           } else {
-            alert('Unexpected server response: ' + xhr.statusText);
+            if (path === paths.PLAYER) {
+              app.screen = 'player-home';
+            } else if (path === paths.SPECTATOR) {
+              app.screen = 'spectator-home';
+            }
+            if (currentPathname !== path) {
+              window.history.replaceState(
+                model,
+                `${constants.APP_NAME} - Game`,
+                `${path}?id=${model.id}`,
+              );
+            }
           }
-        } catch (e) {
-          console.log('Error processing XHR response: ' + e);
-        }
-      };
-      xhr.responseType = 'json';
-      xhr.send();
+        })
+        .catch((err) => {
+          alert('Error getting game data');
+          console.error(err);
+        });
     },
     updatePlayer() {
       this.update(paths.PLAYER);
@@ -185,7 +187,9 @@ export const mainAppSettings = {
   },
   mounted() {
     document.title = constants.APP_NAME;
-    if (!windowHasHTMLDialogElement()) dialogPolyfill.default.registerDialog(document.getElementById('alert-dialog'));
+    if (!windowHasHTMLDialogElement()) {
+      dialogPolyfill.default.registerDialog(document.getElementById('alert-dialog'));
+    }
     const currentPathname = getLastPathSegment();
     const app = this as unknown as (MainAppData) & (typeof mainAppSettings.methods);
     if (currentPathname === paths.PLAYER) {
@@ -201,26 +205,27 @@ export const mainAppSettings = {
         alert('Bad id URL parameter.');
       }
     } else if (currentPathname === paths.GAME) {
-      app.screen = 'game-home';
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', paths.API_GAME + window.location.search);
-      xhr.onerror = function() {
-        alert('Error getting game data');
-      };
-      xhr.onload = function() {
-        if (xhr.status === statusCode.ok) {
+      const url = paths.API_GAME + window.location.search;
+      fetch(url)
+        .then((resp) => {
+          if (!resp.ok) {
+            throw new Error(`Error getting game data: ${resp.statusText}`);
+          }
+          return resp.json();
+        })
+        .then((appGame: SimpleGameModel) => {
+          app.screen = 'game-home';
+          app.game = appGame;
           window.history.replaceState(
-            xhr.response,
+            appGame,
             `${constants.APP_NAME} - Game`,
-            `${paths.GAME}?id=${xhr.response.id}`,
+            `${paths.GAME}?id=${appGame.id}`,
           );
-          app.game = xhr.response as SimpleGameModel;
-        } else {
-          alert('Unexpected server response');
-        }
-      };
-      xhr.responseType = 'json';
-      xhr.send();
+        })
+        .catch((err) => {
+          alert('Error getting game data');
+          console.error(err);
+        });
     } else if (currentPathname === paths.GAMES_OVERVIEW) {
       app.screen = 'games-overview';
     } else if (currentPathname === paths.NEW_GAME) {
@@ -235,6 +240,8 @@ export const mainAppSettings = {
       app.updateSpectator();
     } else if (currentPathname === paths.ADMIN) {
       app.screen = 'admin';
+    } else if (currentPathname === paths.LOGIN) {
+      app.screen = 'login-home';
     } else {
       app.screen = 'start-screen';
     }

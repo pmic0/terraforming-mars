@@ -30,8 +30,8 @@ const COLOR_CODES: Record<Color, string> = {
   [Color.LGREEN]: 'rgb(170,199,111)',
   [Color.LBLUE]: 'rgb(122,157,238)',
   // Not actual player colors
-  [Color.NEUTRAL]: '',
-  [Color.BRONZE]: '',
+  ['neutral']: '',
+  ['bronze']: '',
 };
 
 interface ChartDataSet {
