@@ -2,7 +2,7 @@ import {CardModel} from '../../common/models/CardModel';
 import {Color} from '../../common/Color';
 import {IGame} from '../IGame';
 import {GameOptions} from '../game/GameOptions';
-import {SimpleGameModel} from '../../common/models/SimpleGameModel';
+import {SimpleGameModel, SimpleBotGameModel} from '../../common/models/SimpleGameModel';
 import {GameOptionsModel} from '../../common/models/GameOptionsModel';
 import {Board} from '../boards/Board';
 import {Space} from '../boards/Space';
@@ -45,6 +45,25 @@ export class Server {
       gameOptions: this.getGameOptionsAsModel(game.gameOptions),
       lastSoloGeneration: game.lastSoloGeneration(),
       expectedPurgeTimeMs: game.expectedPurgeTimeMs(),
+    };
+  }
+
+
+  public static getSimpleGameModelBot(game: IGame): SimpleBotGameModel {
+    return {
+      activePlayer: game.getPlayerById(game.activePlayer).color,
+      activePlayerName: game.getPlayerById(game.activePlayer).name,
+      id: game.id,
+      phase: game.phase,
+      players: game.getPlayersInGenerationOrder().map((player) => ({
+        color: player.color,
+        id: player.id,
+        name: player.name,
+        waitingFor: this.getWaitingFor(player, player.getWaitingFor()),
+      })),
+      passedPlayers: game.getPassedPlayers(),
+      deckSize: game.projectDeck.drawPile.length ? game.projectDeck.drawPile.length  : -1,
+      turmoil: game.gameOptions.turmoilExtension ? getTurmoilModel(game) : undefined,
     };
   }
 

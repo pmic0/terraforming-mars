@@ -12,12 +12,16 @@
                     <div class="create-game-page-container">
                         <div class="create-game-page-column">
                             <h4 v-i18n>№ of Players</h4>
-                            <div v-for="pCount in [1,2,3,4,5,6]" v-bind:key="pCount">
-                              <input type="radio" :value="pCount" name="playersCount" v-model="playersCount" :id="pCount+'-radio'">
-                              <label :for="pCount+'-radio'">
-                                  {{ getPlayersCountText(pCount) }}
-                              </label>
-                            </div>
+
+                            <template v-for="pCount in [1,2,3,4,5,6,7,8]">
+                              <div v-bind:key="pCount">
+                                <input type="radio" :value="pCount" name="playersCount" v-model="playersCount" :id="pCount+'-radio'">
+                                <label :for="pCount+'-radio'">
+                                    {{ getPlayersCountText(pCount) }}
+                                </label>
+                              </div>
+                            </template>
+
                         </div>
 
                         <div class="create-game-page-column">
@@ -440,7 +444,9 @@
                                               <input class="form-input form-inline create-game-player-name" :placeholder="getPlayerNamePlaceholder(index)" v-model="newPlayer.name" />
                                           </div>
                                           <div class="create-game-page-color-row">
-                                              <template v-for="color in PLAYER_COLORS">
+
+                                              <template v-for="color in ['Red', 'Green', 'Yellow', 'Blue', 'Black', 'Purple', 'Orange', 'Pink', 'Lred', 'Lyellow', 'Lgreen', 'Lblue']">
+
                                                 <div v-bind:key="color">
                                                   <input type="radio" :value="color" :name="'playerColor' + (index + 1)" v-model="newPlayer.color" :id="'radioBox' + color + (index + 1)">
                                                   <label :for="'radioBox' + color + (index + 1)">
@@ -592,7 +598,85 @@ export default (Vue as WithRefs<Refs>).extend({
   name: 'CreateGameForm',
   data(): CreateGameModel & FormModel {
     return {
-      ...defaultCreateGameModel(),
+      firstIndex: 1,
+      playersCount: 1,
+      players: [
+        { name: '', color: Color.RED, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.GREEN, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.YELLOW, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.BLUE, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.BLACK, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.PURPLE, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.ORANGE, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.PINK, beginner: false, handicap: 0, first: false},
+        {name: '', color: Color.LRED, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.LYELLOW, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.LGREEN, beginner: false, handicap: 0, first: false},
+        { name: '', color: Color.LBLUE, beginner: false, handicap: 0, first: false},              
+      ],
+      expansions: {...DEFAULT_EXPANSIONS},
+      draftVariant: true,
+      initialDraft: false,
+      randomMA: RandomMAOptionType.NONE,
+      modularMA: false,
+      randomFirstPlayer: true,
+      showOtherPlayersVP: false,
+      // beginnerOption: false,
+      showColoniesList: false,
+      showCorporationList: false,
+      showPreludesList: false,
+      showBannedCards: false,
+      showIncludedCards: false,
+      customColonies: [],
+      customCorporations: [],
+      customPreludes: [],
+      bannedCards: [],
+      includedCards: [],
+      board: BoardName.THARSIS,
+      boards: [
+        BoardName.THARSIS,
+        BoardName.HELLAS,
+        BoardName.ELYSIUM,
+        RandomBoardOption.OFFICIAL,
+        BoardName.UTOPIA_PLANITIA,
+        BoardName.VASTITAS_BOREALIS_NOVUS,
+        BoardName.TERRA_CIMMERIA_NOVUS,
+        BoardName.ARABIA_TERRA,
+        BoardName.AMAZONIS,
+        BoardName.TERRA_CIMMERIA,
+        BoardName.VASTITAS_BOREALIS,
+        RandomBoardOption.ALL,
+      ],
+      seed: Math.random(),
+      seededGame: false,
+      solarPhaseOption: false,
+      shuffleMapOption: false,
+      aresExtremeVariant: false,
+      politicalAgendasExtension: AgendaStyle.STANDARD,
+      undoOption: false,
+      showTimers: true,
+      fastModeOption: false,
+      removeNegativeGlobalEventsOption: false,
+      includeFanMA: false,
+      startingCorporations: 2,
+      soloTR: false,
+      clonedGameId: undefined,
+      allOfficialExpansions: false,
+      requiresVenusTrackCompletion: false,
+      requiresMoonTrackCompletion: false,
+      moonStandardProjectVariant: false,
+      moonStandardProjectVariant1: false,
+      altVenusBoard: false,
+      escapeVelocityMode: false,
+      escapeVelocityThreshold: constants.DEFAULT_ESCAPE_VELOCITY_THRESHOLD,
+      escapeVelocityBonusSeconds: constants.DEFAULT_ESCAPE_VELOCITY_BONUS_SECONDS,
+      escapeVelocityPeriod: constants.DEFAULT_ESCAPE_VELOCITY_PERIOD,
+      escapeVelocityPenalty: constants.DEFAULT_ESCAPE_VELOCITY_PENALTY,
+      twoCorpsVariant: false,
+      customCeos: [],
+      startingCeos: 3,
+      startingPreludes: 4,
+      preludeDraftVariant: undefined,
       preludeToggled: false,
       uploading: false,
     };

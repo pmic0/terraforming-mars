@@ -17,15 +17,18 @@ Chart.defaults.font.family = 'Ubuntu, Sans';
 Chart.defaults.color = 'rgb(240, 240, 240)';
 
 const COLOR_CODES: Record<Color, string> = {
-  ['red']: 'rgb(153, 17, 0)',
-  ['yellow']: 'rgb(170, 170, 0)',
-  ['green']: 'rgb(0, 153, 0)',
-  ['black']: 'rgb(170, 170, 170)',
-  ['blue']: 'rgb(0, 102, 255)',
-  ['purple']: 'rgb(140, 0, 255)',
-  ['orange']: 'rgb(236, 113, 12)',
-  ['pink']: 'rgb(245, 116, 187)',
-
+  [Color.RED]: 'rgb(153, 17, 0)',
+  [Color.YELLOW]: 'rgb(170, 170, 0)',
+  [Color.GREEN]: 'rgb(0, 153, 0)',
+  [Color.BLACK]: 'rgb(170, 170, 170)',
+  [Color.BLUE]: 'rgb(0, 102, 255)',
+  [Color.PURPLE]: 'rgb(140, 0, 255)',
+  [Color.ORANGE]: 'rgb(236, 113, 12)',
+  [Color.PINK]: 'rgb(245, 116, 187)',
+  [Color.LRED]: 'rgb(249,137,137)',
+  [Color.LYELLOW]: 'rgb(231,227,149)',
+  [Color.LGREEN]: 'rgb(170,199,111)',
+  [Color.LBLUE]: 'rgb(122,157,238)',
   // Not actual player colors
   ['neutral']: '',
   ['bronze']: '',
