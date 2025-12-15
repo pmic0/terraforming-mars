@@ -50,12 +50,17 @@ export class Server {
 
 
   public static getSimpleGameModelBot(game: IGame): SimpleBotGameModel {
+    const activeColor = game.activePlayer.color;
+    const players: Array<PublicPlayerModel> = game.playersInGenerationOrder.map(player => this.getPlayer(player,false));
+    const thisPlayerIndex = players.findIndex((p) => p.color === activeColor);
+    const thisPlayer: PublicPlayerModel = players[thisPlayerIndex];
     return {
-      activePlayer: game.getPlayerById(game.activePlayer).color,
-      activePlayerName: game.getPlayerById(game.activePlayer).name,
+      activePlayer: activeColor,
+      activePlayerName: game.activePlayer.name,
+      activePlayerData: thisPlayer,
       id: game.id,
       phase: game.phase,
-      players: game.getPlayersInGenerationOrder().map((player) => ({
+      players: game.playersInGenerationOrder.map((player) => ({
         color: player.color,
         id: player.id,
         name: player.name,
@@ -134,7 +139,7 @@ export class Server {
 
   public static getSpectatorModel(game: IGame): SpectatorModel {
     return {
-      color: 'neutral',
+      color: "neutral",
       id: game.spectatorId,
       game: this.getGameModel(game),
       players: game.playersInGenerationOrder.map((p) => this.getPlayer(p, false)),

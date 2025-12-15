@@ -1,4 +1,5 @@
-export enum Color {
+/*
+const enum ColorE {
   BLUE = 'blue',
   RED = 'red',
   YELLOW = 'yellow',
@@ -7,16 +8,30 @@ export enum Color {
   PURPLE = 'purple',
   ORANGE = 'orange',
   PINK = 'pink',
-  NEUTRAL = 'neutral',
   BRONZE = 'bronze',
   LRED = 'lred',
   LYELLOW = 'lyellow',
   LGREEN = 'lgreen',
   LBLUE = 'lblue',
 }
+*/
 
 
-export const PLAYER_COLORS = [Color.BLUE, Color.RED, Color.YELLOW, Color.GREEN, Color.BLACK, Color.PURPLE, Color.ORANGE, Color.PINK, Color.LRED, Color.LYELLOW, Color.LBLUE, Color.LGREEN] as const;
+export const PLAYER_COLORS = ['blue',
+  'red',
+  'yellow',
+  'green',
+  'black',
+  'purple',
+  'orange',
+  'pink',
+  'lred',
+  'lyellow',
+  'lgreen',
+  'lblue',] as const;
 
 
 export type ColorWithNeutral = Color | 'NEUTRAL';
+
+const ALL_COLORS = [...PLAYER_COLORS, 'neutral', 'bronze'] as const;
+export type Color = typeof ALL_COLORS[number];
