@@ -15,7 +15,7 @@
             <section>
                 <dialog id="alert-dialog" class="alert-dialog">
                     <form method="dialog">
-                        <p class="title" v-i18n>Error with input</p>
+                        <p id="alert-title" class="title" v-i18n>Error with input</p>
                         <p id="alert-dialog-message"></p>
                         <menu class="dialog-menu centered-content">
                             <button id="alert-dialog-button" class="btn btn-lg btn-primary">OK</button>
@@ -55,6 +55,7 @@
                 ></games-overview>
                 <card-list v-else-if="screen === 'cards'"></card-list>
                 <admin-home v-else-if="screen === 'admin'"></admin-home>
+                <login-home v-else-if="screen === 'login-home'"></login-home>
                 <Help v-else-if="screen === 'help'"></Help>
             </div>
             <div class="notice" v-i18n>

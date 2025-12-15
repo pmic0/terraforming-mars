@@ -77,8 +77,9 @@ function calc(params: URLSearchParams): string {
     }
     try {
       const mas = chooseMilestonesAndAwards(options);
-      mas.awards.forEach((award) => results.add(award.name));
-      mas.milestones.forEach((milestone) => results.add(milestone.name));
+      for (const ma of (mas.milestones as Array<string>).concat(mas.awards)) {
+        results.add(ma);
+      }
     } catch (err) {
       console.log(err);
       results.add('ERROR');

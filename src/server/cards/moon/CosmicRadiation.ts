@@ -11,6 +11,7 @@ import {Size} from '../../../common/cards/render/Size';
 import {all} from '../Options';
 import {SelectPaymentDeferred} from '../../deferredActions/SelectPaymentDeferred';
 import {message} from '../../logs/MessageBuilder';
+import {Board} from '../../boards/Board';
 
 export class CosmicRadiation extends Card implements IProjectCard {
   constructor() {
@@ -34,8 +35,8 @@ export class CosmicRadiation extends Card implements IProjectCard {
   public override bespokePlay(player: IPlayer) {
     const game = player.game;
     const mines = MoonExpansion.spaces(game, TileType.MOON_MINE);
-    game.getPlayersInGenerationOrder().forEach((mineTileOwner) => {
-      const owned = mines.filter((mine) => mine.player?.id === mineTileOwner.id).length;
+    game.playersInGenerationOrder.forEach((mineTileOwner) => {
+      const owned = mines.filter(Board.ownedBy(mineTileOwner)).length;
       if (owned > 0) {
         const bill = owned * 4;
         const owes = Math.min(bill, mineTileOwner.spendableMegacredits());
