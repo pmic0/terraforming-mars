@@ -3,11 +3,13 @@ import {Tardigrades} from '../../../src/server/cards/base/Tardigrades';
 import {IProjectCard} from '../../../src/server/cards/IProjectCard';
 import {HousePrinting} from '../../../src/server/cards/prelude/HousePrinting';
 import {SelectCard} from '../../../src/server/inputs/SelectCard';
-import {cast, runAllActions} from '../../TestingUtils';
+import {runAllActions, setRulingParty} from '../../TestingUtils';
+import {PartyName} from '@/common/turmoil/PartyName';
 import {testGame} from '../../TestGame';
 import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
 import {UnexpectedApplication} from '../../../src/server/cards/prelude2/UnexpectedApplication';
+import {cast} from '../../../src/common/utils/utils';
 
 describe('UnexpectedApplication', () => {
   let card: UnexpectedApplication;
@@ -63,5 +65,18 @@ describe('UnexpectedApplication', () => {
 
     expect(player.cardsInHand).does.not.contain(tardigrades);
     expect(game.projectDeck.discardPile).contains(tardigrades);
+  });
+
+  it('canAct when reds are in power', () => {
+    [game, player] = testGame(2, {turmoilExtension: true, venusNextExtension: true});
+    setRulingParty(game, PartyName.REDS);
+    player.cardsInHand.push(card, tardigrades);
+    player.megaCredits = 6;
+
+    expect(player.canPlay(card)).is.false;
+
+    player.megaCredits = 7;
+
+    expect(player.canPlay(card)).is.true;
   });
 });

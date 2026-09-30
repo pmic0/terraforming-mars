@@ -14,6 +14,11 @@ export class LogMessageBuilder extends MessageBuilder {
     this.type = LogMessageType.DEFAULT;
   }
 
+  public forNotice(): this {
+    this.type = LogMessageType.NOTICE;
+    return this;
+  }
+
   public forNewGeneration(): this {
     this.type = LogMessageType.NEW_GENERATION;
     return this;
@@ -28,12 +33,18 @@ export class LogMessageBuilder extends MessageBuilder {
       } else {
         return this.cardName(from.card);
       }
-    } else {
+    } else if ('globalEvent' in from) {
       if (typeof(from.globalEvent) === 'object') {
         return this.globalEvent(from.globalEvent);
       } else {
         return this.globalEventName(from.globalEvent);
       }
+    } else if ('party' in from) {
+      return this.party(from.party);
+    } else if ('partyName' in from) {
+      return this.partyName(from.partyName);
+    } else {
+      throw new Error(`Unknown From type: ${JSON.stringify(from)}`);
     }
   }
 

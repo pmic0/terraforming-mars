@@ -14,6 +14,19 @@ import {ColonyName} from '../colonies/ColonyName';
 import {GlobalParameter} from '../GlobalParameter';
 import {Tag} from '../cards/Tag';
 
+export type DeckSizeModel = {
+  drawPile: number;
+  discardPile: number;
+};
+
+// Sizes of the decks other than the project deck. A deck is undefined when its expansion is not in the game.
+export type OtherDeckSizesModel = {
+  corporations: DeckSizeModel;
+  preludes: DeckSizeModel | undefined;
+  ceos: DeckSizeModel | undefined;
+  globalEvents: DeckSizeModel | undefined;
+};
+
 // Common data about a game not assocaited with a player (eg the temperature.)
 export type GameModel = {
   aresData: AresData | undefined;
@@ -22,8 +35,8 @@ export type GameModel = {
   discardedColonies: ReadonlyArray<ColonyName>;
   deckSize: number;
   discardPileSize: number;
+  otherDeckSizes: OtherDeckSizesModel;
   expectedPurgeTimeMs: number;
-  experimentalReset?: boolean;
   gameAge: number;
   gameOptions: GameOptionsModel;
   generation: number;
@@ -32,13 +45,14 @@ export type GameModel = {
   lastSoloGeneration: number,
   milestones: ReadonlyArray<ClaimedMilestoneModel>;
   moon: MoonModel | undefined;
+  name: string;
   oceans: number;
   oxygenLevel: number;
   passedPlayers: ReadonlyArray<Color>;
   pathfinders: PathfindersModel | undefined;
   phase: Phase;
   spaces: ReadonlyArray<SpaceModel>;
-  spectatorId?: SpectatorId;
+  spectatorId: SpectatorId;
   step: number;
   tags: ReadonlyArray<Tag>;
   temperature: number;

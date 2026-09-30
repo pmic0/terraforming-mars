@@ -8,9 +8,10 @@ import {GanymedeColony} from '../../../src/server/cards/base/GanymedeColony';
 import {PhobosSpaceHaven} from '../../../src/server/cards/base/PhobosSpaceHaven';
 import {SolarWindPower} from '../../../src/server/cards/base/SolarWindPower';
 import {BuildColonyStandardProject} from '../../../src/server/cards/colonies/BuildColonyStandardProject';
-import {cast, formatMessage} from '../../TestingUtils';
+import {formatMessage} from '../../TestingUtils';
 import {OrOptions} from '../../../src/server/inputs/OrOptions';
 import {AndOptions} from '../../../src/server/inputs/AndOptions';
+import {cast} from '../../../src/common/utils/utils';
 
 describe('AdhaiHighOrbitConstructions', () => {
   let player: TestPlayer;
@@ -23,19 +24,19 @@ describe('AdhaiHighOrbitConstructions', () => {
   });
 
   it('onCardPlayed', () => {
-    card.onCardPlayedForCorps(player, new SearchForLife()); // Science
+    card.onCardPlayed(player, new SearchForLife()); // Science
     expect(card.resourceCount).eq(0);
 
-    card.onCardPlayedForCorps(player, new Soletta()); // Space
+    card.onCardPlayed(player, new Soletta()); // Space
     expect(card.resourceCount).eq(1);
 
-    card.onCardPlayedForCorps(player, new GanymedeColony()); // Jovian, Space, City
+    card.onCardPlayed(player, new GanymedeColony()); // Jovian, Space, City
     expect(card.resourceCount).eq(1);
 
-    card.onCardPlayedForCorps(player, new PhobosSpaceHaven()); // Space, City
+    card.onCardPlayed(player, new PhobosSpaceHaven()); // Space, City
     expect(card.resourceCount).eq(2);
 
-    card.onCardPlayedForCorps(player, new SolarWindPower()); // Science, Space, Power
+    card.onCardPlayed(player, new SolarWindPower()); // Science, Space, Power
     expect(card.resourceCount).eq(3);
   });
 

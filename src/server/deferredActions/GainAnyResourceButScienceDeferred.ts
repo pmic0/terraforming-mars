@@ -4,11 +4,11 @@ import {CardResource} from '../../common/CardResource';
 import {DeferredAction} from './DeferredAction';
 import {Priority} from './Priority';
 import {PlayerInput} from '../PlayerInput';
-import {Units} from '../../common/Units';
 import {OrOptions} from '../inputs/OrOptions';
 import {SelectOption} from '../inputs/SelectOption';
 import {UnderworldExpansion} from '../underworld/UnderworldExpansion';
 import {SelectResource} from '../inputs/SelectResource';
+import {message} from '../logs/MessageBuilder';
 
 export class GainAnyResourceButScienceDeferred extends DeferredAction {
   constructor(player: IPlayer) {
@@ -24,11 +24,12 @@ export class GainAnyResourceButScienceDeferred extends DeferredAction {
         .andThen(([card]) => {
           this.player.addResourceTo(card, {log: true});
           return undefined;
-        }));
+        })
+        .maybeConvertToSelectOption(message('Add resource to ${0}', (b) => b.card(cards[0]))));
     }
     orOptions.options.push(new SelectResource('Gain 1 standard resource')
       .andThen((resource) => {
-        this.player.stock.add(Units.ResourceMap[resource], 1, {log: true});
+        this.player.stock.add(resource, 1, {log: true});
         return undefined;
       }));
     orOptions.options.push(new SelectOption('Gain 1 corruption')

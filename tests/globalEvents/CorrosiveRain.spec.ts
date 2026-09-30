@@ -3,7 +3,7 @@ import {IGame} from '../../src/server/IGame';
 import {CorrosiveRain} from '../../src/server/turmoil/globalEvents/CorrosiveRain';
 import {Kelvinists} from '../../src/server/turmoil/parties/Kelvinists';
 import {Turmoil} from '../../src/server/turmoil/Turmoil';
-import {cast, runAllActions} from '../TestingUtils';
+import {runAllActions} from '../TestingUtils';
 import {TestPlayer} from '../TestPlayer';
 import {TitanShuttles} from '../../src/server/cards/colonies/TitanShuttles';
 import {TitanAirScrapping} from '../../src/server/cards/colonies/TitanAirScrapping';
@@ -12,6 +12,7 @@ import {SelectCard} from '../../src/server/inputs/SelectCard';
 import {OrOptions} from '../../src/server/inputs/OrOptions';
 import {SelectOption} from '../../src/server/inputs/SelectOption';
 import {testGame} from '../TestGame';
+import {cast} from '@/common/utils/utils';
 
 describe('CorrosiveRain', () => {
   let card: CorrosiveRain;
@@ -36,7 +37,7 @@ describe('CorrosiveRain', () => {
     player.megaCredits = 15;
     player2.megaCredits = 15;
 
-    card.resolve(game, turmoil);
+    card.resolve(game);
     expect(game.deferredActions).has.lengthOf(2);
     runAllActions(game);
     expect(game.deferredActions).has.lengthOf(0);
@@ -58,7 +59,7 @@ describe('CorrosiveRain', () => {
 
     player.megaCredits = 3;
 
-    card.resolve(game, turmoil);
+    card.resolve(game);
     runAllActions(game);
     const orOptions = cast(player.popWaitingFor(), OrOptions);
     const reduce10MC = cast(orOptions.options[0], SelectOption);

@@ -2,12 +2,14 @@ import {expect} from 'chai';
 import {TestPlayer} from '../TestPlayer';
 import {GrantVenusAltTrackBonusDeferred} from '../../src/server/venusNext/GrantVenusAltTrackBonusDeferred';
 import {AndOptions} from '../../src/server/inputs/AndOptions';
-import {cast, formatMessage} from '../TestingUtils';
+import {formatMessage} from '../TestingUtils';
 import {Tardigrades} from '../../src/server/cards/base/Tardigrades';
 import {OrOptions} from '../../src/server/inputs/OrOptions';
 import {SelectCard} from '../../src/server/inputs/SelectCard';
 import {Birds} from '../../src/server/cards/base/Birds';
 import {testGame} from '../TestGame';
+import {cast} from '@/common/utils/utils';
+import {SelectOption} from '../../src/server/inputs/SelectOption';
 
 describe('GrantVenusAltTrackBonusDeferred', () => {
   let player: TestPlayer;
@@ -68,5 +70,16 @@ describe('GrantVenusAltTrackBonusDeferred', () => {
 
     // The second option is the standard resource section.
     expect(input.options[1]).instanceof(AndOptions);
+  });
+
+  it('offers the only resource card directly', () => {
+    const card = new Tardigrades();
+    player.playedCards.push(card);
+
+    const orOptions = cast(new GrantVenusAltTrackBonusDeferred(player, 0, true).execute(), OrOptions);
+    const option = cast(orOptions.options[0], SelectOption);
+    option.cb(undefined);
+
+    expect(card.resourceCount).eq(1);
   });
 });

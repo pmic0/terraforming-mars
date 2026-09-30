@@ -5,6 +5,7 @@ import {AdjacencyBonus} from '../ares/AdjacencyBonus';
 import {SpaceId} from '../../common/Types';
 import {IPlayer} from '../IPlayer';
 import {UndergroundResourceToken} from '../../common/underworld/UndergroundResourceToken';
+import {SpaceCube} from '../../common/boards/SpaceCube';
 
 export type Space = {
   /** The unique ID of this space*/
@@ -16,6 +17,10 @@ export type Space = {
 
   /** The type of space: ocean, space colony, etc. */
   spaceType: SpaceType;
+
+  /** When true, this is a volcanic space. */
+  volcanic?: boolean;
+
   /** The tile placed on top of the space. Could be a hazard tile. */
   tile?: Tile;
   /** The player who owns this tile. Will show a token, even the neutral player */
@@ -24,6 +29,9 @@ export type Space = {
   bonus: Array<SpaceBonus>;
   /** The bonuses granted to players when placing tiles NEXT TO this space. */
   adjacency?: AdjacencyBonus,
+
+  /** The neutral player cube reserving this space. A cube is not a tile, and cannot share a space with one. */
+  cube?: SpaceCube;
 
   /** Optional underworld expansion resource token. */
   undergroundResources?: UndergroundResourceToken;

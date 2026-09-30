@@ -1,23 +1,24 @@
 <template>
-  <div :class="classes" v-i18n>({{ description }})</div>
+  <div :class="classes">(<span v-i18n>{{ description }}</span>)</div>
 </template>
 
 <script lang="ts">
 
-import Vue from 'vue';
-import {isIDescription} from '@/common/cards/render/ICardRenderDescription';
+import {defineComponent, PropType} from 'vue';
+import {isDescription} from '@/common/cards/render/CardRenderDescription';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'CardDescription',
   props: {
     item: {
+      type: [String, Object] as PropType<unknown>,
       required: true,
     },
   },
   computed: {
     classes(): ReadonlyArray<string> {
       const classes: string[] = ['card-description'];
-      if (isIDescription(this.item)) {
+      if (isDescription(this.item)) {
         if (this.item.align !== 'center') {
           // we want to reduce size for aligned left of right to 60%
           classes.push('card-description-aligned');
@@ -27,7 +28,7 @@ export default Vue.extend({
       return classes;
     },
     description(): string {
-      return isIDescription(this.item) ? this.item.text : String(this.item);
+      return isDescription(this.item) ? this.item.text : String(this.item);
     },
   },
 });

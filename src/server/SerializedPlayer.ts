@@ -3,10 +3,11 @@ import {CardName} from '../common/cards/CardName';
 import {Color} from '../common/Color';
 import {SerializedCard} from './SerializedCard';
 import {SerializedTimer} from '../common/SerializedTimer';
-import {SerializedUnderworldPlayerData} from './underworld/UnderworldData';
 import {AlliedParty} from '../common/turmoil/Types';
 import {GlobalParameter} from '../common/GlobalParameter';
 import {DiscordId} from './server/auth/discord';
+import {UnderworldPlayerData} from '../common/underworld/UnderworldPlayerData';
+import {DeltaProjectPlayerModel} from '../common/models/DeltaProjectPlayerModel';
 
 interface DeprecatedFields {
 }
@@ -14,6 +15,7 @@ interface DeprecatedFields {
 export interface SerializedPlayer extends DeprecatedFields{
   actionsTakenThisGame: number;
   actionsTakenThisRound: number;
+  availableActionsThisRound?: number;
   actionsThisGeneration: Array<CardName>;
   alliedParty: AlliedParty | undefined;
   autoPass: boolean;
@@ -24,6 +26,7 @@ export interface SerializedPlayer extends DeprecatedFields{
   cardCost: number;
   cardDiscount: number;
   cardsInHand: Array<CardName>;
+  ceoCardsInHand: Array<CardName>;
   colonyTradeDiscount: number;
   colonyTradeOffset: number;
   colonyVictoryPoints: number;
@@ -32,6 +35,7 @@ export interface SerializedPlayer extends DeprecatedFields{
   dealtCeoCards: Array<CardName>;
   dealtPreludeCards: Array<CardName>;
   dealtProjectCards: Array<CardName>;
+  deltaProject?: DeltaProjectPlayerModel;
   draftedCards: Array<CardName>;
   draftHand: Array<CardName>,
   energy: number;
@@ -44,8 +48,8 @@ export interface SerializedPlayer extends DeprecatedFields{
   heat: number;
   heatProduction: number;
   id: PlayerId;
+  jovianTagCount: number;
   lastCardPlayed?: CardName;
-  ceoCardsInHand: Array<CardName>;
   megaCreditProduction: number;
   megaCredits: number;
   name: string;
@@ -75,9 +79,11 @@ export interface SerializedPlayer extends DeprecatedFields{
   titaniumValue: number;
   totalDelegatesPlaced: number;
   tradesThisGeneration: number;
+  trThisGeneration: number;
   turmoilPolicyActionUsed: boolean;
-  underworldData: SerializedUnderworldPlayerData;
+  underworldData: UnderworldPlayerData;
   victoryPointsByGeneration: Array<number>;
   user?: DiscordId;
+  warmongerCards: number;
   withinDeflectionZone: boolean;
 }

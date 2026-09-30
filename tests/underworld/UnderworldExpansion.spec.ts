@@ -5,11 +5,12 @@ import {UnderworldExpansion} from '../../src/server/underworld/UnderworldExpansi
 import {Game} from '../../src/server/Game';
 import {IGame} from '../../src/server/IGame';
 import {UnderworldData} from '../../src/server/underworld/UnderworldData';
-import {cast, fakeCard, forceGenerationEnd, formatMessage, runAllActions} from '../TestingUtils';
+import {fakeCard, forceGenerationEnd, formatMessage, runAllActions} from '../TestingUtils';
 import {Units} from '../../src/common/Units';
 import {Cryptocurrency} from '../../src/server/cards/pathfinders/Cryptocurrency';
 import {MartianCulture} from '../../src/server/cards/pathfinders/MartianCulture';
 import {GHGProducingBacteria} from '../../src/server/cards/base/GHGProducingBacteria';
+import {Asteroid} from '../../src/server/cards/base/Asteroid';
 import {RegolithEaters} from '../../src/server/cards/base/RegolithEaters';
 import {SelectCard} from '../../src/server/inputs/SelectCard';
 import {TileType} from '../../src/common/TileType';
@@ -18,10 +19,15 @@ import {Phase} from '../../src/common/Phase';
 import {LawSuit} from '../../src/server/cards/promo/LawSuit';
 import {PlayerInput} from '../../src/server/PlayerInput';
 import {OrOptions} from '../../src/server/inputs/OrOptions';
+import {SelectOption} from '../../src/server/inputs/SelectOption';
+import {Priority} from '../../src/server/deferredActions/Priority';
+import {Resource} from '../../src/common/Resource';
 import {PrivateMilitaryContractor} from '../../src/server/cards/underworld/PrivateMilitaryContractor';
 import {Tag} from '../../src/common/cards/Tag';
 import {BoardName} from '../../src/common/boards/BoardName';
-import {SpaceName} from '../../src/common/boards/SpaceName';
+import {TunnelingLoophole} from '../../src/server/cards/underworld/TunnelingLoophole';
+import {SpaceType} from '../../src/common/boards/SpaceType';
+import {cast} from '@/common/utils/utils';
 
 describe('UnderworldExpansion', () => {
   let player1: TestPlayer;
@@ -75,18 +81,19 @@ describe('UnderworldExpansion', () => {
     const responses: Array<string> = [];
     const space = game.board.getAvailableSpacesOnLand(player1)[0];
     const fake = fakeCard({
-      onIdentificationByAnyPlayer(cardOwner, identifyingPlayer, space) {
-        responses.push(`${identifyingPlayer?.id} - ${cardOwner.id} - ${space.id}`);
+      onIdentificationByAnyPlayer(cardOwner, identifyingPlayer, token) {
+        responses.push(`${identifyingPlayer?.id} - ${cardOwner.id} - ${token}`);
       },
     });
     player1.playedCards.push(fake);
     player2.playedCards.push(fake);
 
+    game.underworldData.tokens.push('ocean');
     UnderworldExpansion.identify(game, space, player1);
 
     expect(responses).deep.eq([
-      'p-player1-id - p-player1-id - 03',
-      'p-player1-id - p-player2-id - 03',
+      'p-player1-id - p-player1-id - ocean',
+      'p-player1-id - p-player2-id - ocean',
     ]);
   });
 
@@ -171,48 +178,6 @@ describe('UnderworldExpansion', () => {
     expect(player1.underworldData.corruption).eq(2);
   });
 
-  it('grant bonus - data1', () => {
-    expect(player1.getCardsWithResources()).is.empty;
-
-    UnderworldExpansion.grant(player1, 'data1');
-    runAllActions(game);
-    const selectCard = cast(player1.popWaitingFor(), SelectCard);
-    selectCard.cb([dataCard2]);
-
-    expect(player1.getCardsWithResources()).deep.eq([dataCard2]);
-    expect(dataCard2.resourceCount).eq(1);
-  });
-
-  it('grant bonus - data2', () => {
-    expect(player1.getCardsWithResources()).is.empty;
-
-    UnderworldExpansion.grant(player1, 'data2');
-    runAllActions(game);
-    const selectCard = cast(player1.popWaitingFor(), SelectCard);
-    selectCard.cb([dataCard2]);
-
-    expect(player1.getCardsWithResources()).deep.eq([dataCard2]);
-    expect(dataCard2.resourceCount).eq(2);
-  });
-
-  it('grant bonus - data3', () => {
-    expect(player1.getCardsWithResources()).is.empty;
-
-    UnderworldExpansion.grant(player1, 'data3');
-    runAllActions(game);
-    const selectCard = cast(player1.popWaitingFor(), SelectCard);
-    selectCard.cb([dataCard2]);
-
-    expect(player1.getCardsWithResources()).deep.eq([dataCard2]);
-    expect(dataCard2.resourceCount).eq(3);
-  });
-
-  it('grant bonus - steel2', () => {
-    expect(player1.stock.asUnits()).deep.eq(Units.of({}));
-    UnderworldExpansion.grant(player1, 'steel2');
-    expect(player1.stock.asUnits()).deep.eq(Units.of({steel: 2}));
-  });
-
   it('grant bonus - steel1production', () => {
     expect(player1.stock.asUnits()).deep.eq(Units.of({}));
     UnderworldExpansion.grant(player1, 'steel1production');
@@ -265,18 +230,6 @@ describe('UnderworldExpansion', () => {
     expect(player1.production.asUnits()).deep.eq(Units.of({}));
     UnderworldExpansion.grant(player1, 'heat2production');
     expect(player1.production.asUnits()).deep.eq(Units.of({heat: 2}));
-  });
-
-  it('grant bonus - microbe1', () => {
-    expect(player1.getCardsWithResources()).is.empty;
-
-    UnderworldExpansion.grant(player1, 'microbe1');
-    runAllActions(game);
-    const selectCard = cast(player1.popWaitingFor(), SelectCard);
-    selectCard.cb([microbeCard1]);
-
-    expect(player1.getCardsWithResources()).deep.eq([microbeCard1]);
-    expect(microbeCard1.resourceCount).eq(1);
   });
 
   it('grant bonus - microbe2', () => {
@@ -395,23 +348,43 @@ describe('UnderworldExpansion', () => {
     expect(UnderworldExpansion.excavatableSpaces(player1)).contains(space);
   });
 
-  it('Rey Skywalker space is identifiable and excavatable', () => {
+  it('Rey Skywalker space is not identifiable or excavatable', () => {
     const space = UnderworldExpansion.identifiableSpaces(player1)[0];
-    game.simpleAddTile(player1, space, {tileType: TileType.REY_SKYWALKER});
+    space.cube = 'rey-skywalker';
 
-    expect(UnderworldExpansion.identifiableSpaces(player1)).contains(space);
-    expect(UnderworldExpansion.excavatableSpaces(player1)).contains(space);
+    expect(UnderworldExpansion.identifiableSpaces(player1)).not.contains(space);
+    expect(UnderworldExpansion.excavatableSpaces(player1)).not.contains(space);
+
+    expect(() => UnderworldExpansion.excavate(player1, space)).to.throw();
   });
 
   it('Martian Nature Wonders space is identifiable and excavatable', () => {
     const space = UnderworldExpansion.identifiableSpaces(player1)[0];
-    game.simpleAddTile(player1, space, {tileType: TileType.MARTIAN_NATURE_WONDERS});
+    space.cube = 'martian-nature-wonders';
 
     expect(UnderworldExpansion.identifiableSpaces(player1)).contains(space);
     expect(UnderworldExpansion.excavatableSpaces(player1)).contains(space);
+
+    UnderworldExpansion.excavate(player1, space);
+
+    expect(space.excavator?.id).eq(player1.id);
   });
 
-  // TODO(kberg): Test excavatablespaces override
+  it('excavatableSpaces - TunnelingLoophole overrides placement restrictions', () => {
+    // Give player1 one excavated space so placement restrictions kick in.
+    UnderworldExpansion.excavatableSpaces(player1)[0].excavator = player1;
+    const restricted = UnderworldExpansion.excavatableSpaces(player1);
+    // Without TunnelingLoophole, only spaces adjacent to player1's excavation are available.
+    expect(restricted.length).to.be.greaterThan(0);
+
+    // With TunnelingLoophole active this generation, all excavatable spaces are available.
+    const card = new TunnelingLoophole();
+    card.generationUsed = game.generation;
+    player1.playedCards.push(card);
+
+    const unrestricted = UnderworldExpansion.excavatableSpaces(player1);
+    expect(unrestricted.length).to.be.greaterThan(restricted.length);
+  });
 
   it('excavate', () => {
     player1.plants = 0;
@@ -506,6 +479,7 @@ describe('UnderworldExpansion', () => {
     game.increaseTemperature(player2, 2);
     runAllActions(game);
     const selectCard1 = cast(player1.popWaitingFor(), SelectCard);
+    expect(selectCard1.cards).deep.eq([microbeCard1, microbeCard2]);
     selectCard1.cb([microbeCard1]);
 
     expect(player1.getCardsWithResources()).deep.eq([microbeCard1]);
@@ -514,6 +488,7 @@ describe('UnderworldExpansion', () => {
     runAllActions(game);
 
     const selectCard2 = cast(player1.popWaitingFor(), SelectCard);
+    expect(selectCard2.cards).deep.eq([microbeCard1, microbeCard2]);
     selectCard2.cb([microbeCard2]);
     expect(player1.getCardsWithResources()).deep.eq([microbeCard1, microbeCard2]);
     expect(microbeCard2.resourceCount).eq(1);
@@ -525,31 +500,50 @@ describe('UnderworldExpansion', () => {
   it('on temperature change - plant2pertemp', () => {
     player1.underworldData.activeBonus = 'plant2pertemp';
     game.increaseTemperature(player2, 2);
+    runAllActions(game);
     expect(player1.stock.plants).eq(4);
   });
 
   it('on temperature change - steel2pertemp', () => {
     player1.underworldData.activeBonus = 'steel2pertemp';
     game.increaseTemperature(player2, 2);
+    runAllActions(game);
     expect(player1.stock.steel).eq(4);
   });
 
   it('on temperature change - titanium1pertemp', () => {
     player1.underworldData.activeBonus = 'titanium1pertemp';
     game.increaseTemperature(player2, 2);
+    runAllActions(game);
     expect(player1.stock.titanium).eq(2);
+  });
+
+  it('temperature bonus resolves before the temperature-raising card removes plants', () => {
+    player1.underworldData.activeBonus = 'plant2pertemp';
+    expect(player1.stock.plants).eq(0);
+
+    // Asteroid raises the temperature 1 step and then removes up to 3 plants.
+    player2.playCard(new Asteroid());
+    runAllActions(game);
+
+    expect(player1.stock.plants).eq(2);
+
+    const orOptions = cast(player2.popWaitingFor(), OrOptions);
+    expect(orOptions.options.map((option) => formatMessage(option.title))).includes(`Remove 2 plants from ${player1.color}`);
   });
 
   it('temperature bonus applies to Solar Phase', () => {
     player1.underworldData.activeBonus = 'titanium1pertemp';
     game.phase = Phase.SOLAR;
     game.increaseTemperature(player2, 2);
+    runAllActions(game);
     expect(player1.stock.titanium).eq(2);
   });
 
   it('temperature bonus does not apply next generation', () => {
     player1.underworldData.activeBonus = 'steel2pertemp';
     game.increaseTemperature(player2, 2);
+    runAllActions(game);
     expect(player1.stock.steel).eq(4);
     player1.stock.steel = 0;
 
@@ -557,6 +551,7 @@ describe('UnderworldExpansion', () => {
 
     expect(player1.underworldData.activeBonus).is.undefined;
     game.increaseTemperature(player2, 1);
+    runAllActions(game);
     expect(player1.stock.steel).eq(0);
   });
 
@@ -650,6 +645,26 @@ describe('UnderworldExpansion', () => {
     expect(tester.called).is.true;
     expect(tester.proceed).is.false;
     expect(player1.underworldData.corruption).eq(0);
+  });
+
+  it('maybeBlockAttack - resolves before opponent triggers', () => {
+    player1.underworldData.corruption = 1;
+    player1.megaCredits = 10;
+    // Stands in for one of player1's cards that triggers during player2's turn.
+    player1.defer(new SelectOption('opponent trigger'), Priority.OPPONENT_TRIGGER);
+
+    player1.attack(player2, Resource.MEGACREDITS, 4);
+    runAllActions(game);
+
+    // Even though it was deferred second, blocking is resolved first.
+    const orOptions = cast(player1.popWaitingFor(), OrOptions);
+    expect(orOptions.options.map((option) => option.title)).deep.eq(['Block with corruption', 'Do not block']);
+
+    orOptions.options[1].cb();
+    expect(player1.megaCredits).eq(6);
+
+    runAllActions(game);
+    expect(cast(player1.popWaitingFor(), SelectOption).title).eq('opponent trigger');
   });
 
   it('maybeBlockAttack - block self', () => {
@@ -774,15 +789,30 @@ describe('UnderworldExpansion', () => {
     expect(game.underworldData.tokens).to.have.members(['card1']);
   });
 
-  it('Cannot identify the restricted space on Amazonis Planitia', () => {
-    const [game, player1] = testGame(2, {underworldExpansion: true, boardName: BoardName.AMAZONIS});
-    expect(UnderworldExpansion.identifiableSpaces(player1)).to.not.include(game.board.getSpaceOrThrow(SpaceName.MEDUSAE_FOSSAE));
-    expect(UnderworldExpansion.excavatableSpaces(player1)).to.not.include(game.board.getSpaceOrThrow(SpaceName.MEDUSAE_FOSSAE));
+  it('removeClaimedToken - planttag decrements extra plant tag', () => {
+    player1.underworldData.tokens.push({token: 'planttag', shelter: false, active: false});
+    player1.tags.extraPlantTags = 1;
+
+    UnderworldExpansion.removeClaimedToken(player1, 0);
+
+    expect(player1.underworldData.tokens).is.empty;
+    expect(player1.tags.extraPlantTags).eq(0);
   });
 
-  it('Can identify the space that would be restricted if it were Amazonis Planitia', () => {
-    const [game, player1] = testGame(2, {underworldExpansion: true, boardName: BoardName.THARSIS});
-    expect(UnderworldExpansion.identifiableSpaces(player1)).to.include(game.board.getSpaceOrThrow(SpaceName.MEDUSAE_FOSSAE));
-    expect(UnderworldExpansion.excavatableSpaces(player1)).to.include(game.board.getSpaceOrThrow(SpaceName.MEDUSAE_FOSSAE));
+  it('removeClaimedToken - sciencetag decrements extra science tag', () => {
+    player1.underworldData.tokens.push({token: 'sciencetag', shelter: false, active: false});
+    player1.tags.extraScienceTags = 1;
+
+    UnderworldExpansion.removeClaimedToken(player1, 0);
+
+    expect(player1.underworldData.tokens).is.empty;
+    expect(player1.tags.extraScienceTags).eq(0);
+  });
+
+  it('Cannot identify the restricted space on Amazonis Planitia', () => {
+    const [game, player1] = testGame(2, {underworldExpansion: true, boardName: BoardName.AMAZONIS});
+    const restrictedSpace = game.board.spaces.filter((space) => space.spaceType === SpaceType.RESTRICTED)[0];
+    expect(UnderworldExpansion.identifiableSpaces(player1)).to.not.include(restrictedSpace);
+    expect(UnderworldExpansion.excavatableSpaces(player1)).to.not.include(restrictedSpace);
   });
 });

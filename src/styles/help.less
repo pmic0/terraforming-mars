@@ -1,305 +1,415 @@
 .help-container {
-    .help-tabs {
-        padding-top: 10px;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        padding-bottom: 10px;
-    }
+  .help-tabs {
+    padding-top: 10px;
+    display: flex;
+    flex-flow: row nowrap;
+    padding-bottom: 10px;
+  }
 
-    input[type="radio"] {
-        opacity: 0;
-        position: fixed;
-        width: 0;
-    }
+  input[type="radio"] {
+    opacity: 0;
+    position: fixed;
+    width: 0;
+  }
 
-    label {
-        color: #ccc;
-        display: inline-block;
-        background-color: #444;
-        padding: 3px 20px 3px 20px;
-        font-family: Ubuntu, Sans;
-        font-size: 23px;
-        border-radius: 8px 8px 0px 0px;
-        text-align: center;
-        margin: 4px;
-        width: auto;
-        display: flex;
-        justify-content: center;
-    }
+  label {
+    color: #ccc;
+    background-color: #444;
+    padding: 3px 20px 3px 20px;
+    font-family: Ubuntu, sans-serif;
+    font-size: 23px;
+    border-radius: 8px 8px 0px 0px;
+    text-align: center;
+    margin: 4px;
+    width: auto;
+    display: flex;
+    justify-content: center;
+  }
 
-    label:hover {
-        background-color: rgb(104, 104, 104);
-        cursor: pointer;
-    }
+  label:hover {
+    background-color: rgb(104, 104, 104);
+    cursor: pointer;
+  }
 
-    input[type="radio"]:checked + label {
-        background-color: rgb(199, 199, 199);
-        color: black;
-    }
+  input[type="radio"]:checked + label {
+    background-color: rgb(199, 199, 199);
+    color: black;
+  }
 }
 
 .help-iconology-container {
-    padding: 20px;
-    display : flex;
-    flex-flow: row wrap;
-}
-
-.help-phases-container {
-    padding-bottom: 40px;
+  padding: 20px;
+  display : flex;
+  flex-flow: row wrap;
 }
 
 .help-standard-projects-container {
-    padding-bottom: 40px;
-    h2 {
-        padding-top: 25px;
-        margin-bottom: 0px;
-    }
+  padding-bottom: 40px;
+  h2 {
+    padding-top: 25px;
+    margin-bottom: 0px;
+  }
 }
 
 .help-icons-column {
-    display: flex;
-    flex-flow: column nowrap;
-    padding:10px;
-    justify-content: flex-start;
-    padding-right: 60px;
-}
-
-.help-icon-column > div {
-    margin-top: 0px;
-    margin-bottom: 5px;
+  display: flex;
+  flex-flow: column nowrap;
+  padding:10px;
+  justify-content: flex-start;
+  padding-right: 60px;
 }
 
 .help-icon-label{
-    padding-left: 15px;
-    display: inline-block;
+  padding-left: 15px;
+  display: inline-block;
 }
 
 .help-icon-sublabel{
-    font: 15px;
-    color: gray;
-    display: inline-block;
+  font: 15px;
+  color: gray;
+  display: inline-block;
 }
 
 .help-icon-mc-font{
-    color: rgba(0, 0, 0, 0.3);
-    font-style: normal;
-    font-family: Arial;
-    font-weight: bold;
-    text-align: center;
+  color: rgba(0, 0, 0, 0.3);
+  font-style: normal;
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  text-align: center;
 }
 
 .help-icons-section-heading{
-    font-size: 25px;
-    font-style: normal;
-    font-family: Arial;
-    font-weight: bold;
-    text-align: center;
-    padding-bottom: 15px;
+  font-size: 25px;
+  font-style: normal;
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  text-align: center;
+  padding-bottom: 15px;
 }
 
 .help-icon-resource {
-    font-family: Prototype;
-    position: relative;
-    display: inline-block;
-    margin-bottom: 5px;
-    width: 30px;
-    height: 30px;
-    font-size: 22px;
-    line-height: 30px;
-    background-size: 30px;
-    filter: drop-shadow(0px 0px 1px black);
-    vertical-align: middle;
+  font-family: Prototype, sans-serif;
+  position: relative;
+  display: inline-block;
+  margin-bottom: 5px;
+  width: 30px;
+  height: 30px;
+  font-size: 22px;
+  line-height: 30px;
+  background-size: 30px;
+  filter: drop-shadow(0px 0px 1px black);
+  vertical-align: middle;
 }
 
 .help-other-symbols {
-    display: inline-block;
-    width: 60px;
+  display: inline-block;
+  width: 60px;
 }
 
 .help-icon-param-box-temperature {
-    display: inline-block;
-    margin-bottom: 5px;
-    width: 40px;
-    height: 40px;
-    background-image: url(./assets/global-parameters/temperature.png);
-    background-size: 12px 40px;
-    background-position: 13px -1px;
-    filter: drop-shadow(0px 0px 1px black);
-    background-repeat: no-repeat;
+  display: inline-block;
+  margin-bottom: 5px;
+  width: 40px;
+  height: 40px;
+  background-image: url(./assets/global-parameters/temperature.png);
+  background-size: 12px 40px;
+  background-position: 13px -1px;
+  filter: drop-shadow(0px 0px 1px black);
+  background-repeat: no-repeat;
 }
 
 .help-icon-param-box-oxygen {
-    display: inline-block;
-    margin-bottom: 5px;
-    width: 40px;
-    height: 40px;
-    background-image: url(./assets/global-parameters/oxygen.png);
-    background-size: 40px 40px;
-    background-position: 0px -1px;
-    filter: drop-shadow(0px 0px 1px black);
-    background-repeat: no-repeat;
+  display: inline-block;
+  margin-bottom: 5px;
+  width: 40px;
+  height: 40px;
+  background-image: url(./assets/global-parameters/oxygen.png);
+  background-size: 40px 40px;
+  background-position: 0px -1px;
+  filter: drop-shadow(0px 0px 1px black);
+  background-repeat: no-repeat;
 }
 
 .help-icon-param-box-ocean {
-    display: inline-block;
-    margin-bottom: 5px;
-    width: 40px;
-    height: 40px;
-    background-image: url(./assets/tiles/ocean.png);
-    background-size: 35px 40px;
-    background-position: 3px -1px;
-    filter: drop-shadow(0px 0px 1px black);
-    background-repeat: no-repeat;
+  display: inline-block;
+  margin-bottom: 5px;
+  width: 40px;
+  height: 40px;
+  background-image: url(./assets/tiles/ocean.png);
+  background-size: 35px 40px;
+  background-position: 3px -1px;
+  filter: drop-shadow(0px 0px 1px black);
+  background-repeat: no-repeat;
 }
 
 .help-icon-param-box-venus {
-    display: inline-block;
-    margin-bottom: 5px;
-    width: 40px;
-    height: 40px;
-    background-image: url(./assets/global-parameters/venus.png);
-    background-size: 40px 22px;
-    background-position: 0px 7px;
-    filter: drop-shadow(0px 0px 1px black);
-    background-repeat: no-repeat;
+  display: inline-block;
+  margin-bottom: 5px;
+  width: 40px;
+  height: 40px;
+  background-image: url(./assets/global-parameters/venus.png);
+  background-size: 40px 22px;
+  background-position: 0px 7px;
+  filter: drop-shadow(0px 0px 1px black);
+  background-repeat: no-repeat;
 }
 
 .help-icon-card{
-    display: inline-block;
-    margin-left: 15px;
+  display: inline-block;
+  margin-left: 15px;
 }
 
 .help-icon-delegate{
-    display: inline-block;
-    background: url(./assets/turmoil_ui.png);
-    width: 50px;
-    height: 60px;
-    margin-left: 6px;
-    background-position: -919px 850px;
-    vertical-align: middle;
-    margin-bottom: 5px;
-    transform: scale(0.7);
+  display: inline-block;
+  background: url(./assets/turmoil_ui.png);
+  width: 50px;
+  height: 60px;
+  margin-left: 6px;
+  background-position: -919px 850px;
+  vertical-align: middle;
+  margin-bottom: 5px;
+  transform: scale(0.7);
 }
 
 .help-icon-influence{
-    transform:scale(1.2);
-    margin-left: 10px;
+  transform:scale(1.2);
+  margin-left: 10px;
 }
 
 .help-icon-victory-point {
-    display: inline-block;
-    color: black;
-    font-family: Prototype;
-    font-weight: normal;
-    width: 80px;
-    height: 42px;
-    margin-left: -7px;
-    line-height: 35px;
-    font-size: 28px;
-    text-align: center;
-    border-radius: 12px;
-    border-top: 2px solid rgb(221,221,221);
-    border-left: 2px solid rgb(221,221,221);
-    border-bottom: 2px solid rgb(137,137,137);
-    border-right: 2px solid rgb(137,137,137);
-    background-color: rgb(205,162, 130);
-    background: linear-gradient(#cc8b00, rgb(128, 87, 0),rgb(128, 87, 0));
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.6), 0 0 0 2px rgba(0,0,0,0.3);
-    transform: scale(0.8);
-  }
+  display: inline-block;
+  color: black;
+  font-family: Prototype, sans-serif;
+  font-weight: normal;
+  width: 80px;
+  height: 42px;
+  margin-left: -7px;
+  line-height: 35px;
+  font-size: 28px;
+  text-align: center;
+  border-radius: 12px;
+  border-top: 2px solid rgb(221,221,221);
+  border-left: 2px solid rgb(221,221,221);
+  border-bottom: 2px solid rgb(137,137,137);
+  border-right: 2px solid rgb(137,137,137);
+  background: linear-gradient(#cc8b00, rgb(128, 87, 0),rgb(128, 87, 0));
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.6), 0 0 0 2px rgba(0,0,0,0.3);
+  transform: scale(0.8);
+}
 
 .help-phases-container {
-    ul{
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
+  padding-bottom: 40px;
 
+  ul{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  label{
+    display: block;
+    cursor: pointer;
+    width: fit-content;
+    border-radius: 8px;
+    border: none;
+    background-color: rgb(104, 37, 37);
+  }
+
+  label:hover{
+    background: #9b524d;
+  }
+
+  input[type="checkbox"]:checked + label{
+    background: #8d615e;
+  }
+
+  ul li ul {
     label{
-        display: block;
-        cursor: pointer;
-        width: fit-content;
-        border-radius: 8px;
-        border: none;
-        background-color: rgb(104, 37, 37);
+      margin-top: 10px;
+      background: #805c0f;
     }
 
     label:hover{
-        background: #9b524d;
+      background: #caaa64;
     }
 
     input[type="checkbox"]:checked + label{
-        background: #8d615e;
+      background: #9c7e3b;
     }
-
-    ul li ul {
-        label{
-            margin-top: 10px;
-            background: #805c0f;
-        }
-
-        label:hover{
-            background: #caaa64;
-        }
-
-        input[type="checkbox"]:checked + label{
-            background: #9c7e3b;
-        }
-        li {
-            margin-left: 25px;
-        }
+    li {
+      margin-left: 25px;
     }
+  }
 
-    ul ul li{
-        margin-left: 25px;
-    }
+  ul ul li{
+    margin-left: 25px;
+  }
 
-    input[type="checkbox"]{
-        opacity: 0;
-        position: fixed;
-        width: 0;
-    }
+  input[type="checkbox"]{
+    opacity: 0;
+    position: fixed;
+    width: 0;
+  }
 
-    input[type="checkbox"] ~ ul{
-        height: 0;
-        transform: scaleY(0);
-    }
+  input[type="checkbox"] ~ ul{
+    height: 0;
+    transform: scaleY(0);
+  }
 
-    input[type="checkbox"]:checked ~ ul{
-        height: 100%;
-        transform-origin: top;
-        transition: transform .2s ease-out;
-        transform: scaleY(1);
-    }
+  input[type="checkbox"]:checked ~ ul{
+    height: 100%;
+    transform-origin: top;
+    transition: transform .2s ease-out;
+    transform: scaleY(1);
+  }
+}
+
+
+.help-turmoil-parties-container {
+  padding: 20px;
+  font-size: 13px;
+
+  > p {
+    color: #ccc;
+    margin-bottom: 20px;
+    max-width: 900px;
+  }
+}
+
+.help-parties-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.help-party-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px 12px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  // A fixed-column row means each card's width isn't guaranteed to fit .party-name's normal
+  // fixed 165px pill (unlike a viewport-driven auto-fill grid). Letting it size to the card's
+  // own available width instead avoids clipping long names - clip-path's polygon points are
+  // percentages, so the pill's notched shape still scales correctly at any width.
+  .party-name {
+    width: auto;
+    min-width: 0;
+    padding: 0 8px;
+  }
+}
+
+.help-party-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-bottom: 4px;
+}
+
+// A fixed 2-column grid (1 row of 2 bonuses, 2 rows of 2 policies) so every card is exactly
+// the same size regardless of which section it's in. minmax(0, 1fr) (not plain 1fr) is required
+// here: a plain 1fr column's minimum width still defaults to its content's natural width, so a
+// wide multi-icon agenda (e.g. "Pay 10 M€ to draw 3 cards") would force that whole column wider
+// than the others instead of wrapping inside its own cell -- this got much worse on narrow
+// screens, where there's less room to absorb the overflow.
+.help-agenda-section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+// A bonus/policy shown as its real board icon on its own background tile (matching how it
+// looks on /cards), with its plain-text effect underneath. min-width: 0 is the other half of
+// the fix above -- a flex/grid item won't actually shrink below its content's natural width
+// just because its track is constrained, unless the item itself allows it too.
+.help-agenda-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 6px;
+  background-image: linear-gradient(#9c602d, #25170a);
+  border-radius: 8px;
+}
+
+.help-agenda-description {
+  color: #e6d8c3;
+  font-size: 11px;
+  line-height: 1.3;
+  text-align: center;
+}
+
+// A plain visual break between the 2 bonuses and 4 policies -- no label needed, the order
+// (bonuses, then policies) is always the same.
+.help-agenda-divider {
+  border-top: 1px solid #444;
+  margin: 4px 0;
+}
+
+// 3 fixed party columns are too narrow to hold a 2-column bonus/policy grid on an actual phone
+// screen, even with the minmax(0, 1fr) fix above -- drop to 1 column so each party card gets
+// the full width instead.
+@media only screen and (max-width: 767px) {
+  .help-parties-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.help-rulebooks-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 60px;
+  padding: 20px;
+}
+
+.help-rulebooks-section {
+  text-align: center;
+}
+
+.help-rulebook-rows {
+  display: inline-block;
+  text-align: left;
+}
+
+.help-rulebook-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
 }
 
 .help-hotkeys {
-    display: inline-block;
-    vertical-align: middle;
-    background: url(./assets/help/hotkeys.png);
-    width: 608px;
-    height: 436px;
-    background-size: 608px 436px;
-    color: white;
-    font-family: Prototype;
-    font-weight: normal;
-    text-align: left;
-    margin-left: 250px;
-    line-height: 38px;
-    .keys{
-        position: relative;
-        left: -245px;
-        margin-top: 263px;
-    }
+  display: inline-block;
+  vertical-align: middle;
+  background: url(./assets/help/hotkeys.png);
+  width: 608px;
+  height: 436px;
+  background-size: 608px 436px;
+  color: white;
+  font-family: Prototype, sans-serif;
+  font-weight: normal;
+  text-align: left;
+  margin-left: 250px;
+  line-height: 38px;
+  .keys{
+    position: relative;
+    left: -245px;
+    margin-top: 263px;
+  }
 }
 
 .help-hotkeys-example {
-    display: inline-block;
-    vertical-align: middle;
-    background: url(./assets/help/hotkey-mapping-example.png);
-    width: 568px;
-    height: 749px;
-    background-size: 568px 749px;
-    margin: 25px;
+  display: inline-block;
+  vertical-align: middle;
+  background: url(./assets/help/hotkey-mapping-example.png);
+  width: 568px;
+  height: 749px;
+  background-size: 568px 749px;
+  margin: 25px;
 }

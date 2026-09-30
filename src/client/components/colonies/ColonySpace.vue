@@ -1,6 +1,6 @@
 <template>
   <div>
-    <build-benefit v-if="idx <= 2" :metadata="metadata" :idx="idx"></build-benefit>
+    <BuildBenefit v-if="idx <= 2" :metadata="metadata" :idx="idx"/>
     <div v-if="player !== undefined" class="occupied-colony-space">
       <div :class="`board-cube colony-cube board-cube--${player}`"></div>
     </div>
@@ -9,19 +9,20 @@
 </template>
 <script lang="ts">
 
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 
 import {ColonyName} from '@/common/colonies/ColonyName';
 import {ColonyMetadata} from '@/common/colonies/ColonyMetadata';
 import BuildBenefit from './BuildBenefit.vue';
 import {Color} from '@/common/Color';
 
-export default Vue.extend({
+export default defineComponent({
   components: {BuildBenefit},
   name: 'ColonyRow',
   props: {
     idx: {
       type: Number,
+      required: true,
     },
     metadata: {
       type: Object as () => ColonyMetadata,
@@ -29,6 +30,7 @@ export default Vue.extend({
     },
     player: {
       type: String as () => Color | undefined,
+      default: undefined,
     },
     marker: {
       type: Boolean,

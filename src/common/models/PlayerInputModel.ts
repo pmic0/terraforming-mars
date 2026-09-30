@@ -16,6 +16,7 @@ export type BaseInputModel = {
   title: string | Message;
   warning?: string | Message;
   buttonLabel: string;
+  optional?: boolean;
 }
 
 export type AndOptionsModel = BaseInputModel & {
@@ -51,6 +52,8 @@ export type SelectProjectCardToPlayModel = BaseInputModel & {
   seeds: number;
   graphene: number;
   kuiperAsteroids: number;
+  auroraiData: number;
+  spireScience: number;
 }
 
 export type SelectCardModel = BaseInputModel & {
@@ -61,6 +64,7 @@ export type SelectCardModel = BaseInputModel & {
   showOnlyInLearnerMode: boolean;
   selectBlueCardAction: boolean;
   showOwner: boolean;
+  showSelectAll: boolean;
 }
 
 export type SelectColonyModel = BaseInputModel & {
@@ -76,6 +80,11 @@ export type SelectPaymentModel = BaseInputModel & {
   auroraiData: number;
   kuiperAsteroids: number;
   spireScience: number;
+  reserveUnits: Readonly<Units> | undefined; // Built to support the Merchant milestone.
+
+  floaters: 0,
+  microbes: 0,
+  graphene: 0,
 }
 
 export type SelectPlayerModel = BaseInputModel & {
@@ -93,6 +102,11 @@ export type SelectAmountModel = BaseInputModel & {
   min: number;
   max: number;
   maxByDefault: boolean;
+}
+
+export type DeltaProjectInputModel = BaseInputModel & {
+  type: 'deltaProject';
+  validSteps: ReadonlyArray<number>;
 }
 
 export type SelectDelegateModel = BaseInputModel & {
@@ -158,4 +172,5 @@ export type PlayerInputModel =
   SelectGlobalEventModel |
   SelectResourceModel |
   SelectResourcesModel |
-  SelectClaimedUndergroundTokenModel;
+  SelectClaimedUndergroundTokenModel |
+  DeltaProjectInputModel;

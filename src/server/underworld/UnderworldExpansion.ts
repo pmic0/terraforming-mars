@@ -23,7 +23,9 @@ import {GlobalParameter} from '../../common/GlobalParameter';
 import {Tag} from '../../common/cards/Tag';
 import {UnderworldPlayerData} from '../../common/underworld/UnderworldPlayerData';
 import {GainAnyResourceButScienceDeferred} from '../deferredActions/GainAnyResourceButScienceDeferred';
-import {TileType} from '../../common/TileType';
+import {GainResourcesDeferred} from '../deferredActions/GainResourcesDeferred';
+import {GainProduction} from '../deferredActions/GainProduction';
+import {Priority} from '../deferredActions/Priority';
 
 export class UnderworldExpansion {
   private constructor() {}
@@ -112,10 +114,11 @@ export class UnderworldExpansion {
       return false;
     }
     if (space.tile !== undefined) {
-      // Players may still identify on Martian Nature Wonders and Rey Skywalker
-      if (space.tile.tileType !== TileType.MARTIAN_NATURE_WONDERS && space.tile.tileType !== TileType.REY_SKYWALKER) {
-        return false;
-      }
+      return false;
+    }
+    // Players may still identify on Martian Nature Wonders, but Rey Skywalker blocks tokens.
+    if (space.cube === 'rey-skywalker') {
+      return false;
     }
 
     if (space.spaceType === SpaceType.COLONY || space.spaceType === SpaceType.RESTRICTED) {
@@ -158,12 +161,7 @@ export class UnderworldExpansion {
 
     const undergroundResource = this.drawExcavationToken(game);
     space.undergroundResources = undergroundResource;
-
-    for (const p of game.playersInGenerationOrder) {
-      for (const card of p.tableau) {
-        card.onIdentificationByAnyPlayer?.(p, player, space);
-      }
-    }
+    game.triggerForAllCards((p, c) => c.onIdentificationByAnyPlayer?.(p, player, undergroundResource));
     return true;
   }
 
@@ -206,10 +204,11 @@ export class UnderworldExpansion {
       }
 
       if (space.tile !== undefined) {
-        // Players may still excavate from Martian Nature Wonders and Rey Skywalker
-        if (space.tile.tileType !== TileType.MARTIAN_NATURE_WONDERS && space.tile.tileType !== TileType.REY_SKYWALKER) {
-          return false;
-        }
+        return false;
+      }
+      // Players may still excavate from Martian Nature Wonders, but Rey Skywalker blocks tokens.
+      if (space.cube === 'rey-skywalker') {
+        return false;
       }
 
       if (space.undergroundResources === 'ocean' && !player.canAfford({cost: 4, tr: {oceans: 1}})) {
@@ -261,6 +260,10 @@ export class UnderworldExpansion {
     if (space.tile !== undefined) {
       throw new Error(`cannot excavate space ${space.id} which has a tile.`);
     }
+    // Players may still excavate from Martian Nature Wonders, but Rey Skywalker blocks tokens.
+    if (space.cube === 'rey-skywalker') {
+      throw new Error(`cannot excavate space ${space.id} which has a cube.`);
+    }
 
     if (space.undergroundResources === undefined) {
       this.identify(player.game, space, player);
@@ -280,9 +283,7 @@ export class UnderworldExpansion {
     this.claimToken(player, undergroundResource, /* isExcavate= */ true, space);
 
     for (const adjacentSpace of game.board.getAdjacentSpaces(space)) {
-      if (adjacentSpace.tile === undefined) {
-        UnderworldExpansion.identify(game, adjacentSpace, player);
-      }
+      UnderworldExpansion.identify(game, adjacentSpace, player);
     }
 
     const leaser = game.getCardPlayerOrUndefined(CardName.EXCAVATOR_LEASING);
@@ -344,18 +345,6 @@ export class UnderworldExpansion {
     case 'corruption2':
       UnderworldExpansion.gainCorruption(player, 2, {log: true});
       break;
-    case 'data1':
-      player.game.defer(new AddResourcesToCard(player, CardResource.DATA, {count: 1}));
-      break;
-    case 'data2':
-      player.game.defer(new AddResourcesToCard(player, CardResource.DATA, {count: 2}));
-      break;
-    case 'data3':
-      player.game.defer(new AddResourcesToCard(player, CardResource.DATA, {count: 3}));
-      break;
-    case 'steel2':
-      player.stock.add(Resource.STEEL, 2, {log: true});
-      break;
     case 'steel2plant':
       player.stock.add(Resource.STEEL, 2, {log: true});
       player.stock.add(Resource.PLANTS, 1, {log: true});
@@ -389,9 +378,6 @@ export class UnderworldExpansion {
       break;
     case 'heat2production':
       player.production.add(Resource.HEAT, 2, {log: true});
-      break;
-    case 'microbe1':
-      player.game.defer(new AddResourcesToCard(player, CardResource.MICROBE, {count: 1}));
       break;
     case 'microbe2':
       player.game.defer(new AddResourcesToCard(player, CardResource.MICROBE, {count: 2}));
@@ -431,15 +417,11 @@ export class UnderworldExpansion {
       break;
     case 'sciencetag':
       player.tags.extraScienceTags++;
-      for (const card of player.tableau) {
-        card.onNonCardTagAdded?.(player, Tag.SCIENCE);
-      }
+      player.triggerOnNonCardTagAdded(Tag.SCIENCE);
       break;
     case 'planttag':
       player.tags.extraPlantTags++;
-      for (const card of player.tableau) {
-        card.onNonCardTagAdded?.(player, Tag.PLANT);
-      }
+      player.triggerOnNonCardTagAdded(Tag.PLANT);
       break;
 
     // This doesn't reward anything.
@@ -574,35 +556,45 @@ export class UnderworldExpansion {
     }
   }
 
-  //   // TODOc(kberg): add viz for temperature bonus.
+  static gainCardResource(player: IPlayer, resource: CardResource, steps: number, count: number) {
+    for (let i = 0; i < steps; i++) {
+      player.game.defer(new AddResourcesToCard(player, resource, {count}));
+    }
+  }
+
+  static gainStandardResource(player: IPlayer, resource: Resource, steps: number, count: number) {
+    // The default priority runs before ATTACK_OPPONENT, so in this case an opponent (here, known as `player`
+    // gains their plants from your asteroid-type card before you remove them afterwards from the same card.
+    player.game.defer(
+      new GainResourcesDeferred(player, resource, {count: count * steps, log: true}),
+      Priority.DEFAULT);
+  }
+
+  // TODO(kberg): add viz for temperature bonus.
   static onTemperatureChange(game: IGame, steps: number) {
     game.playersInGenerationOrder.forEach((player) => {
       switch (player.underworldData.activeBonus) {
       case 'data1pertemp':
+        this.gainCardResource(player, CardResource.DATA, steps, 1);
+        break;
       case 'microbe1pertemp':
-        const resource = player.underworldData.activeBonus === 'data1pertemp' ? CardResource.DATA : CardResource.MICROBE;
-        for (let i = 0; i < steps; i++) {
-          player.game.defer(new AddResourcesToCard(player, resource));
-        }
+        this.gainCardResource(player, CardResource.MICROBE, steps, 1);
         break;
       case 'microbe2pertemp':
-        // TODO(kberg): Replace with RunNTimes.
-        for (let i = 0; i < steps; i++) {
-          player.game.defer(new AddResourcesToCard(player, CardResource.MICROBE, {count: 2}));
-        }
+        this.gainCardResource(player, CardResource.MICROBE, steps, 2);
         break;
 
       case 'mcprod1pertemp':
-        player.production.add(Resource.MEGACREDITS, steps, {log: true});
+        player.game.defer(new GainProduction(player, Resource.MEGACREDITS, {count: steps, log: true}));
         break;
       case 'plant2pertemp':
-        player.stock.add(Resource.PLANTS, 2 * steps, {log: true});
+        this.gainStandardResource(player, Resource.PLANTS, steps, 2);
         break;
       case 'steel2pertemp':
-        player.stock.add(Resource.STEEL, 2 * steps, {log: true});
+        this.gainStandardResource(player, Resource.STEEL, steps, 2);
         break;
       case 'titanium1pertemp':
-        player.stock.add(Resource.TITANIUM, steps, {log: true});
+        this.gainStandardResource(player, Resource.TITANIUM, steps, 1);
         break;
       case undefined:
         break;
@@ -633,7 +625,7 @@ export class UnderworldExpansion {
     [GlobalParameter.VENUS]: undefined,
     [GlobalParameter.MOON_HABITAT_RATE]: undefined,
     [GlobalParameter.MOON_MINING_RATE]: undefined,
-    [GlobalParameter.MOON_LOGISTICS_RATE]: undefined,
+    [GlobalParameter.MOON_LOGISTIC_RATE]: undefined,
   } as const;
 
   public static getGlobalParameterRequirementBonus(player: IPlayer, parameter: GlobalParameter) {
@@ -650,6 +642,11 @@ export class UnderworldExpansion {
     if (token.active) {
       // TODO(kberg): Log the discard.
       player.underworldData.activeBonus = undefined;
+    }
+    if (token.token === 'sciencetag') {
+      player.tags.extraScienceTags = Math.max(player.tags.extraScienceTags - 1, 0);
+    } else if (token.token === 'planttag') {
+      player.tags.extraPlantTags = Math.max(player.tags.extraPlantTags - 1, 0);
     }
   }
 }

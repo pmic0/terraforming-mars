@@ -20,8 +20,8 @@
   "victoryPoints": "Pontos de vitória",
   "terraformRating": "Índice de terraformação",
   "milestones": "marcos",
-  "Claimed ": "Reinvindicado ",
-  " milestone": " como marco",
+  "Claimed": "Reinvindicado ",
+  "milestone": " como marco",
   "greenery": "vegetação",
   "city": "cidade",
 
@@ -43,9 +43,7 @@
   "7 Heat Into Temperature": "7 de calor em temperatura",
   "NEXT CARD:": "PRÓXIMA CARTA:",
   "GENERATION 1 OF 12": "Geração ${0} de ${1}",
-  "You": "Você",
   "you": "você",
-  "researching": "pesquisando",
 
   "Milestones": "Marcos",
   "Builder": "Construtor",
@@ -145,7 +143,6 @@
   "played cards": "cartas em jogo",
 
   "Select which cards to take into hand": "Escolha quais cartas levar para a mão",
-  "Not enough cards selected": "Não foram selecionadas cartas suficientes",
 
   "Convert 7 heat into temperature": "Converter 7 de calor em elevação da temperatura",
   "Convert 8 heat into temperature": "Converter 8 de calor em elevação da temperatura",
@@ -173,7 +170,7 @@
   "Build colony (17 M€)": "Construir colônia (17 M€)",
   "Air scrapping (15 M€)": "Reciclagem Atmosférica (15 M€)",
   "Buffer Gas (16 M€)": "Depósito de gás (16 M€)",
-  "Power Plant": "Usina elétrica",
+  "Power Plant": "Usina Elétrica",
   "Aquifer": "Aquífero",
   "Greenery": "Vegetação",
   "City": "Cidade",
@@ -182,11 +179,6 @@
   "Pay ${0} Titanium": "Pagar ${0} de Titânio",
   "Trade with a colony tile": "Negociar com uma Peça de Colônia",
   "(Enceladus - (Microbes)": "(Encéladus - (Micróbios)",
-  "Select action for World Government Terraforming": "Escolha uma ação para a Terraformação pelo Governo Mundial",
-  "Increase temperature": "Aumentar temperatura",
-  "Increase oxygen": "Aumentar oxigênio",
-  "Add an ocean": "Adicione um oceano",
-  "Increase Venus scale": "Aumentar escala de Vênus",
 
   "Login": "Iniciar sessão",
   "My Games": "Minhas Partidas",
@@ -220,14 +212,13 @@
   "Remove floaters": "Remova flutuadores",
   "Add floater": "Adicione flutuador",
   "Select card to take into hand": "Escolha uma carta para colocar na mão",
-  "Send a delegate in an area (5 M€)": "Enviar um delegado para uma área（5 M€)",
-  "Pay 10 M€ to draw 3 cards (Turmoil Scientists)": "Pagar 10 M€ para comprer 3 cartas (Reviravolta: Cientistas)",
+  "Send a delegate in an area (5 M€)": "Enviar delegado para um partido (5 M€)",
+  "Pay 10 M€ to draw 3 cards": "Pagar 10 M€ para comprer 3 cartas",
   "Select card to keep or none to discard": "Escolha cartas para manter ou nenhuma para descartar",
   "Select a space with a steel or titanium bonus": "Escolha uma área com bônus de aço ou de titânio ",
-  "Select card to add 1 floater": "Escolha uma carta para adicione um flutuador",
   "Select one option": "Escolha uma opção",
   "Add 1 floater to this card": "Adicione flutuador a esta carta",
-  "Remove 2 floaters to raise Venus scale 1 step": "Remova 2 flutuadores para aumentar 1 nível a escala de terraformação de Vênus",
+  "Remove 2 floaters here to raise Venus 1 step.": "Remova 2 flutuadores para aumentar 1 nível a escala de terraformação de Vênus",
   "Show timers": "Mostrar cronômetros",
   "You cannot pay for this card": "Você não consegue pagar por esta carta",
   "Select card(s) to buy": "Escolha carta(s) que deseja comprar",
@@ -254,8 +245,6 @@
   "Pay trade fee": "Pagar taxa de negociação",
   "Select colony tile for trade": "Escolher peça de colônia para negociar",
   "Pass for this generation": "Passar por esta geração",
-  "Confirm": "Confirmar",
-  "Increase": "Aumentar",
   "Buy": "Comprar",
   "Skip this action": "Pular esta ação",
   "Keep": "Manter",
@@ -308,7 +297,6 @@
   "Build colony": "Contruir colônia",
 
   "Place any final greenery from plants": "Converter as plantas restantes em vegetações:",
-  "Don't place a greenery": "Não colocar vegetação",
 
   "City: 1 VP per adjacent greenery": "Cidade: 1 PV por tile de vegetação adjacente",
   "Greenery: 1 VP": "Vegetação: 1 PV",
@@ -319,7 +307,7 @@
   "Game not found": "Partida não encontrada",
   "toggle cards filters": "alterar filtros de cartas",
 
-  "Show information that can be helpful\n to players who are still learning the games": "Mostrar informações que podem ser úteis\n para jogadores que estão aprendendo o jogo",
+  "Show information that can be helpful to players who are still learning the games": "Mostrar informações que podem ser úteis\n para jogadores que estão aprendendo o jogo",
   "press to show or hide the description": "clique para mostrar ou esconder a descrição",
 
   "Draw 3 cards": "Comprar 3 cartas",
@@ -333,7 +321,7 @@
   "Decrease": "Diminuir",
 
   "Remove 2 floaters to raise Venus 1 step": "Remova 2 flutuadores para aumentar Vênus 1 nível",
-  "Spend one titanium to add 2 floaters to this card": "Gaste 1 titânio para adicionar 2 flutuadores a esta carta",
+  "Spend 1 titanium to add 2 floaters to this card": "Gaste 1 titânio para adicionar 2 flutuadores a esta carta",
 
   "Spend 3 M€ to draw a blue card": "Gastar 3 M€ para comprar uma carta azul",
 
@@ -352,10 +340,9 @@
   "gain 1 TR": "ganhar 1 IT",
   "Draw card": "Comprar carta",
   "Remove 1 asteroid on this card to increase M€ production 1 step OR gain 2 titanium": "Remover 1 asteroide desta carta para aumentar produção de M€ 1 nível OU receber 2 tiânios",
-  "Remove an asteroid resource to place an ocean": "Remover um asteroide para colocar um oceano",
+  "Remove 1 asteroid here to place an ocean": "Remover um asteroide para colocar um oceano",
   "Select card to add 1 asteroid": "Escolha carta para adicionar um asteroide",
   "gain 2 titanium": "ganhar 2 titânios",
-  "asteroid(s) ": "asteroide(s)",
   "Commercial District tile": "tile",
   "Gain 2 titanium": "Ganhar 2 titânios",
   "Increase M€ production 1 step": "Aumentar produção de megacréditos 1 nível",
@@ -367,9 +354,9 @@
   "Select a card to discard": "Escolha uma carta para descartar",
   "Do nothing": "Fazer nada",
   "Discard": "Descartar",
-  "Select player to decrease ": "Escolha um jogador para diminuir produção de ",
-  " production by ": " em ",
-  " step(s)": " nível(is)",
+  "Select player to decrease": "Escolha um jogador para diminuir produção de ",
+  "production by": " em ",
+  "step(s)": " nível(is)",
   "Remove 1 asteroid to raise temperature 1 step": "Remover 1 asteroide para aumentar a temperatura 1 nível",
   "Pay 6 M€ to add 1 asteroid to a card": "Pagar 6 M€ para adicionar 1 asteroid a uma carta",
   "Skip removal": "Não remover",
@@ -379,7 +366,6 @@
   "Select where to send a delegate": "Escolha o partido para enviar o delegado.",
 
   "Convert heat": "Conveter calor",
-  "Take action": "Fazer ação",
   "Self-replicating Robots cards": "Cartas ligadas ao Robôs Autorreplicadores",
   "Reorder Cards": "Reordenar Cartas"
 }

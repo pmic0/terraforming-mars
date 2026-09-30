@@ -8,14 +8,14 @@
     <div :class="'party-name party-name-indicator party-name--'+rulingPartyToCss()"> <span v-i18n>{{ getRulingParty() }}</span></div>
   </div>
   <div class="global_params">
-    <global-parameter-value :param="globalParameter.TEMPERATURE" :value="temperature"></global-parameter-value>
-    <global-parameter-value :param="globalParameter.OXYGEN" :value="oxygen"></global-parameter-value>
-    <global-parameter-value :param="globalParameter.OCEANS" :value="oceans"></global-parameter-value>
-    <global-parameter-value v-if="gameOptions.expansions.venus" :param="globalParameter.VENUS" :value="venus"></global-parameter-value>
-    <MoonGlobalParameterValue v-if="gameOptions.expansions.moon" :moonData="moonData"></MoonGlobalParameterValue>
+    <GlobalParameterValue :param="globalParameter.TEMPERATURE" :value="temperature"/>
+    <GlobalParameterValue :param="globalParameter.OXYGEN" :value="oxygen"/>
+    <GlobalParameterValue :param="globalParameter.OCEANS" :value="oceans"/>
+    <GlobalParameterValue v-if="gameOptions.expansions.venus" :param="globalParameter.VENUS" :value="venus"/>
+    <MoonGlobalParameterValue v-if="moonData" :moonData="moonData"/>
   </div>
   <div class="sidebar_item preferences_player" :title="$t('Player Color Cube')">
-    <div :class="getPlayerColorCubeClass()+' player_bg_color_' + player_color"></div>
+    <div :class="getPlayerColorCubeClass()+' player_bg_color_' + playerColor"></div>
   </div>
 
   <a href="#board" :title="$t('Jump to board')">
@@ -41,22 +41,14 @@
       </div>
   </a>
 
-  <language-icon></language-icon>
+  <LanguageIcon/>
 
   <div class="sidebar_item sidebar_item--info" :title="$t('Information panel')">
     <i class="sidebar_icon sidebar_icon--info"
       :class="{'sidebar_item--is-active': ui.gamesetup_detail_open}"
-      v-on:click="ui.gamesetup_detail_open = !ui.gamesetup_detail_open"
+      @click="ui.gamesetup_detail_open = !ui.gamesetup_detail_open"
       :title="$t('game setup details')"></i>
-    <div class="info_panel" v-if="ui.gamesetup_detail_open">
-      <div class="info_panel-spacing"></div>
-      <div class="info-panel-title" v-i18n>Game Setup Details</div>
-      <game-setup-detail :gameOptions="gameOptions" :playerNumber="playerNumber" :lastSoloGeneration="lastSoloGeneration"></game-setup-detail>
-
-      <div class="info_panel_actions">
-        <button class="btn btn-lg btn-primary" v-on:click="ui.gamesetup_detail_open=false" v-i18n>Ok</button>
-      </div>
-    </div>
+    <InfoPanel v-if="ui.gamesetup_detail_open" :gameOptions="gameOptions" :playerNumber="playerNumber" :lastSoloGeneration="lastSoloGeneration" :deckSize="deckSize" :discardPileSize="discardPileSize" :otherDeckSizes="otherDeckSizes" @close="ui.gamesetup_detail_open=false" />
   </div>
 
   <a href="help" target="_blank">
@@ -65,19 +57,20 @@
     </div>
   </a>
 
-  <preferences-icon></preferences-icon>
+  <PreferencesIcon/>
 </div>
 </template>
 
 <script lang="ts">
 
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import {Color} from '@/common/Color';
 import {getPreferences, PreferencesManager} from '@/client/utils/PreferencesManager';
 import {TurmoilModel} from '@/common/models/TurmoilModel';
 import {PartyName} from '@/common/turmoil/PartyName';
-import GameSetupDetail from '@/client/components/GameSetupDetail.vue';
+import InfoPanel from '@/client/components/InfoPanel.vue';
 import {GameOptionsModel} from '@/common/models/GameOptionsModel';
+import {OtherDeckSizesModel} from '@/common/models/GameModel';
 import GlobalParameterValue from '@/client/components/GlobalParameterValue.vue';
 import MoonGlobalParameterValue from '@/client/components/moon/MoonGlobalParameterValue.vue';
 import {GlobalParameter} from '@/common/GlobalParameter';
@@ -85,58 +78,74 @@ import {MoonModel} from '@/common/models/MoonModel';
 import PreferencesIcon from '@/client/components/PreferencesIcon.vue';
 import LanguageIcon from '@/client/components/LanguageIcon.vue';
 
-export default Vue.extend({
-  name: 'sidebar',
+export default defineComponent({
+  name: 'Sidebar',
   props: {
     playerNumber: {
       type: Number,
+      required: true,
     },
     gameOptions: {
       type: Object as () => GameOptionsModel,
+      required: true,
     },
-    acting_player: {
+    actingPlayer: {
       type: Boolean,
     },
-    player_color: {
+    playerColor: {
       type: String as () => Color,
+      required: true,
     },
     generation: {
       type: Number,
+      required: true,
     },
     coloniesCount: {
       type: Number,
+      required: true,
     },
     temperature: {
       type: Number,
+      required: true,
     },
     oxygen: {
       type: Number,
+      required: true,
     },
     oceans: {
       type: Number,
+      required: true,
     },
     venus: {
       type: Number,
+      required: true,
     },
     moonData: {
-      type: Object as () => MoonModel,
+      type: Object as () => MoonModel | undefined,
     },
     turmoil: {
-      type: Object as () => TurmoilModel || undefined,
+      type: Object as () => TurmoilModel | undefined,
     },
     lastSoloGeneration: {
       type: Number,
+      required: true,
     },
     deckSize: {
       type: Number,
+      required: true,
     },
     discardPileSize: {
       type: Number,
+      required: true,
+    },
+    otherDeckSizes: {
+      type: Object as () => OtherDeckSizesModel,
+      required: true,
     },
   },
   components: {
-    'game-setup-detail': GameSetupDetail,
-    'global-parameter-value': GlobalParameterValue,
+    InfoPanel,
+    GlobalParameterValue,
     MoonGlobalParameterValue,
     PreferencesIcon,
     LanguageIcon,
@@ -151,23 +160,24 @@ export default Vue.extend({
   },
   methods: {
     getPlayerColorCubeClass(): string {
-      return this.acting_player && (getPreferences().hide_animated_sidebar === false) ? 'preferences_player_inner active' : 'preferences_player_inner';
+      return this.actingPlayer && (getPreferences().hide_animated_sidebar === false) ? 'preferences_player_inner active' : 'preferences_player_inner';
     },
     getSideBarClass(): string {
-      return this.acting_player && (getPreferences().hide_animated_sidebar === false) ? 'preferences_acting_player' : 'preferences_nonacting_player';
+      return this.actingPlayer && (getPreferences().hide_animated_sidebar === false) ? 'preferences_acting_player' : 'preferences_nonacting_player';
     },
     getGenMarker(): string {
       return `${this.generation}`;
     },
     rulingPartyToCss(): string {
-      if (this.turmoil.ruling === undefined) {
+      if (this.turmoil?.ruling === undefined) {
         console.warn('no party provided');
         return '';
       }
       return this.turmoil.ruling.toLowerCase().split(' ').join('_');
     },
     getRulingParty(): string {
-      switch (this.turmoil.ruling) {
+      const ruling = this.turmoil?.ruling;
+      switch (ruling) {
       case PartyName.MARS:
         return 'Mars';
       case PartyName.SCIENTISTS:
@@ -177,7 +187,7 @@ export default Vue.extend({
       case undefined:
         return '???';
       default:
-        return this.turmoil.ruling;
+        return ruling;
       }
     },
   },

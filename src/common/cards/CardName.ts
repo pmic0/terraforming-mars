@@ -4,7 +4,7 @@ export enum CardName {
   POWER_PLANT_STANDARD_PROJECT = 'Power Plant:SP',
   ASTEROID_STANDARD_PROJECT = 'Asteroid:SP',
   BUFFER_GAS_STANDARD_PROJECT = 'Buffer Gas',
-  BUILD_COLONY_STANDARD_PROJECT = 'Colony',
+  BUILD_COLONY_STANDARD_PROJECT = 'Build Colony',
   AQUIFER_STANDARD_PROJECT = 'Aquifer',
   GREENERY_STANDARD_PROJECT = 'Greenery',
   CITY_STANDARD_PROJECT = 'City',
@@ -344,7 +344,7 @@ export enum CardName {
   // Corps:
   BEGINNER_CORPORATION = 'Beginner Corporation',
   CREDICOR = 'CrediCor',
-  ECOLINE = 'EcoLine',
+  ECOLINE = 'Ecoline',
   HELION = 'Helion',
   INTERPLANETARY_CINEMATICS = 'Interplanetary Cinematics',
   INVENTRIX = 'Inventrix',
@@ -353,7 +353,7 @@ export enum CardName {
   SATURN_SYSTEMS = 'Saturn Systems',
   TERACTOR = 'Teractor',
   THARSIS_REPUBLIC = 'Tharsis Republic',
-  THORGATE = 'Thorgate',
+  THORGATE = 'ThorGate',
   UNITED_NATIONS_MARS_INITIATIVE = 'United Nations Mars Initiative',
   ACQUIRED_SPACE_AGENCY = 'Acquired Space Agency',
   // Preludes:
@@ -393,13 +393,13 @@ export enum CardName {
   POSEIDON = 'Poseidon',
   STORMCRAFT_INCORPORATED = 'Stormcraft Incorporated',
   ARCADIAN_COMMUNITIES = 'Arcadian Communities',
-  ASTRODRILL = 'Astrodrill',
+  ASTRODRILL = 'AstroDrill',
   ADVERTISING = 'Advertising',
   PHARMACY_UNION = 'Pharmacy Union',
   INDUSTRIAL_CENTER = 'Industrial Center',
   FACTORUM = 'Factorum',
   LAKEFRONT_RESORTS = 'Lakefront Resorts',
-  TERRALABS_RESEARCH = 'Terralabs Research',
+  TERRALABS_RESEARCH = 'TerraLabs Research',
   SEPTUM_TRIBUS = 'Septem Tribus',
   MONS_INSURANCE = 'Mons Insurance',
   SPLICE = 'Splice',
@@ -572,6 +572,9 @@ export enum CardName {
   PUBLIC_PLANS = 'Public Plans',
   STATIC_HARVESTING = 'Static Harvesting',
   WEATHER_BALLOONS = 'Weather Balloons',
+  ALBEDO_PLANTS = 'Albedo Plants',
+  STERLING_VENTS = 'Sterling Vents',
+  BOOM_TOWN = 'Boom Town',
 
   // Promo cards from Dutch Open
   FLOYD_CONTINUUM = 'Floyd Continuum',
@@ -581,6 +584,7 @@ export enum CardName {
   // End of promo cards
 
   // Community corps
+  AEROTECH = 'Aerotech',
   AGRICOLA_INC = 'Agricola Inc',
   CURIOSITY_II = 'Curiosity II',
   INCITE = 'Incite',
@@ -606,6 +610,19 @@ export enum CardName {
 
   // For Playwright.
   SPECIAL_DESIGN_PROXY = 'Special Design:proxy',
+
+  // Proxy for when Executor is used for Global Events.
+  GLOBAL_EVENT_PROXY = 'Global Event Proxy',
+
+  // Automa
+  AUTOMA_METEOR_SHOWER = 'Meteor Shower:automa',
+  AUTOMA_INVASIVE_SPECIES = 'Invasive Species:automa',
+  AUTOMA_RESEARCH_AND_DEVELOPMENT = 'Research and Development:automa',
+  AUTOMA_OVERACHIEVEMENT = 'Overachievement:automa',
+  AUTOMA_EXPEDITED_CONSTRUCTION = 'Expedited Construction:automa',
+  AUTOMA_LOBBYISTS = 'Lobbyists:automa',
+  AUTOMA_LOCAL_NEURAL_INSTANCE = 'Local Neural Instance:automa',
+  AUTOMA_CORPORATE_COMPETITION = 'Corporate Competition:automa',
 
   // Ares expansion.
   BIOENGINEERING_ENCLOSURE = 'Bioengineering Enclosure',
@@ -1051,6 +1068,9 @@ export enum CardName {
   PROSPECTING = 'Prospecting',
   ELECTION_SPONSORSHIP = 'Election Sponsorship',
   CLOUD_VORTEX_OUTPOST = 'Cloud Vortex Outpost',
+
+  // Delta Project
+  DELTA_PROJECT = 'Delta Project',
 
   // Underworld Standard Projects
   EXCAVATE_STANDARD_PROJECT = 'Excavate:SP',

@@ -1,14 +1,14 @@
 <template>
   <div v-if="space !== undefined" :class="mainClass" :data_space_id="space.id">
-    <board-space-tile
+    <BoardSpaceTile
       :space="space"
       :aresExtension="aresExtension"
       :tileView="tileView"
-    ></board-space-tile>
+    />
     <div class="board-space-text" v-if="text" v-i18n>{{ text }}</div>
-    <bonus :bonus="space.bonus" v-if="showBonus"></bonus>
+    <Bonus :bonus="space.bonus" v-if="showBonus"/>
     <template v-if="tileView === 'coords'">
-      <div class="board-space-coords">{{  getSpaceName(space.id) }}</div>
+      <div class="board-space-coords">{{ getSpaceName(space.id) }}</div>
     </template>
     <template v-if="tileView === 'show'">
       <div :class="playerColorCss" v-if="space.color !== undefined"></div>
@@ -22,7 +22,8 @@
       <template v-if="space.nomads === true">
         <div class='board-cube--nomad'></div>
       </template>
-      <underground-token v-if="claimedToken !== undefined" :token="claimedToken" location="board"></underground-token>
+      <BoardSpaceCube v-if="space.cube !== undefined" :cube="space.cube"/>
+      <UndergroundToken v-if="claimedToken !== undefined" :token="claimedToken" location="board"/>
       <div v-if="space.excavator !== undefined" class="underground-excavator" :class="'underground-excavator--' + space.excavator"></div>
       <div v-if="space.spaceType === SpaceType.DEFLECTION_ZONE" class="board-space-type-deflection-zone"></div>
     </template>
@@ -32,9 +33,10 @@
 
 <script lang="ts">
 
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import Bonus from '@/client/components/Bonus.vue';
 import BoardSpaceTile from '@/client/components/board/BoardSpaceTile.vue';
+import BoardSpaceCube from '@/client/components/board/BoardSpaceCube.vue';
 import UndergroundToken from '@/client/components/underworld/UndergroundToken.vue';
 import {TileView} from '@/client/components/board/TileView';
 import {SpaceModel} from '@/common/models/SpaceModel';
@@ -42,29 +44,33 @@ import {getPreferences} from '../utils/PreferencesManager';
 import {ClaimedToken} from '@/common/underworld/UnderworldPlayerData';
 import {getSpaceName} from '@/common/boards/spaces';
 import {SpaceType} from '@/common/boards/SpaceType';
-export default Vue.extend({
-  name: 'board-space',
+export default defineComponent({
+  name: 'BoardSpace',
   props: {
     space: {
       type: Object as () => SpaceModel,
+      required: true,
     },
     text: {
       type: String,
+      default: '',
     },
     aresExtension: {
       type: Boolean,
     },
     tileView: {
       type: String as () => TileView,
+      required: true,
     },
   },
   data() {
     return {};
   },
   components: {
-    'bonus': Bonus,
-    'board-space-tile': BoardSpaceTile,
-    'underground-token': UndergroundToken,
+    Bonus,
+    BoardSpaceTile,
+    BoardSpaceCube,
+    UndergroundToken,
   },
   computed: {
     mainClass(): string {
@@ -73,7 +79,10 @@ export default Vue.extend({
       return css;
     },
     showBonus(): boolean {
-      return this.space.tileType === undefined || this.tileView === 'hide';
+      if (this.tileView === 'hide') {
+        return true;
+      }
+      return this.space.tileType === undefined && this.space.cube === undefined;
     },
     playerColorCss(): string {
       if (this.space.color === undefined) {

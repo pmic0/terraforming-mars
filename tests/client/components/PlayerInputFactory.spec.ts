@@ -1,5 +1,5 @@
 import {mount} from '@vue/test-utils';
-import {getLocalVue} from './getLocalVue';
+import {globalConfig} from './getLocalVue';
 import {expect} from 'chai';
 import PlayerInputFactory from '@/client/components/PlayerInputFactory.vue';
 import {CardModel} from '@/common/models/CardModel';
@@ -10,6 +10,7 @@ import {SELECT_CORPORATION_TITLE, SELECT_PROJECTS_TITLE} from '@/common/inputs/S
 import {PlayerViewModel, PublicPlayerModel} from '@/common/models/PlayerModel';
 import {PartyName} from '@/common/turmoil/PartyName';
 import {RecursivePartial} from '@/common/utils/utils';
+import {asComplete} from './utils/models';
 
 describe('PlayerInputFactory', () => {
   it('AndOptions', async () => {
@@ -47,6 +48,7 @@ describe('PlayerInputFactory', () => {
   it('SelectPayment', async () => {
     runTest({
       type: 'payment',
+      amount: 0,
       paymentOptions: {},
     });
   });
@@ -110,6 +112,76 @@ describe('PlayerInputFactory', () => {
     });
   });
 
+  it('saveData delegates to child ref', async () => {
+    let saved = false;
+    const thisPlayer: Partial<PublicPlayerModel> = {
+      steel: 0,
+      titanium: 0,
+      tableau: [],
+    };
+
+    const playerView: RecursivePartial<PlayerViewModel> = {
+      id: 'p-player-id',
+      dealtCorporationCards: [],
+      thisPlayer: thisPlayer as PublicPlayerModel,
+      game: {
+        turmoil: {},
+      },
+    };
+
+    const wrapper = mount(PlayerInputFactory, {
+      ...globalConfig,
+      props: {
+        playerView: asComplete(playerView),
+        playerinput: {
+          type: 'option',
+          title: 'test',
+          buttonLabel: 'save',
+        },
+        onsave: () => {
+          saved = true;
+        },
+        showsave: true,
+        showtitle: true,
+      },
+    });
+    (wrapper.vm as any).saveData();
+    expect(saved).to.be.true;
+  });
+
+  it('canSave returns true when child has no canSave method', () => {
+    const thisPlayer: Partial<PublicPlayerModel> = {
+      steel: 0,
+      titanium: 0,
+      tableau: [],
+    };
+
+    const playerView: RecursivePartial<PlayerViewModel> = {
+      id: 'p-player-id',
+      dealtCorporationCards: [],
+      thisPlayer: thisPlayer as PublicPlayerModel,
+      game: {
+        turmoil: {},
+      },
+    };
+
+    const wrapper = mount(PlayerInputFactory, {
+      ...globalConfig,
+      props: {
+        playerView: asComplete(playerView),
+        playerinput: {
+          type: 'option',
+          title: 'test',
+          buttonLabel: 'save',
+        },
+        onsave: () => {},
+        showsave: true,
+        showtitle: true,
+      },
+    });
+    expect((wrapper.vm as any).canSave()).to.be.true;
+  });
+
   it('ShiftAresGlobalParameters', async () => {
     runTest({
       type: 'aresGlobalParameters',
@@ -151,11 +223,17 @@ function runTest(playerInput: Partial<PlayerInputModel>) {
   };
 
   const component = mount(PlayerInputFactory, {
-    localVue: getLocalVue(),
-    propsData: {
+    ...globalConfig,
+    global: {
+      ...globalConfig.global,
+      components: {
+        'PlayerInputFactory': PlayerInputFactory,
+      },
+    },
+    props: {
       players: [],
-      playerView: playerView,
-      playerinput: fullInput,
+      playerView: asComplete(playerView),
+      playerinput: asComplete<PlayerInputModel>(fullInput),
       onsave: () => {
       },
       showsave: true,
@@ -163,5 +241,5 @@ function runTest(playerInput: Partial<PlayerInputModel>) {
     },
   });
   expect(component).not.is.undefined;
-  expect((component.vm as any).$children[0].saveData).not.is.undefined;
+  expect((component.vm as any).$refs.childInput.saveData).not.is.undefined;
 }

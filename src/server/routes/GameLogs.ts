@@ -27,7 +27,7 @@ export class GameLogs {
     return newMessages;
   }
 
-  public getLogsForGameView(playerId: ParticipantId, game: IGame, generation: string | null): Array<LogMessage> {
+  public getLogsForGameView(playerId: ParticipantId, game: IGame, generation: number | undefined): Array<LogMessage> {
     const messagesForPlayer = (message: LogMessage) => {
       try {
         if (message === undefined || message === null) {
@@ -40,12 +40,12 @@ export class GameLogs {
       }
     };
 
-    // for most recent generation pull last 50 log messages
-    if (generation === null || Number(generation) === game.generation) {
+    // Default view keeps the payload small. An explicit generation request should
+    // always return the full generation, including the current one.
+    if (generation === undefined) {
       return game.gameLog.filter(messagesForPlayer).slice(-50);
-    } else { // pull all logs for generation
-      return this.getLogsForGeneration(game.gameLog, Number(generation)).filter(messagesForPlayer);
     }
+    return this.getLogsForGeneration(game.gameLog, generation).filter(messagesForPlayer);
   }
 
   public getLogsForGameEnd(game: IGame): Array<string> {

@@ -49,7 +49,7 @@ export class Stock extends BaseStock {
 
     const from = options?.from;
     if (isFromPlayer(from)) {
-      LawSuit.resourceHook(this.player, resource, delta, from.player);
+      LawSuit.resourceHook(this.player, delta, from.player);
       CrashSiteCleanup.resourceHook(this.player, resource, delta, from.player);
     }
 

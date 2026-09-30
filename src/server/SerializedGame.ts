@@ -49,6 +49,7 @@ export type SerializedGame = {
     lastSaveId: number;
     milestones: Array<MilestoneName>;
     moonData: SerializedMoonData | undefined;
+    name: string;
     nomadSpace: SpaceId | undefined;
     pathfindersData: SerializedPathfindersData | undefined;
     oxygenLevel: number;
@@ -60,7 +61,7 @@ export type SerializedGame = {
     researchedPlayers: Array<PlayerId>;
     seed: number;
     someoneHasRemovedOtherPlayersPlants: boolean;
-    spectatorId: SpectatorId | undefined;
+    spectatorId: SpectatorId;
     stJosephCathedrals: Array<SpaceId>;
     syndicatePirateRaider: PlayerId | undefined;
     tags: ReadonlyArray<Tag>

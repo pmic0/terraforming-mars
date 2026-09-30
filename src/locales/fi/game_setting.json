@@ -1,6 +1,4 @@
 {
-  "game id: ": "peli-ID: ",
-  "Terraforming Mars": "Maankaltaistetaan Mars",
   "Instructions: To start the game, separately copy and share the links with all players, and then click on your name.": "Ohjeet: Aloittaaksesi pelin, kopioi ja jaa linkit erikseen kaikille pelaajille, ja klikkaa sitten nimeäsi.",
   "Save this page in case you or one of your opponents loses a link.": "Tallenna tämä sivu siltä varalta, että sinä tai joku vastustajistasi kadottaa linkin.",
   "Read our changelog to get the latest updates.": "Lue muutoslogimme saadaksesi viimeisimmät päivitykset.",
@@ -15,7 +13,6 @@
   "Copied!": "Kopioitu!",
   "copy": "kopioi",
   "Close": "Sulje",
-  " show tiles ": "näytä laatat",
   "1st": "1.",
   "2nd": "2.",
   "3rd": "3.",
@@ -39,7 +36,7 @@
   "Include fan Milestones/Awards": "Sisällytä fanien saavutukset/palkinnot",
   "Official Random α": "Virallinen satunnainen α",
   "The new Milestones and Awards are still in active development.": "Uudet saavutukset ja palkinnot ovat vielä aktiivisessa kehityksessä.",
-  "Please don't report anything but functional issues. ": "Älä raportoi muuta kuin toiminnallisia ongelmia.",
+  "Please don't report anything but functional issues.": "Älä raportoi muuta kuin toiminnallisia ongelmia.",
   "Draft:": "Kaupankäynti:",
   "Research phase": "Tutkimusvaihe",
   "Initial": "Alkuperäinen",
@@ -50,7 +47,6 @@
   "real-time vp": "reaaliaikainen VP",
   "fast mode": "nopea tila",
   "Banned cards:": "Kielletyt kortit:",
-  "Game Setup Details": "Pelin asetusten yksityiskohdat",
   "Board-defined": "pelilaudan määrittämä",
 
   "Hollandia": ""

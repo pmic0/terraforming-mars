@@ -24,27 +24,29 @@ describe('ApiGame', () => {
 
   it('invalid id', async () => {
     const player = TestPlayer.BLACK.newPlayer();
-    scaffolding.ctx.gameLoader.add(Game.newInstance('game-valid-id', [player], player));
+    scaffolding.ctx.gameLoader.add(Game.newInstance('game-valid-id', [player], player, 'spectatorid'));
     scaffolding.url = '/api/game?id=invalidId';
     await scaffolding.get(ApiGame.INSTANCE, res);
-    expect(res.statusCode).eq(statusCode.notFound);
-    expect(res.content).eq('Not found: game not found');
+    expect(res.statusCode).eq(statusCode.badRequest);
+    expect(res.content).eq('Bad request: invalid game id');
   });
 
   it('valid id', async () => {
     const player = TestPlayer.BLACK.newPlayer();
-    scaffolding.ctx.gameLoader.add(Game.newInstance('game-valid-id', [player], player));
+    scaffolding.ctx.gameLoader.add(Game.newInstance('game-valid-id', [player], player, 'spectatorid'));
     scaffolding.url = '/api/game?id=game-valid-id';
     await scaffolding.get(ApiGame.INSTANCE, res);
     // This test is probably brittle.
     const json = JSON.parse(res.content);
     json.expectedPurgeTimeMs = -1;
+    json.name = 'game-name';
     expect(json).deep.eq(
       {
         'activePlayer': 'black',
         'expectedPurgeTimeMs': -1,
         'id': 'game-valid-id',
         'lastSoloGeneration': 14,
+        'name': 'game-name',
         'phase': 'research',
         'players': [
           {
@@ -53,6 +55,7 @@ describe('ApiGame', () => {
             'name': 'player-black',
           },
         ],
+        'spectatorId': 'spectatorid',
         'gameOptions': {
           'altVenusBoard': false,
           'aresExtremeVariant': false,
@@ -65,6 +68,7 @@ describe('ApiGame', () => {
             'colonies': false,
             'community': false,
             'corpera': true,
+            'deltaProject': false,
             'moon': false,
             'pathfinders': false,
             'prelude': false,
@@ -93,6 +97,18 @@ describe('ApiGame', () => {
           'soloTR': false,
           'twoCorpsVariant': false,
           'undoOption': false,
+
+          'aresHazards': true,
+          'customCeos': [],
+          'customColoniesList': [],
+          'customCorporationsList': [],
+          'customPreludes': [],
+          'modularMA': false,
+          'moonStandardProjectVariant': false,
+          'moonStandardProjectVariant1': false,
+          'startingCeos': 3,
+          'startingCorporations': 2,
+          'startingPreludes': 4,
         },
       },
     );

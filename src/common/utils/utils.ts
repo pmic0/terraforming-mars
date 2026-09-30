@@ -28,7 +28,7 @@ export const range = (n: number): Array<number> => Array.from(Array(n).keys());
  * @param {ReadonlyArray<T>} b: the second array
  * @return {Array<T>} the intersection of both arrays
  */
-export function intersection<T>(a: ReadonlyArray<T>, b: ReadonlyArray<T>): Array<T> {
+export function intersection<T>(a: ReadonlyArray<T>, b: ReadonlyArray<NoInfer<T>>): Array<T> {
   return a.filter((e) => b.includes(e));
 }
 
@@ -39,7 +39,7 @@ export function intersection<T>(a: ReadonlyArray<T>, b: ReadonlyArray<T>): Array
  * @param {Array<T>} b: the second array
  * @return {Boolean} true if a includes an element of b.
  */
-export function hasIntersection<T>(a: ReadonlyArray<T>, b: ReadonlyArray<T>): boolean {
+export function hasIntersection<T>(a: ReadonlyArray<T>, b: ReadonlyArray<NoInfer<T>>): boolean {
   return a.some((e) => b.includes(e));
 }
 
@@ -63,7 +63,7 @@ export function oneWayDifference<T>(a: ReadonlyArray<T>, b: ReadonlyArray<T>): R
 /**
  * Returns elements in neither A nor B.
  */
-export function twoWayDifference<T>(a: Array<T>, b: Array<T>): Array<T> {
+export function twoWayDifference<T>(a: ReadonlyArray<T>, b: ReadonlyArray<T>): ReadonlyArray<T> {
   return a
     .filter((x) => !b.includes(x))
     .concat(b.filter((x) => !a.includes(x)));
@@ -84,7 +84,7 @@ export type ValueOf<T> = T[keyof T];
  *
  * Returns true if the element was removed from the array, false otherwise.
  */
-export function inplaceRemove<T>(array: Array<T>, element: T): boolean {
+export function inplaceRemove<T>(array: Array<T>, element: NoInfer<T>): boolean {
   return inplaceRemoveIf(array, (e) => e === element) !== undefined;
 }
 
@@ -236,6 +236,8 @@ export function getEnumStringEntries<T extends Record<string, string>>(enumObjec
   return Object.entries(enumObject) as Array<[string, T[keyof T]]>;
 }
 
+type ConstructorOf<T> = new (...args: any[]) => T;
+
 /**
  * Confirms `obj` is defined and of type `klass`, otherwise it throws an Error.
  *
@@ -243,7 +245,7 @@ export function getEnumStringEntries<T extends Record<string, string>>(enumObjec
  */
 export function cast<T>(obj: any, klass: new (...args: any[]) => T): T;
 export function cast<T>(obj: any, klass: undefined): undefined;
-export function cast<T>(obj: any, klass: (new (...args: any[]) => T) | undefined): T | undefined {
+export function cast<T>(obj: any, klass: ConstructorOf<T> | undefined): T | undefined {
   if (klass === undefined) {
     if (obj !== undefined) {
       throw new Error(`Expected undefined, got type ${obj.constructor.name}`);
@@ -254,4 +256,13 @@ export function cast<T>(obj: any, klass: (new (...args: any[]) => T) | undefined
     throw new Error(`Not an instance of ${klass.name}: ${obj?.constructor?.name}`);
   }
   return obj;
+}
+
+/**
+ * Fails to compile when `x` is reachable, which makes a switch over a union
+ * exhaustive: adding a member to the union breaks the build at every switch
+ * that doesn't handle it.
+ */
+export function assertNever(x: never): never {
+  throw new Error('unexpected value: ' + x);
 }

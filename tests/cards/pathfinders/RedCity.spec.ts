@@ -11,8 +11,9 @@ import {TileType} from '../../../src/common/TileType';
 import {MarsBoard} from '../../../src/server/boards/MarsBoard';
 import {Units} from '../../../src/common/Units';
 import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
-import {cast, runAllActions} from '../../TestingUtils';
+import {runAllActions} from '../../TestingUtils';
 import {Mangrove} from '../../../src/server/cards/base/Mangrove';
+import {cast} from '../../../src/common/utils/utils';
 
 describe('RedCity', () => {
   let card: RedCity;
@@ -154,5 +155,34 @@ describe('RedCity', () => {
     runAllActions(game);
     const selectSpace = cast(player.popWaitingFor(), SelectSpace);
     expect(selectSpace.spaces).does.not.contain(oceanSpace);
+  });
+
+  it('A restricted area is not an empty area', () => {
+    const redCitySpace = board.getSpaceOrThrow('53');
+    player.production.override({energy: 1});
+    card.play(player);
+    runAllActions(game);
+    cast(player.popWaitingFor(), SelectSpace).cb(redCitySpace);
+
+    expect(card.getVictoryPoints(player)).eq(4);
+
+    board.getAdjacentSpaces(redCitySpace)[0].spaceType = SpaceType.RESTRICTED;
+
+    expect(card.getVictoryPoints(player)).eq(3);
+  });
+
+  it('A neutral cube is an empty area', () => {
+    const redCitySpace = board.getSpaceOrThrow('53');
+    player.production.override({energy: 1});
+    card.play(player);
+    runAllActions(game);
+    cast(player.popWaitingFor(), SelectSpace).cb(redCitySpace);
+
+    expect(card.getVictoryPoints(player)).eq(4);
+
+    // A cube reserves a space, but nothing is built there.
+    board.getAdjacentSpaces(redCitySpace)[0].cube = 'martian-nature-wonders';
+
+    expect(card.getVictoryPoints(player)).eq(4);
   });
 });

@@ -1,29 +1,30 @@
 <template>
     <div class="player-tags">
         <div class="player-tags-main">
-            <tag-count tag="vp" :count="hideVpCount ? '?' : player.victoryPointsBreakdown.total" :size="'big'" :type="'main'" />
+            <TagCount tag="vp" :count="hideVpCount ? '?' : player.victoryPointsBreakdown.total" :size="'big'" :type="'main'" />
             <div v-if="isEscapeVelocityOn" :class="tooltipCss" :data-tooltip="$t('Escape Velocity penalty')">
-              <tag-count tag="escape" :count="escapeVelocityPenalty" :size="'big'" type="'main'" :showWhenZero="true"/>
+              <TagCount tag="escape" :count="escapeVelocityPenalty" :size="'big'" :type="'main'" :showWhenZero="true"/>
             </div>
-            <tag-count tag="tr" :count="player.terraformRating" :size="'big'" :type="'main'"/>
-            <tag-count v-if="player.handicap !== undefined" :tag="'handicap'" :count="player.handicap" :size="'big'" :type="'main'" :showWhenZero="true"/>
+            <TagCount tag="tr" :count="player.terraformRating" :size="'big'" :type="'main'"/>
+            <TagCount v-if="player.handicap !== undefined" :tag="'handicap'" :count="player.handicap" :size="'big'" :type="'main'" :showWhenZero="true"/>
             <div class="tag-and-discount">
               <PlayerTagDiscount v-if="all.discount" :amount="all.discount" :color="player.color"  :data-test="'discount-all'"/>
-              <tag-count tag="cards" :count="cardsInHandCount" :size="'big'" :type="'main'"/>
+              <TagCount tag="cards" :count="cardsInHandCount" :size="'big'" :type="'main'"/>
             </div>
         </div>
         <div class="player-tags-secondary">
           <div class="tag-count-container" v-for="tagDetail of tags" :key="tagDetail.name">
             <template v-if="tagDetail.name === SpecialTags.UNDERGROUND_TOKEN_COUNT">
               <div class="tag-and-discount">
-              <tag-count :tag="tagDetail.name" :undergroundToken="player.underworldData.activeBonus" :count="tagDetail.count" :size="'big'" :type="'secondary'"/>
+              <TagCount :tag="tagDetail.name" :undergroundToken="player.underworldData.activeBonus" :count="tagDetail.count" :size="'big'" :type="'secondary'"/>
               </div>
             </template>
             <div v-else-if="tagDetail.name === 'separator'" class="tag-separator"></div>
+            <template v-else-if="tagDetail.name === 'all'"></template>
             <div v-else class="tag-and-discount">
               <PlayerTagDiscount v-if="tagDetail.discount > 0" :color="player.color" :amount="tagDetail.discount" :data-test="'discount-' + tagDetail.name"/>
               <PointsPerTag :points="tagDetail"/>
-              <tag-count :tag="tagDetail.name" :count="tagDetail.count" :size="'big'" :type="'secondary'"/>
+              <TagCount :tag="tagDetail.name" :count="tagDetail.count" :size="'big'" :type="'secondary'"/>
             </div>
           </div>
         </div>
@@ -32,7 +33,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import TagCount from '@/client/components/TagCount.vue';
 import {ViewModel, PublicPlayerModel} from '@/common/models/PlayerModel';
 import {GameModel} from '@/common/models/GameModel';
@@ -45,13 +46,19 @@ import {getCard} from '@/client/cards/ClientCardManifest';
 import {vueRoot} from '@/client/components/vueRoot';
 import {CardName} from '@/common/cards/CardName';
 
-type InterfaceTagsType = Tag | SpecialTags | 'all' | 'separator';
+type InterfaceTagsType = Tag | SpecialTags | 'separator' | 'all';
 type TagDetail = {
   name: InterfaceTagsType;
   discount: number;
   points: number;
   halfPoints: number;
   count: number;
+  asterisk: boolean;
+};
+
+type DataModel = {
+  all: TagDetail;
+  tagsInOrder: Array<TagDetail>;
 };
 
 const ORDER: Array<InterfaceTagsType> = [
@@ -83,7 +90,9 @@ const ORDER: Array<InterfaceTagsType> = [
 
 const isInGame = (tag: InterfaceTagsType, game: GameModel): boolean => {
   const gameOptions = game.gameOptions;
-  if (game.turmoil === undefined && tag === SpecialTags.INFLUENCE) return false;
+  if (game.turmoil === undefined && tag === SpecialTags.INFLUENCE) {
+    return false;
+  }
   switch (tag) {
   case SpecialTags.COLONY_COUNT:
     return gameOptions.expansions.colonies !== false;
@@ -118,22 +127,24 @@ const getTagCount = (tagName: InterfaceTagsType, player: PublicPlayerModel): num
     return player.underworldData.corruption;
   case SpecialTags.NEGATIVE_VP:
     return player.victoryPointsBreakdown.negativeVP;
-  case 'all':
   case 'separator':
+  case 'all':
     return -1;
   default:
     return player.tags[tagName];
   }
 };
 
-export default Vue.extend({
+export default defineComponent({
   name: 'PlayerTags',
   props: {
     playerView: {
       type: Object as () => ViewModel,
+      required: true,
     },
     player: {
       type: Object as () => PublicPlayerModel,
+      required: true,
     },
     hideZeroTags: {
       type: Boolean,
@@ -148,16 +159,25 @@ export default Vue.extend({
       default: true,
     },
   },
-  data() {
-    type TagDetails = Record<InterfaceTagsType, TagDetail>;
+  data(): DataModel {
+    type TagDetails = Record<InterfaceTagsType | 'all', TagDetail>;
 
     // Start by giving every entry a default value
-    // Ideally, remove 'x' and inline it into Object.fromEntries, but Typescript doesn't like it.
-    const x = ORDER.map((key) => [key, {name: key, discount: 0, points: 0, count: getTagCount(key, this.player), halfPoints: 0}]);
-    const details: TagDetails = Object.fromEntries(x);
+    const interim = ORDER.map((key) => [
+      key,
+      {name: key, discount: 0, points: 0, count: getTagCount(key, this.player), halfPoints: 0, asterisk: false},
+    ]);
+    const details: TagDetails = Object.fromEntries(interim);
 
     // Initialize all's card discount.
-    details['all'] = {name: 'all', discount: this.player?.cardDiscount ?? 0, points: 0, count: 0, halfPoints: 0};
+    details['all'] = {
+      name: 'all',
+      discount: this.player?.cardDiscount ?? 0,
+      points: 0,
+      count: 0,
+      halfPoints: 0,
+      asterisk: false,
+    };
 
     // For each card
     for (const card of this.player.tableau) {
@@ -167,22 +187,30 @@ export default Vue.extend({
         details[tag].discount += discount.amount;
       }
 
-      // Special case Cultivation of Venus & Venera Base.
       // See https://github.com/terraforming-mars/terraforming-mars/issues/5236
       if (card.name === CardName.CULTIVATION_OF_VENUS || card.name === CardName.VENERA_BASE) {
         details[Tag.VENUS].halfPoints++;
       } else {
         const vps = getCard(card.name)?.victoryPoints;
         if (vps !== undefined && typeof(vps) !== 'number' && vps !== 'special') {
+          // Special case Commercial District etc.
+          const asterisk = vps.nextToThis !== undefined;
           if (vps.tag !== undefined) {
-            details[vps.tag].points += ((vps.each ?? 1) / (vps.per ?? 1));
+            if (!asterisk) {
+              details[vps.tag].points += ((vps.each ?? 1) / (vps.per ?? 1));
+            } else {
+              details[vps.tag].asterisk = true;
+            }
           }
           if (vps.cities !== undefined) {
-            details['city-count'].points += ((vps.each ?? 1) / (vps.per ?? 1));
+            if (!asterisk) {
+              details['city-count'].points += ((vps.each ?? 1) / (vps.per ?? 1));
+            } else {
+              details['city-count'].asterisk = true;
+            }
           }
         }
       }
-      // Special case Off-world City Living and Immigration Shuttles
     }
 
     // Other modifiers
@@ -205,7 +233,7 @@ export default Vue.extend({
   },
 
   components: {
-    'tag-count': TagCount,
+    TagCount,
     PlayerTagDiscount,
     PointsPerTag,
   },

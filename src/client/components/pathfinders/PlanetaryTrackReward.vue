@@ -1,25 +1,27 @@
 <template>
 <div class="reward">
   <div :class="outerClass">
-    <div :class="getClass" />
+    <div :class="getClass" ></div>
   </div>
 </div>
 </template>
 
 <script lang="ts">
 
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import {GameOptionsModel} from '@/common/models/GameOptionsModel';
 import {Reward} from '@/common/pathfinders/Reward';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'PlanetaryTrackReward',
   props: {
     reward: {
       type: String as () => Reward,
+      required: true,
     },
     gameOptions: {
       type: Object as () => GameOptionsModel,
+      required: true,
     },
   },
   computed: {

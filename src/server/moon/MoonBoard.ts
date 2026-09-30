@@ -52,10 +52,6 @@ export class MoonBoard extends Board {
     const spaces = b.build();
     return new MoonBoard(spaces);
   }
-
-  public constructor(spaces: Array<Space>) {
-    super(spaces, undefined, []);
-  }
 }
 
 class Builder {
@@ -114,7 +110,7 @@ class Builder {
       const idx = Number(spaceId.substring(1, 3));
       preservedSpaces.push(idx - 2);
     }
-    preservedSpaces.sort((a, b) => a - b);
+    preservedSpaces.sort((a, b) => a - b); // TODO(kberg): this can be removed.
     preservingShuffle(this.spaceTypes, preservedSpaces, rng);
     preservingShuffle(this.bonuses, preservedSpaces, rng);
     return;

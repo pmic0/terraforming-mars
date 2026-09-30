@@ -104,7 +104,9 @@ export class LocalFilesystem implements IDatabase {
 
   getGameVersion(gameId: GameId, saveId: number): Promise<SerializedGame> {
     try {
-      if (!LocalFilesystem.quiet) console.log(`Loading ${gameId} at ${saveId}`);
+      if (!LocalFilesystem.quiet) {
+        console.log(`Loading ${gameId} at ${saveId}`);
+      }
       const text = readFileSync(this.historyFilename(gameId, saveId));
       const serializedGame = JSON.parse(text.toString());
       return Promise.resolve(serializedGame);
@@ -188,10 +190,14 @@ export class LocalFilesystem implements IDatabase {
   }
 
   private asGameId(dirent: Dirent): GameId | undefined {
-    if (!dirent.isFile()) return undefined;
+    if (!dirent.isFile()) {
+      return undefined;
+    }
     const re = /(.*).json/;
     const result = dirent.name.match(re);
-    if (result === null) return undefined;
+    if (result === null) {
+      return undefined;
+    }
     return isGameId(result[1]) ? result[1] : undefined;
   }
 
@@ -205,7 +211,9 @@ export class LocalFilesystem implements IDatabase {
           const text = readFileSync(this.filename(gameId));
           const game: SerializedGame = JSON.parse(text.toString());
           const participantIds: Array<ParticipantId> = game.players.map(toID);
-          if (game.spectatorId) participantIds.push(game.spectatorId);
+          if (game.spectatorId) {
+            participantIds.push(game.spectatorId);
+          }
           gameIds.push({gameId, participantIds});
         } catch (e) {
           console.error(`While reading ${gameId} `, e);
@@ -224,6 +232,29 @@ export class LocalFilesystem implements IDatabase {
     unlinkSync(this.sessionFilename(sessionId));
     return Promise.resolve();
   }
+  async deleteExpiredSessions(): Promise<number> {
+    let deleted = 0;
+    const now = Date.now();
+    for (const dirent of readdirSync(this.sessionsFolder, {withFileTypes: true})) {
+      if (!dirent.isFile() || !dirent.name.endsWith('.json')) {
+        continue;
+      }
+      const filename = path.resolve(this.sessionsFolder, dirent.name);
+      try {
+        const session: Session = JSON.parse(readFileSync(filename).toString());
+        if (session.expirationTimeMillis <= now) {
+          await this.deleteSession(session.id);
+          deleted++;
+        }
+      } catch (e) {
+        // A corrupt session file can never be pruned, so it has to be skipped rather than
+        // allowed to abort the sweep over every other file.
+        console.error(`While pruning ${dirent.name} `, e);
+      }
+    }
+    return deleted;
+  }
+
   getSessions(): Promise<Array<Session>> {
     const sessions: Array<Session> = [];
     const now = Date.now();

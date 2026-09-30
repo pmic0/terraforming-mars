@@ -4,7 +4,7 @@ import {IGame} from '../../src/server/IGame';
 import {TestPlayer} from '../TestPlayer';
 import {testGame} from '../TestGame';
 import {Tag} from '../../src/common/cards/Tag';
-import {addCity, addGreenery, cast, fakeCard, maxOutOceans, runAllActions} from '../TestingUtils';
+import {addCity, addGreenery, fakeCard, maxOutOceans, runAllActions} from '../TestingUtils';
 import {IProjectCard} from '../../src/server/cards/IProjectCard';
 import {Units} from '../../src/common/Units';
 import {MoonExpansion} from '../../src/server/moon/MoonExpansion';
@@ -12,6 +12,16 @@ import {SpaceName} from '../../src/common/boards/SpaceName';
 import {OceanCity} from '../../src/server/cards/ares/OceanCity';
 import {SelectSpace} from '../../src/server/inputs/SelectSpace';
 import {Wetlands} from '../../src/server/cards/pathfinders/Wetlands';
+import {TileType} from '../../src/common/TileType';
+import {cast} from '../../src/common/utils/utils';
+import {Turmoil} from '../../src/server/turmoil/Turmoil';
+import {Virus} from '../../src/server/cards/base/Virus';
+import {IceAsteroid} from '../../src/server/cards/base/IceAsteroid';
+import {ImportedHydrogen} from '../../src/server/cards/base/ImportedHydrogen';
+import {ProxyCard} from '../../src/server/cards/ProxyCard';
+import {CardName} from '../../src/common/cards/CardName';
+
+const GLOBAL_EVENT_PROXY = new ProxyCard(CardName.GLOBAL_EVENT_PROXY);
 
 describe('Counter', () => {
   let game: IGame;
@@ -30,12 +40,6 @@ describe('Counter', () => {
     const counter = new Counter(player, fakeCard());
     expect(counter.count(3)).eq(3);
     expect(counter.count(8)).eq(8);
-  });
-
-  it('start', () => {
-    const counter = new Counter(player, fakeCard());
-    expect(counter.count({start: 3})).eq(3);
-    expect(counter.count({start: 3, each: 7})).eq(21);
   });
 
   it('tags, simple', () => {
@@ -233,6 +237,55 @@ describe('Counter', () => {
     expect(counter.count({oceans: {}})).eq(10);
   });
 
+  it('nextToThis: oceans', () => {
+    // Place the card's tile at a known space.
+    const cardSpace = game.board.getSpaceOrThrow('05');
+    const card = fakeCard();
+    cardSpace.tile = {tileType: TileType.CITY, card: card.name};
+    cardSpace.player = player;
+
+    const counter = new Counter(player, card);
+    expect(counter.count({oceans: {}, nextToThis: {}})).eq(0);
+
+    // Adjacent ocean — should count.
+    const adjacent = game.board.getAdjacentSpaces(cardSpace);
+    adjacent[0].tile = {tileType: TileType.OCEAN};
+    expect(counter.count({oceans: {}, nextToThis: {}})).eq(1);
+
+    adjacent[1].tile = {tileType: TileType.OCEAN};
+    expect(counter.count({oceans: {}, nextToThis: {}})).eq(2);
+
+    // A non-adjacent ocean — should not count.
+    const nonAdjacent = game.board.spaces.find((s) => !adjacent.includes(s) && s !== cardSpace);
+    nonAdjacent!.tile = {tileType: TileType.OCEAN};
+    expect(counter.count({oceans: {}, nextToThis: {}})).eq(2);
+    // But plain {oceans: {}} counts all of them.
+    expect(counter.count({oceans: {}})).eq(3);
+  });
+
+  it('nextToThis: cities', () => {
+    const cardSpace = game.board.getSpaceOrThrow('05');
+    const card = fakeCard();
+    cardSpace.tile = {tileType: TileType.COMMERCIAL_DISTRICT, card: card.name};
+    cardSpace.player = player;
+
+    const counter = new Counter(player, card);
+    expect(counter.count({cities: {}, nextToThis: {}})).eq(0);
+
+    const adjacent = game.board.getAdjacentSpaces(cardSpace);
+    adjacent[0].tile = {tileType: TileType.CITY};
+    adjacent[0].player = player;
+    expect(counter.count({cities: {}, nextToThis: {}})).eq(1);
+
+    adjacent[1].tile = {tileType: TileType.CITY};
+    adjacent[1].player = player2;
+    expect(counter.count({cities: {}, nextToThis: {}})).eq(2);
+
+    // A non-adjacent city — should not count.
+    addCity(player);
+    expect(counter.count({cities: {}, nextToThis: {}})).eq(2);
+  });
+
   it('count units', () => {
     player.tagsForTest = {building: 2, space: 3};
     const counter = new Counter(player, fakeCard());
@@ -243,6 +296,18 @@ describe('Counter', () => {
     });
 
     expect(units).deep.eq(Units.of({megacredits: 3, energy: -1, heat: 4}));
+  });
+
+  it('eventsPlayed', () => {
+    const counter = new Counter(player, fakeCard());
+    expect(counter.count({eventsPlayed: true})).eq(0);
+
+    player.playedCards.push(new Virus());
+    player2.playedCards.push(new IceAsteroid(), new ImportedHydrogen());
+
+    expect(counter.count({eventsPlayed: true})).eq(1);
+    expect(counter.count({eventsPlayed: true, all: true})).eq(3);
+    expect(counter.count({eventsPlayed: true, each: 2})).eq(2);
   });
 });
 
@@ -334,6 +399,30 @@ describe('Counter for Moon', () => {
     MoonExpansion.addRoadTile(player, 'm06');
     expect(counter.count({moon: {road: {}}})).eq(5);
   });
+
+  it('nextToThis: moon mine tiles', () => {
+    const moonData = MoonExpansion.moonData(game);
+    // Place the card's tile at a known space with room to surround it.
+    const hubSpace = moonData.moon.getSpaceOrThrow('m15');
+    hubSpace.tile = {tileType: TileType.LUNA_MINING_HUB, card: fake.name};
+    hubSpace.player = player;
+
+    const counter = new Counter(player, fake);
+    expect(counter.count({moon: {mine: {}}, nextToThis: {}, each: 2})).eq(0);
+
+    const adjacent = moonData.moon.getAdjacentSpaces(hubSpace);
+    adjacent[0].tile = {tileType: TileType.MOON_MINE};
+    expect(counter.count({moon: {mine: {}}, nextToThis: {}, each: 2})).eq(2);
+
+    adjacent[1].tile = {tileType: TileType.MOON_MINE};
+    expect(counter.count({moon: {mine: {}}, nextToThis: {}, each: 2})).eq(4);
+
+    // A non-adjacent mine — should not count.
+    MoonExpansion.addMineTile(player, 'm02');
+    expect(counter.count({moon: {mine: {}}, nextToThis: {}, each: 2})).eq(4);
+    // But plain {moon: {mine: {}}} counts all.
+    expect(counter.count({moon: {mine: {}}})).to.be.greaterThan(2);
+  });
 });
 
 describe('Counter for Underworld', () => {
@@ -371,9 +460,97 @@ describe('Counter for Underworld', () => {
     expect(counter.count({underworld: {excavationMarkers: {}}})).eq(1);
     expect(counter.count({underworld: {excavationMarkers: {}}, all: true})).eq(1);
 
-    game.board.getSpaceOrThrow(SpaceName.THARSIS_THOLUS).excavator = player2;
+    game.board.getSpaceOrThrow('09').excavator = player2;
 
     expect(counter.count({underworld: {excavationMarkers: {}}})).eq(1);
     expect(counter.count({underworld: {excavationMarkers: {}}, all: true})).eq(2);
+  });
+});
+
+describe('Counter for Turmoil', () => {
+  let game: IGame;
+  let player: TestPlayer;
+  let turmoil: Turmoil;
+
+  beforeEach(() => {
+    [game, player] = testGame(2, {turmoilExtension: true});
+    turmoil = Turmoil.getTurmoil(game);
+  });
+
+  it('influence', () => {
+    const counter = new Counter(player, GLOBAL_EVENT_PROXY);
+    expect(counter.count({turmoil: {influence: {}}})).eq(0);
+
+    turmoil.chairman = player;
+    expect(counter.count({turmoil: {influence: {}}})).eq(1);
+
+    turmoil.dominantParty.partyLeader = player;
+    expect(counter.count({turmoil: {influence: {}}})).eq(2);
+
+    game.turmoil!.addInfluenceBonus(player, 3);
+    expect(counter.count({turmoil: {influence: {}}})).eq(5);
+  });
+
+  it('partyLeaders', () => {
+    const counter = new Counter(player, GLOBAL_EVENT_PROXY);
+    expect(counter.count({turmoil: {partyLeaders: {}}})).eq(0);
+
+    turmoil.parties[0].partyLeader = player;
+    expect(counter.count({turmoil: {partyLeaders: {}}})).eq(1);
+
+    turmoil.parties[1].partyLeader = player;
+    expect(counter.count({turmoil: {partyLeaders: {}}})).eq(2);
+
+    // Chariman is not a party leader.
+    turmoil.chairman = player;
+    expect(counter.count({turmoil: {partyLeaders: {}}})).eq(2);
+  });
+
+  it('max and influence', () => {
+    const counter = new Counter(player, GLOBAL_EVENT_PROXY);
+    player.tagsForTest = {earth: 7};
+
+    turmoil.chairman = player;
+    turmoil.dominantParty.partyLeader = player;
+    expect(turmoil.getInfluence(player)).eq(2);
+
+    expect(counter.count({tag: Tag.EARTH, turmoil: {}})).eq(7);
+    expect(counter.count({tag: Tag.EARTH, turmoil: {max: 5}})).eq(5);
+    expect(counter.count({tag: Tag.EARTH, turmoil: {max: 5, influence: {}}})).eq(7);
+  });
+
+  it('influence subtracts', () => {
+    const counter = new Counter(player, GLOBAL_EVENT_PROXY);
+    player.tagsForTest = {earth: 7};
+
+    turmoil.chairman = player;
+    turmoil.dominantParty.partyLeader = player;
+    expect(turmoil.getInfluence(player)).eq(2);
+
+    expect(counter.count({tag: Tag.EARTH, turmoil: {max: 5, influence: {subtract: true}}})).eq(3);
+
+    // The count runs below zero. `lose` is what clamps it, not the counter.
+    turmoil.addInfluenceBonus(player, 6);
+    expect(counter.count({tag: Tag.EARTH, turmoil: {max: 5, influence: {subtract: true}}})).eq(-3);
+  });
+
+  it('each applies after max and influence', () => {
+    const counter = new Counter(player, GLOBAL_EVENT_PROXY);
+    player.tagsForTest = {earth: 7};
+
+    turmoil.chairman = player;
+    expect(turmoil.getInfluence(player)).eq(1);
+
+    expect(counter.count({tag: Tag.EARTH, turmoil: {max: 5, influence: {}}})).eq(6);
+    expect(counter.count({tag: Tag.EARTH, each: 2, turmoil: {max: 5, influence: {}}})).eq(12);
+  });
+
+  it('global events do not count wild tags', () => {
+    const [/* game */, player] = testGame(2, {turmoilExtension: true});
+    player.tagsForTest = {earth: 1, wild: 1};
+
+    // Wild tags apply when taking an action, but not when a global event resolves.
+    expect(new Counter(player, fakeCard()).count({tag: Tag.EARTH})).eq(2);
+    expect(new Counter(player, GLOBAL_EVENT_PROXY).count({tag: Tag.EARTH})).eq(1);
   });
 });

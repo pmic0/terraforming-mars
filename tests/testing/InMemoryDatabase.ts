@@ -43,9 +43,8 @@ export class InMemoryDatabase implements IDatabase {
     if (row === undefined || row.length === 0) {
       return Promise.reject(new Error('not found'));
     } else {
-      const result: Array<number | undefined> =
-        row!.map((value, idx) => value !== undefined ? idx : undefined);
-      return Promise.resolve(result.filter((result) => result !== undefined) as Array<number>);
+      const result = row!.map((value, idx) => value !== undefined ? idx : undefined);
+      return Promise.resolve(result.filter((result) => result !== undefined));
     }
   }
   getGameVersion(gameId: GameId, saveId: number): Promise<SerializedGame> {
@@ -139,5 +138,16 @@ export class InMemoryDatabase implements IDatabase {
   getSessions(): Promise<Array<Session>> {
     const now = this.clock.now();
     return Promise.resolve(Array.from(this.sessions.values()).filter((e) => e.expirationTimeMillis > now));
+  }
+  deleteExpiredSessions(): Promise<number> {
+    const now = this.clock.now();
+    let deleted = 0;
+    for (const session of Array.from(this.sessions.values())) {
+      if (session.expirationTimeMillis <= now) {
+        this.sessions.delete(session.id);
+        deleted++;
+      }
+    }
+    return Promise.resolve(deleted);
   }
 }

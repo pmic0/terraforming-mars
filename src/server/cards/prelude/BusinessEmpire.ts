@@ -4,7 +4,6 @@ import {PreludeCard} from './PreludeCard';
 import {CardName} from '../../../common/cards/CardName';
 import {SelectPaymentDeferred} from '../../deferredActions/SelectPaymentDeferred';
 import {CardRenderer} from '../render/CardRenderer';
-import {PathfindersExpansion} from '../../pathfinders/PathfindersExpansion';
 
 export class BusinessEmpire extends PreludeCard {
   constructor() {
@@ -28,14 +27,13 @@ export class BusinessEmpire extends PreludeCard {
     });
   }
   public override bespokeCanPlay(player: IPlayer) {
-    if (player.tableau.has(CardName.MANUTECH)) return true;
+    if (player.tableau.has(CardName.MANUTECH)) {
+      return true;
+    }
     return player.canAfford(6);
   }
   public override bespokePlay(player: IPlayer) {
-    player.game.defer(new SelectPaymentDeferred(player, -this.startingMegaCredits)).andThen(() => {
-      PathfindersExpansion.addToSolBank(player);
-    });
+    player.game.defer(new SelectPaymentDeferred(player, -this.startingMegaCredits));
     return undefined;
   }
 }
-

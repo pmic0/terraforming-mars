@@ -9,7 +9,7 @@ import {FloatersRequirement} from './FloatersRequirement';
 import {GreeneriesRequirement} from './GreeneriesRequirement';
 import {HabitatRateRequirement} from './HabitatRateRequirement';
 import {HabitatTilesRequirement} from './HabitatTilesRequirement';
-import {LogisticsRateRequirement} from './LogisticsRateRequirement';
+import {LogisticRateRequirement} from './LogisticRateRequirement';
 import {MiningRateRequirement} from './MiningRateRequirement';
 import {MiningTilesRequirement} from './MiningTilesRequirement';
 import {OceanRequirement} from './OceanRequirement';
@@ -86,7 +86,7 @@ export class CardRequirements {
     } else if (descriptor.cities !== undefined) {
       return new CitiesRequirement({...descriptor, count: descriptor.cities});
     } else if (descriptor.colonies !== undefined) {
-      return new ColoniesRequirement({...descriptor, count: descriptor.colonies});
+      return new ColoniesRequirement({...descriptor, count: descriptor.colonies, all: descriptor.all});
     } else if (descriptor.floaters !== undefined) {
       return new FloatersRequirement({...descriptor, count: descriptor.floaters});
     } else if (descriptor.partyLeader !== undefined) {
@@ -102,7 +102,7 @@ export class CardRequirements {
     } else if (descriptor.miningRate !== undefined) {
       return new MiningRateRequirement({...descriptor, count: descriptor.miningRate});
     } else if (descriptor.logisticRate !== undefined) {
-      return new LogisticsRateRequirement({...descriptor, count: descriptor.logisticRate});
+      return new LogisticRateRequirement({...descriptor, count: descriptor.logisticRate});
     } else if (descriptor.habitatTiles !== undefined) {
       return new HabitatTilesRequirement({...descriptor, count: descriptor.habitatTiles});
     } else if (descriptor.miningTiles !== undefined) {

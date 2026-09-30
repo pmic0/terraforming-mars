@@ -1,20 +1,20 @@
 <template>
         <div class="players-overview" v-if="hasPlayers()">
-            <overview-settings />
+            <OverviewSettings />
             <div class="other_player" v-if="thisPlayer === undefined || players.length > 1">
                 <div v-for="(otherPlayer, index) in getPlayersInOrder()" :key="otherPlayer.color">
-                    <other-player v-if="thisPlayer === undefined || otherPlayer.color !== thisPlayer.color" :player="otherPlayer" :playerIndex="index"/>
+                    <OtherPlayer v-if="thisPlayer === undefined || otherPlayer.color !== thisPlayer.color" :player="otherPlayer" :playerIndex="index"/>
                 </div>
             </div>
-            <player-info v-for="(p, index) in getPlayersInOrder()"
+            <PlayerInfo v-for="(p, index) in getPlayersInOrder()"
               :player="p"
               :key="p.color"
               :playerView="playerView"
               :firstForGen="getIsFirstForGen(p)"
               :actionLabel="getActionLabel(p)"
               :playerIndex="index"/>
-            <div v-if="playerView.players.length > 1 && thisPlayer !== undefined" class="player-divider" />
-            <player-info
+            <div v-if="playerView.players.length > 1 && thisPlayer !== undefined" class="player-divider" ></div>
+            <PlayerInfo
               v-if="thisPlayer !== undefined"
               :player="thisPlayer"
               :key="thisPlayer.color"
@@ -26,7 +26,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import PlayerInfo from '@/client/components/overview/PlayerInfo.vue';
 import OverviewSettings from '@/client/components/overview/OverviewSettings.vue';
 import OtherPlayer from '@/client/components/OtherPlayer.vue';
@@ -49,11 +49,12 @@ export const playerIndex = (
   return -1;
 };
 
-export default Vue.extend({
+export default defineComponent({
   name: 'PlayersOverview',
   props: {
     playerView: {
       type: Object as () => ViewModel,
+      required: true,
     },
   },
   computed: {
@@ -65,9 +66,9 @@ export default Vue.extend({
     },
   },
   components: {
-    'player-info': PlayerInfo,
-    'overview-settings': OverviewSettings,
-    'other-player': OtherPlayer,
+    PlayerInfo,
+    OverviewSettings,
+    OtherPlayer,
   },
   data() {
     return {};
@@ -113,11 +114,21 @@ export default Vue.extend({
         } else {
           return 'none';
         }
+      } else if (this.playerView.game.phase === Phase.SOLAR) {
+        // World Government Advisor and Terra briefly enter the Solar phase during the active player's turn.
+        // Otherwise this is World Government Terraforming, where activePlayer is stale and the running
+        // timer shows who is deciding.
+        const activePlayerIsDeciding = this.players.some((p) => p.isActive && p.timer.running);
+        if (!activePlayerIsDeciding) {
+          return player.timer.running ? 'active' : 'none';
+        }
       }
       if (this.playerView.game.passedPlayers.includes(player.color)) {
         return 'passed';
       }
-      if (player.isActive) return 'active';
+      if (player.isActive) {
+        return 'active';
+      }
       const notPassedPlayers = this.players.filter(
         (p: PublicPlayerModel) => !this.playerView.game.passedPlayers.includes(p.color),
       );

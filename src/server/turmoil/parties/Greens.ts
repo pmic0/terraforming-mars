@@ -27,7 +27,7 @@ export class Greens extends Party implements IParty {
 
 class GreensBonus01 extends Bonus {
   readonly id = 'gb01' as const;
-  readonly description = 'Gain 1 M€ for each Plant, Microbe and Animal tag you have';
+  readonly description = 'Gain 1 M€ for each plant, microbe and animal tag you have';
 
   getScore(player: IPlayer) {
     return player.tags.count(Tag.PLANT, 'raw') +
@@ -36,7 +36,7 @@ class GreensBonus01 extends Bonus {
   }
 
   grantForPlayer(player: IPlayer): void {
-    player.stock.add(Resource.MEGACREDITS, this.getScore(player));
+    player.stock.add(Resource.MEGACREDITS, this.getScore(player), {log: true, from: {partyName: PartyName.GREENS}});
   }
 }
 
@@ -51,7 +51,7 @@ class GreensBonus02 extends Bonus {
   }
 
   grantForPlayer(player: IPlayer): void {
-    player.stock.add(Resource.MEGACREDITS, this.getScore(player));
+    player.stock.add(Resource.MEGACREDITS, this.getScore(player), {log: true, from: {partyName: PartyName.GREENS}});
   }
 }
 
@@ -61,7 +61,7 @@ class GreensPolicy01 implements IPolicy {
 
   onTilePlaced(player: IPlayer, space: Space) {
     if (Board.isGreenerySpace(space) && player.game.phase === Phase.ACTION) {
-      player.stock.add(Resource.MEGACREDITS, 4);
+      player.stock.add(Resource.MEGACREDITS, 4, {log: true, from: {partyName: PartyName.GREENS}});
     }
   }
 }
@@ -71,7 +71,7 @@ class GreensPolicy02 implements IPolicy {
   readonly description = 'When you place a tile, gain 1 plant';
 
   onTilePlaced(player: IPlayer) {
-    player.stock.add(Resource.PLANTS, 1);
+    player.stock.add(Resource.PLANTS, 1, {log: true, from: {partyName: PartyName.GREENS}});
   }
 }
 
@@ -83,13 +83,13 @@ class GreensPolicy03 implements IPolicy {
     const tags = [Tag.ANIMAL, Tag.PLANT, Tag.MICROBE];
     const tagCount = card.tags.filter((tag) => tags.includes(tag)).length;
 
-    player.defer(() => player.stock.add(Resource.MEGACREDITS, tagCount * 2));
+    player.defer(() => player.stock.add(Resource.MEGACREDITS, tagCount * 2, {log: true, from: {partyName: PartyName.GREENS}}));
   }
 }
 
 class GreensPolicy04 implements IPolicy {
   readonly id = 'gp04' as const;
-  readonly description = 'Spend 5 M€ to gain 3 plants or add 2 microbes to ANY card (Turmoil Greens)';
+  readonly description = 'Spend 5 M€ to gain 3 plants or add 2 microbes to ANY card';
 
   canAct(player: IPlayer) {
     return player.canAfford(5) && player.politicalAgendasActionUsedCount < POLITICAL_AGENDAS_MAX_ACTION_USES;
@@ -108,7 +108,7 @@ class GreensPolicy04 implements IPolicy {
         if (availableMicrobeCards.length === 1) {
           orOptions.options.push(
             new SelectOption(message('Add ${0} microbes to ${1}', (b) => b.number(2).card(availableMicrobeCards[0]))).andThen(() => {
-              player.addResourceTo(availableMicrobeCards[0], {qty: 2, log: true});
+              player.addResourceTo(availableMicrobeCards[0], {qty: 2, log: true, from: {partyName: PartyName.GREENS}});
 
               return undefined;
             }),
@@ -118,7 +118,7 @@ class GreensPolicy04 implements IPolicy {
             new SelectOption('Add 2 microbes to a card').andThen(() => {
               return new SelectCard('Select card to add 2 microbes', 'Add microbes', availableMicrobeCards)
                 .andThen(([card]) => {
-                  player.addResourceTo(card, {qty: 2, log: true});
+                  player.addResourceTo(card, {qty: 2, log: true, from: {partyName: PartyName.GREENS}});
                   return undefined;
                 });
             }),
@@ -126,12 +126,13 @@ class GreensPolicy04 implements IPolicy {
         }
 
         orOptions.options.push(new SelectOption('Gain 3 plants').andThen(() => {
-          player.stock.add(Resource.PLANTS, 3);
-          game.log('${0} gained 3 plants', (b) => b.player(player));
+          player.stock.add(Resource.PLANTS, 3, {log: true, from: {partyName: PartyName.GREENS}});
           return undefined;
         }));
 
-        if (orOptions.options.length === 1) return orOptions.options[0].cb();
+        if (orOptions.options.length === 1) {
+          return orOptions.options[0].cb();
+        }
 
         player.defer(orOptions);
         return undefined;

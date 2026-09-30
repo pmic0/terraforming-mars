@@ -6,9 +6,11 @@ import {TestPlayer} from '../TestPlayer';
 import {OrOptions} from '../../src/server/inputs/OrOptions';
 import {UndoActionOption} from '../../src/server/inputs/UndoActionOption';
 import {RouteTestScaffolding} from './RouteTestScaffolding';
-import {cast} from '../TestingUtils';
+import {cast} from '@/common/utils/utils';
 import {OrOptionsResponse} from '../../src/common/inputs/InputResponse';
 import {CardName} from '../../src/common/cards/CardName';
+import {Payment} from '../../src/common/inputs/Payment';
+import {statusCode} from '@/common/http/statusCode';
 
 describe('PlayerInput', () => {
   let scaffolding: RouteTestScaffolding;
@@ -24,20 +26,21 @@ describe('PlayerInput', () => {
   it('fails when id not provided', async () => {
     scaffolding.url = '/player/input';
     await scaffolding.post(PlayerInput.INSTANCE, res);
+    expect(res.statusCode).eq(statusCode.badRequest);
     expect(res.content).eq('Bad request: missing id parameter');
   });
 
   it('performs undo action', async () => {
     const player = TestPlayer.BLUE.newPlayer({beginner: true});
     scaffolding.url = '/player/input?id=' + player.id;
-    const game = Game.newInstance('gameid-foo', [player], player);
+    const game = Game.newInstance('gameid-foo', [player], player, 'spectatorid');
 
     const undoVersionOfPlayer = TestPlayer.BLUE.newPlayer({beginner: true});
-    const undo = Game.newInstance('gameid-old', [undoVersionOfPlayer], undoVersionOfPlayer);
+    const undo = Game.newInstance('gameid-old', [undoVersionOfPlayer], undoVersionOfPlayer, 'spectatorid');
 
     await scaffolding.ctx.gameLoader.add(game);
 
-    player.process({type: 'or', index: 1, response: {type: 'card', cards: [CardName.POWER_PLANT_STANDARD_PROJECT]}});
+    player.process({type: 'or', index: 1, response: {type: 'projectCard', card: CardName.POWER_PLANT_STANDARD_PROJECT, payment: Payment.of({megacredits: 11})}});
     const options = cast(player.getWaitingFor(), OrOptions);
     options.options.push(new UndoActionOption());
     scaffolding.ctx.gameLoader.restoreGameAt = (_gameId: string, _lastSaveId: number) => Promise.resolve(undo);
@@ -45,7 +48,7 @@ describe('PlayerInput', () => {
     const post = scaffolding.post(PlayerInput.INSTANCE, res);
     const emit = Promise.resolve().then(() => {
       const orOptionsResponse: OrOptionsResponse = {type: 'or', index: options.options.length - 1, response: {type: 'option'}};
-      req.emitter.emit('data', JSON.stringify(orOptionsResponse));
+      req.emitString(JSON.stringify(orOptionsResponse));
       req.emitter.emit('end');
     });
     await Promise.all(([emit, post]));
@@ -58,14 +61,14 @@ describe('PlayerInput', () => {
   it('reverts to current game instance if undo fails', async () => {
     const player = TestPlayer.BLUE.newPlayer({beginner: true});
     scaffolding.url = '/player/input?id=' + player.id;
-    const game = Game.newInstance('gameid-foo', [player], player);
+    const game = Game.newInstance('gameid-foo', [player], player, 'spectatorid');
 
     const undoVersionOfPlayer = TestPlayer.BLUE.newPlayer({beginner: true});
-    const undo = Game.newInstance('gameid-old', [undoVersionOfPlayer], undoVersionOfPlayer);
+    const undo = Game.newInstance('gameid-old', [undoVersionOfPlayer], undoVersionOfPlayer, 'spectatorid');
 
     await scaffolding.ctx.gameLoader.add(game);
 
-    player.process(<OrOptionsResponse>{type: 'or', index: 1, response: {type: 'card', cards: [CardName.POWER_PLANT_STANDARD_PROJECT]}});
+    player.process(<OrOptionsResponse>{type: 'or', index: 1, response: {type: 'projectCard', card: CardName.POWER_PLANT_STANDARD_PROJECT, payment: Payment.of({megacredits: 11})}});
     const options = cast(player.getWaitingFor(), OrOptions);
     options.options.push(new UndoActionOption());
     scaffolding.ctx.gameLoader.restoreGameAt = (_gameId: string, _lastSaveId: number) => Promise.reject(new Error('error'));
@@ -73,7 +76,7 @@ describe('PlayerInput', () => {
     const post = scaffolding.post(PlayerInput.INSTANCE, res);
     const emit = Promise.resolve().then(() => {
       const orOptionsResponse: OrOptionsResponse = {type: 'or', index: options.options.length - 1, response: {type: 'option'}};
-      scaffolding.req.emitter.emit('data', JSON.stringify(orOptionsResponse));
+      scaffolding.req.emitString(JSON.stringify(orOptionsResponse));
       scaffolding.req.emitter.emit('end');
     });
     await Promise.all(([emit, post]));
@@ -86,16 +89,17 @@ describe('PlayerInput', () => {
   it('sends 400 on server error', async () => {
     const player = TestPlayer.BLUE.newPlayer();
     scaffolding.url = `/player/input?id=${player.id}`;
-    const game = Game.newInstance('gameid', [player], player);
+    const game = Game.newInstance('gameid', [player], player, 'spectatorid');
     await scaffolding.ctx.gameLoader.add(game);
 
     const post = scaffolding.post(PlayerInput.INSTANCE, res);
     const emit = Promise.resolve().then(() => {
-      scaffolding.req.emitter.emit('data', '}{');
+      scaffolding.req.emitString('}{');
       scaffolding.req.emitter.emit('end');
     });
     await Promise.all(([emit, post]));
 
+    expect(res.statusCode).eq(statusCode.badRequest);
     expect(res.content).matches(/Unexpected token/);
   });
 });

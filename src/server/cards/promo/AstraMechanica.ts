@@ -18,7 +18,6 @@ export class AstraMechanica extends Card implements IProjectCard {
 
       metadata: {
         cardNumber: 'X51',
-        hasExternalHelp: true,
         renderData: CardRenderer.builder((b) => {
           b.cards(2, {secondaryTag: Tag.EVENT}).asterix();
         }),
@@ -54,7 +53,7 @@ export class AstraMechanica extends Card implements IProjectCard {
 
   public override bespokeCanPlay(player: IPlayer) {
     if (this.hasUnusableCards(player)) {
-      this.warnings.add('unusableEventsForAstraMechanica');
+      this.addWarning('unusableEventsForAstraMechanica');
     }
     return this.getCards(player).length > 0;
   }

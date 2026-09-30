@@ -26,7 +26,7 @@ export class NewPartner extends PreludeCard {
   public override bespokeCanPlay(player: IPlayer) {
     const game = player.game;
     if (!game.preludeDeck.canDraw(2)) {
-      this.warnings.add('deckTooSmall');
+      this.addWarning('deckTooSmall');
     }
     return true;
   }
@@ -34,6 +34,6 @@ export class NewPartner extends PreludeCard {
   public override bespokePlay(player: IPlayer) {
     const game = player.game;
     const cards = game.preludeDeck.drawN(game, 2);
-    return PreludesExpansion.selectPreludeToPlay(player, cards);
+    return PreludesExpansion.selectPreludeToPlay(player, cards, 'discard');
   }
 }

@@ -27,6 +27,9 @@ import {asArray} from '../../common/utils/utils';
 import {AdditionalProjectCosts} from '../../common/cards/Types';
 import {GlobalParameter} from '../../common/GlobalParameter';
 import {Warning} from '../../common/cards/Warning';
+import {Resource} from '@/common/Resource';
+
+const NO_WARNINGS: ReadonlySet<Warning> = new Set();
 
 /**
  * Cards that do not need a cost attribute.
@@ -40,7 +43,7 @@ const CARD_TYPES_WITHOUT_COST: ReadonlyArray<CardType> = [
 
 /* Properties that are the same internally and externally */
 type SharedProperties = {
-  /** @deprecated use behavior */
+  /** Prefer setting adjacencyBonus inside behavior.tile instead. */
   adjacencyBonus?: AdjacencyBonus;
   action?: Behavior | undefined;
   behavior?: Behavior | undefined;
@@ -48,7 +51,6 @@ type SharedProperties = {
   cardDiscount?: OneOrArray<CardDiscount>;
   type: CardType;
   cost?: number;
-  // TODO(kberg): move initialActionText to Corp shared properties
   initialActionText?: string;
   firstAction?: Behavior & {text: string};
   globalParameterRequirementBonus?: GlobalParameterRequirementBonus;
@@ -109,7 +111,8 @@ const cardProperties = new Map<CardName, InternalProperties>();
 export abstract class Card implements ICard {
   protected readonly properties: InternalProperties;
   public resourceCount = 0;
-  public warnings = new Set<Warning>();
+  // Warnings are a read-only set because the X00_000 sets that are just empty consume many MB for no value.
+  public warnings: ReadonlySet<Warning> = NO_WARNINGS;
   public additionalProjectCosts?: AdditionalProjectCosts = undefined;
 
   private internalize(external: StaticCardProperties): InternalProperties {
@@ -137,7 +140,7 @@ export abstract class Card implements ICard {
       Card.validateTilesBuilt(external);
       step = 5;
     } catch (e) {
-      throw new Error(`Cannot validate ${name} (${step}): ${e}`);
+      throw new Error(`Cannot validate ${name} (${step})`, {cause: e});
     }
 
     const translatedRequirements = asArray(external.requirements ?? []).map((req) => populateCount(req));
@@ -261,12 +264,15 @@ export abstract class Card implements ICard {
 
   public play(player: IPlayer): PlayerInput | undefined {
     player.stock.deductUnits(MoonExpansion.adjustedReserveCosts(player, this));
+    this.bespokePlayBefore(player);
     if (this.behavior !== undefined) {
       const executor = getBehaviorExecutor();
       executor.execute(this.behavior, player, this);
     }
     return this.bespokePlay(player);
   }
+
+  public bespokePlayBefore(_player: IPlayer): void {}
 
   public bespokePlay(_player: IPlayer): PlayerInput | undefined {
     return undefined;
@@ -311,7 +317,9 @@ export abstract class Card implements ICard {
       return 0;
     }
 
-    if (typeof(vps) === 'number') return vps;
+    if (typeof(vps) === 'number') {
+      return vps;
+    }
 
     if (vps.targetOneOrMore === true || vps.anyPlayer === true) {
       throw new Error('Not yet handled');
@@ -346,6 +354,13 @@ export abstract class Card implements ICard {
     if (vps === 'special') {
       if (properties.metadata.victoryPoints === undefined) {
         throw new Error('When card.victoryPoints is \'special\', metadata.victoryPoints and getVictoryPoints must be supplied');
+      }
+      return;
+    } else if (typeof(vps) === 'object' && vps.nextToThis !== undefined) {
+      // nextToThis VP needs explicit metadata.victoryPoints for rendering since auto-generation
+      // cannot express adjacency-scoped VP icons.
+      if (properties.metadata.victoryPoints === undefined) {
+        throw new Error('When card.victoryPoints uses nextToThis, metadata.victoryPoints must also be supplied for rendering');
       }
       return;
     } else {
@@ -442,6 +457,17 @@ export abstract class Card implements ICard {
     }
     return 0;
   }
+
+  public addWarning(warning: Warning): void {
+    if (this.warnings === NO_WARNINGS) {
+      this.warnings = new Set();     // allocate only on first real warning
+    }
+    (this.warnings as Set<Warning>).add(warning);
+  }
+
+  public clearWarnings(): void {
+    this.warnings = NO_WARNINGS;      // drop the per-card Set, back to shared empty
+  }
 }
 
 function populateCount(requirement: CardRequirementDescriptor): CardRequirementDescriptor {
@@ -485,12 +511,27 @@ export function validateBehavior(behavior: Behavior | undefined, name: CardName)
       validate(behavior.tr === undefined, 'spend.megacredits is not yet compatible with tr');
       validate(behavior.global === undefined, 'spend.megacredits is not yet compatible with global');
       validate(behavior.moon?.habitatRate === undefined, 'spend.megacredits is not yet compatible with moon.habitatRate');
-      validate(behavior.moon?.logisticsRate === undefined, 'spend.megacredits is not yet compatible with moon.logisticsRate');
+      validate(behavior.moon?.logisticRate === undefined, 'spend.megacredits is not yet compatible with moon.logisticRate');
       validate(behavior.moon?.miningRate === undefined, 'spend.megacredits is not yet compatible with moon.miningRate');
     }
     // Don't spend heat with other types yet. It's probably not compatible. Check carefully.
     if (spend.heat) {
       validate(Object.keys(spend).length === 1, 'spend.heat cannot be used with another spend');
     }
+    if (spend.canUseSteel || spend.canUseTitanium) {
+      validate(spend.megacredits !== undefined, 'spend.canUseSteel and spend.canUseTitanium only works with spend.megacredits');
+    }
   }
+}
+
+type CardWithBonusResource = Card & {defaultProductionBox?: Units, bonusResource: Array<Resource> | undefined}
+/* Not sure this belongs here. */
+export function productionBoxWithBonusResource(card: CardWithBonusResource) {
+  const units: Units = card.defaultProductionBox ?
+    {...card.defaultProductionBox} :
+    {...Units.EMPTY};
+  if (card.bonusResource && card.bonusResource.length === 1) {
+    units[card.bonusResource[0]] += 1;
+  }
+  return units;
 }

@@ -1,12 +1,12 @@
 <template>
   <div :class="mainClass" :data_space_id="space.id">
-    <board-space-tile
+    <BoardSpaceTile
       :space="space"
       :aresExtension="false"
       :tileView="tileView"
-    ></board-space-tile>
+    />
     <div class="board-space-text" v-if="text" v-i18n>{{ text }}</div>
-    <bonus v-if="space.tileType === undefined || tileView === 'hide'" :bonus="space.bonus" />
+    <Bonus v-if="space.tileType === undefined || tileView === 'hide'" :bonus="space.bonus" />
     <template v-if="tileView === 'coords'">
       <div class="board-space-coords">{{ getSpaceName(space.id) }}</div>
     </template>
@@ -17,7 +17,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import {SpaceModel} from '@/common/models/SpaceModel';
 import Bonus from '@/client/components/Bonus.vue';
 import {TileView} from '../board/TileView';
@@ -25,11 +25,12 @@ import BoardSpaceTile from '@/client/components/board/BoardSpaceTile.vue';
 import {getPreferences} from '@/client/utils/PreferencesManager';
 import {getSpaceName} from '@/common/boards/spaces';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'MoonSpace',
   props: {
     space: {
       type: Object as () => SpaceModel,
+      required: true,
     },
     text: {
       type: String,
@@ -42,7 +43,7 @@ export default Vue.extend({
   },
   components: {
     Bonus,
-    'board-space-tile': BoardSpaceTile,
+    BoardSpaceTile,
   },
   computed: {
     mainClass(): string {

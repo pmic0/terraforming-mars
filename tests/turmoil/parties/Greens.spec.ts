@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import {IGame} from '../../../src/server/IGame';
 import {Space} from '../../../src/server/boards/Space';
-import {cast, setRulingParty, addGreenery, runAllActions} from '../../TestingUtils';
+import {setRulingParty, addGreenery, runAllActions} from '../../TestingUtils';
 import {TestPlayer} from '../../TestPlayer';
 import {GREENS_BONUS_1, GREENS_BONUS_2, GREENS_POLICY_4} from '../../../src/server/turmoil/parties/Greens';
 import {Lichen} from '../../../src/server/cards/base/Lichen';
@@ -12,6 +12,7 @@ import {SpaceType} from '../../../src/common/boards/SpaceType';
 import {OrOptions} from '../../../src/server/inputs/OrOptions';
 import {PartyName} from '../../../src/common/turmoil/PartyName';
 import {testGame} from '../../TestGame';
+import {cast} from '@/common/utils/utils';
 
 describe('Greens', () => {
   let player: TestPlayer;
@@ -21,7 +22,7 @@ describe('Greens', () => {
     [game, player] = testGame(2, {turmoilExtension: true});
   });
 
-  it('Ruling bonus 1: Gain 1 M€ for each Plant, Microbe and Animal tag you have', () => {
+  it('Ruling bonus 1: Gain 1 M€ for each plant, microbe and animal tag you have', () => {
     player.playedCards.push(new Tardigrades(), new Lichen(), new Fish());
 
     const bonus = GREENS_BONUS_1;

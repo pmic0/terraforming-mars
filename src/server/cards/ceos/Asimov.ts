@@ -24,7 +24,7 @@ export class Asimov extends CeoCard {
         renderData: CardRenderer.builder((b) => {
           b.br.br;
           b.effect('You have +2 score for all awards.', (eb) => {
-            eb.award().startEffect.text('+2', Size.LARGE);
+            eb.award().startEffect.text('+2', {size: Size.LARGE});
           });
           b.br.br.br;
           b.opgArrow().text('10-X').award().asterix();
@@ -38,7 +38,10 @@ export class Asimov extends CeoCard {
     if (!super.canAct(player)) {
       return false;
     }
-    if (player.game.isSoloMode()) return false; // Awards are disabled in solo mode
+    if (player.game.isSoloMode()) {
+      // Awards are disabled in solo mode
+      return false;
+    }
     return !player.game.allAwardsFunded();
   }
 
@@ -89,7 +92,9 @@ export class Asimov extends CeoCard {
       inplaceRemove(candidates, award.name);
     }
     const validAwards = candidates.filter((awardName) => isCompatible(awardName, awardManifest, gameOptions));
-    if (validAwards.length === 0) throw new Error('getValidAwards award list is empty.');
+    if (validAwards.length === 0) {
+      throw new Error('getValidAwards award list is empty.');
+    }
     return validAwards;
   }
 }

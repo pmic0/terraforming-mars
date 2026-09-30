@@ -7,9 +7,11 @@ import {Payment} from '../../../src/common/inputs/Payment';
 import {OrOptions} from '../../../src/server/inputs/OrOptions';
 import {SelectPayment} from '../../../src/server/inputs/SelectPayment';
 import {TestPlayer} from '../../TestPlayer';
-import {cast, setTemperature} from '../../TestingUtils';
+import {setTemperature} from '../../TestingUtils';
 import {SelectCard} from '../../../src/server/inputs/SelectCard';
 import {testGame} from '../../TestGame';
+import {cast} from '../../../src/common/utils/utils';
+import {churn, runAllActions} from '../../TestingUtils';
 
 describe('DirectedImpactors', () => {
   let card: DirectedImpactors;
@@ -36,8 +38,10 @@ describe('DirectedImpactors', () => {
     // can add resource to itself
     card.action(player);
     expect(game.deferredActions).has.lengthOf(1);
-    const selectPayment = cast(game.deferredActions.peek()!.execute(), SelectPayment);
-    selectPayment.cb({...Payment.EMPTY, titanium: 1, megaCredits: 3});
+    runAllActions(game);
+    const selectPayment = cast(player.popWaitingFor(), SelectPayment);
+    selectPayment.cb({...Payment.EMPTY, titanium: 1, megacredits: 3});
+    runAllActions(game);
 
     expect(player.megaCredits).to.eq(0);
     expect(player.titanium).to.eq(0);
@@ -58,7 +62,7 @@ describe('DirectedImpactors', () => {
     player.titanium = 1;
     card.resourceCount = 1;
 
-    const action = cast(card.action(player), OrOptions);
+    const action = cast(churn(card.action(player), player), OrOptions);
 
     // can remove resource to raise temperature
     action.options[0].cb();
@@ -67,12 +71,14 @@ describe('DirectedImpactors', () => {
     expect(card.resourceCount).to.eq(0);
 
     // can add resource to any card
-    const selectCard = cast(action.options[1].cb(), SelectCard);
-    expect(game.deferredActions).has.lengthOf(1);
-    const selectPayment = cast(game.deferredActions.peek()!.execute(), SelectPayment);
-    selectPayment.cb({...Payment.EMPTY, titanium: 1, megaCredits: 3});
+    action.options[1].cb();
+    runAllActions(game);
+    const selectPayment = cast(player.popWaitingFor(), SelectPayment);
+    selectPayment.cb({...Payment.EMPTY, titanium: 1, megacredits: 3});
+    runAllActions(game);
 
-    selectCard!.cb([card2]);
+    const selectCard = cast(player.popWaitingFor(), SelectCard);
+    selectCard.cb([card2]);
     expect(card2.resourceCount).to.eq(1);
     expect(player.megaCredits).to.eq(0);
     expect(player.titanium).to.eq(0);

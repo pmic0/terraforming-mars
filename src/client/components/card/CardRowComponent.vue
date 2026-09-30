@@ -11,8 +11,8 @@
 
 <script lang="ts">
 
-import Vue from 'vue';
-import {isIDescription} from '@/common/cards/render/ICardRenderDescription';
+import {defineComponent} from 'vue';
+import {isDescription as isCardRenderDescription} from '@/common/cards/render/CardRenderDescription';
 import {
   ICardRenderCorpBoxAction,
   ICardRenderCorpBoxEffect,
@@ -35,7 +35,7 @@ import CardRenderTileComponent from '@/client/components/card/CardRenderTileComp
 import CardDescription from '@/client/components/card/CardDescription.vue';
 import CardRenderSymbolComponent from '@/client/components/card/CardRenderSymbolComponent.vue';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'CardRowComponent',
   props: {
     componentData: {
@@ -57,7 +57,7 @@ export default Vue.extend({
     isSymbol: isICardRenderSymbol,
     isEffect: isICardRenderEffect,
     isDescription(componentData: ItemType): boolean {
-      return typeof componentData === 'string' || componentData instanceof String || isIDescription(this.componentData);
+      return typeof componentData === 'string' || componentData instanceof String || isCardRenderDescription(this.componentData);
     },
     isTile: isICardRenderTile,
     isProduction: isICardRenderProductionBox,

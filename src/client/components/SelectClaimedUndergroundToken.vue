@@ -4,12 +4,12 @@
     <div class="underground-tokens">
       <label v-for="(token, idx) in playerinput.tokens" :key="idx">
          <!-- disabled="selected.length >= playerinput.count -->
-        <input type="checkbox" :name="idx" v-model="selected" :value="idx" />
-        <underground-token
+        <input type="checkbox" :name="String(idx)" v-model="selected" :value="idx" >
+        <UndergroundToken
           :token="token"
           :key="idx"
           location="tag-count"
-          ></underground-token>
+          />
           <br>
       </label>
     </div>
@@ -19,7 +19,7 @@
   </div>
 </template>
 <script lang="ts">
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import AppButton from '@/client/components/common/AppButton.vue';
 import {SelectClaimedUndergroundTokenModel} from '@/common/models/PlayerInputModel';
 import {SelectClaimedUndergroundTokenResponse} from '@/common/inputs/InputResponse';
@@ -30,17 +30,20 @@ type DataModel = {
   selected: Array<number>,
 };
 
-export default Vue.extend({
+export default defineComponent({
   name: 'SelectClaimedUndergroundToken',
   props: {
     playerView: {
       type: Object as () => PlayerViewModel,
+      required: true,
     },
     playerinput: {
       type: Object as () => SelectClaimedUndergroundTokenModel,
+      required: true,
     },
     onsave: {
       type: Function as unknown as () => (out: SelectClaimedUndergroundTokenResponse) => void,
+      required: true,
     },
     showsave: {
       type: Boolean,
@@ -69,7 +72,7 @@ export default Vue.extend({
       return true;
     },
     saveData() {
-      this.onsave({type: 'claimedUndergroundToken', selected: this.selected.sort()});
+      this.onsave({type: 'claimedUndergroundToken', selected: this.selected});
     },
   },
 });

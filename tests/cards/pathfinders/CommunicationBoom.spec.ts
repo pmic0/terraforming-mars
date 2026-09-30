@@ -1,10 +1,11 @@
 import {expect} from 'chai';
-import {cast, fakeCard, runAllActions, testGame} from '../../TestingUtils';
+import {fakeCard, runAllActions, testGame} from '../../TestingUtils';
 import {CommunicationBoom} from '../../../src/server/cards/pathfinders/CommunicationBoom';
 import {Kelvinists} from '../../../src/server/turmoil/parties/Kelvinists';
 import {CardName} from '../../../src/common/cards/CardName';
 import {CardResource} from '../../../src/common/CardResource';
 import {AndOptions} from '../../../src/server/inputs/AndOptions';
+import {cast} from '../../../src/common/utils/utils';
 
 describe('CommunicationBoom', () => {
   it('resolve play', () => {
@@ -33,7 +34,7 @@ describe('CommunicationBoom', () => {
     turmoil.dominantParty.delegates.add(player2);
     turmoil.dominantParty.delegates.add(player2);
 
-    card.resolve(game, turmoil);
+    card.resolve(game);
 
     expect(player.megaCredits).eq(0);
     expect(a.resourceCount).eq(0);

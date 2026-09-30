@@ -4,7 +4,7 @@ import {CardName} from '../../../common/cards/CardName';
 import {CardRenderer} from '../render/CardRenderer';
 import {Size} from '../../../common/cards/render/Size';
 import {PreludesExpansion} from '../../preludes/PreludesExpansion';
-import {IPreludeCard} from '../prelude/IPreludeCard';
+import {uppercase} from '../Options';
 
 export class DoubleDown extends PreludeCard {
   constructor() {
@@ -15,7 +15,7 @@ export class DoubleDown extends PreludeCard {
         cardNumber: 'X40',
         description: '',
         renderData: CardRenderer.builder((b) => {
-          b.text('Copy your other prelude\'s direct effect.', Size.SMALL, true);
+          b.text('Copy your other prelude\'s direct effect.', {size: Size.SMALL, uppercase});
         }),
       },
     });
@@ -26,10 +26,10 @@ export class DoubleDown extends PreludeCard {
       .filter((card) => card.name !== this.name)
       .filter((card) => card.canPlay(player));
     if (player.lastCardPlayed === CardName.NEW_PARTNER) {
-      // This is a super unfortunate hack. See player.playCard for details.
+      // This is a super unfortunate hack. See Player.playCard for details.
       const newPartner = player.preludeCardsInHand.filter((card) => card.name === CardName.NEW_PARTNER)[0];
       if (newPartner !== undefined) {
-        cards.push(newPartner as IPreludeCard);
+        cards.push(newPartner);
       }
     }
     return cards;
@@ -46,6 +46,7 @@ export class DoubleDown extends PreludeCard {
       return undefined;
     }
     player.game.inDoubleDown = true;
+    player.game.doubleDownPrelude = undefined;
     return PreludesExpansion.selectPreludeToPlay(player, preludes, undefined, 'double-down');
   }
 }

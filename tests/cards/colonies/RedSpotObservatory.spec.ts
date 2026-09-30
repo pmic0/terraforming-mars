@@ -1,9 +1,10 @@
 import {expect} from 'chai';
-import {cast} from '../../TestingUtils';
+import {cast} from '@/common/utils/utils';
 import {RedSpotObservatory} from '../../../src/server/cards/colonies/RedSpotObservatory';
 import {testGame} from '../../TestGame';
 import {OrOptions} from '../../../src/server/inputs/OrOptions';
 import {TestPlayer} from '../../TestPlayer';
+import {churn} from '../../TestingUtils';
 
 describe('RedSpotObservatory', () => {
   let card: RedSpotObservatory;
@@ -30,10 +31,10 @@ describe('RedSpotObservatory', () => {
 
   it('Should act', () => {
     player.playedCards.push(card);
-    expect(card.canAct()).is.true;
+    expect(card.canAct(player)).is.true;
 
     player.addResourceTo(card, 3);
-    const orOptions = cast(card.action(player), OrOptions);
+    const orOptions = cast(churn(card.action(player), player), OrOptions);
     orOptions.options[0].cb();
 
     expect(player.cardsInHand).has.lengthOf(1);

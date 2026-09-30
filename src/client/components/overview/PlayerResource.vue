@@ -1,7 +1,7 @@
 <template>
   <div class="resource_item" :class="mainCSS">
       <div class="resource_item_stock">
-          <i class="resource_icon tooltip tooltip-bottom" :class="iconCSS" :data-tooltip="resourceTypeTooltip"></i>
+          <span class="resource_icon tooltip tooltip-bottom" :class="iconCSS" :data-tooltip="resourceTypeTooltip"></span>
           <div class="resource_item_stock_count" data-test="stock-count">{{ count }}</div>
       </div>
       <div class="resource_item_prod">
@@ -18,23 +18,26 @@
 
 <script lang="ts">
 
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import {DEFAULT_STEEL_VALUE, DEFAULT_TITANIUM_VALUE} from '@/common/constants';
 import {Resource} from '@/common/Resource';
 import {getPreferences} from '@/client/utils/PreferencesManager';
 import {Protection} from '@/common/models/PlayerModel';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'PlayerResource',
   props: {
     type: {
       type: String as () => Resource,
+      required: true,
     },
     count: {
       type: Number,
+      required: true,
     },
     production: {
       type: Number,
+      required: true,
     },
     resourceProtection: {
       type: String as () => Protection,
@@ -78,7 +81,9 @@ export default Vue.extend({
       return 'resource_icon--' + this.type;
     },
     productionSign(): string {
-      if (this.production > 0) return '+';
+      if (this.production > 0) {
+        return '+';
+      }
       return '';
     },
     protectionIcon(): string {

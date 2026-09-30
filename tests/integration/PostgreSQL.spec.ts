@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv';
+import dotenv from 'dotenv';
 import {expect} from 'chai';
 import {describeDatabaseSuite} from '../database/databaseSuite';
 import {ITestDatabase, Status} from '../database/ITestDatabase';
@@ -8,15 +8,15 @@ import {PostgreSQL, POSTGRESQL_TABLES} from '../../src/server/database/PostgreSQ
 import {TestPlayer} from '../TestPlayer';
 import {SelectOption} from '../../src/server/inputs/SelectOption';
 import {Phase} from '../../src/common/Phase';
-import {cast, runAllActions} from '../TestingUtils';
+import {runAllActions} from '../TestingUtils';
 import {IPlayer} from '../../src/server/IPlayer';
 import {GameLoader} from '../../src/server/database/GameLoader';
 import {GameId} from '../../src/common/Types';
 import {QueryResult} from 'pg';
 import {SelectInitialCards} from '../../src/server/inputs/SelectInitialCards';
-import {range} from '../../src/common/utils/utils';
+import {cast, range} from '../../src/common/utils/utils';
 
-dotenv.config({path: 'tests/integration/.env', debug: true});
+dotenv.config({path: 'tests/integration/.env', debug: true, quiet: true});
 
 /*
  * This test can be run with `npm run test:integration` as long as the test is set up
@@ -33,6 +33,8 @@ class TestPostgreSQL extends PostgreSQL implements ITestDatabase {
       host: 'localhost',
       password: process.env.POSTGRES_INTEGRATION_TEST_PASSWORD,
     });
+    // Overwrite compression.
+    this.compressOnWrite = true;
   }
 
   // Tests can wait for saveGamePromise since save() is called inside other methods.
@@ -44,21 +46,15 @@ class TestPostgreSQL extends PostgreSQL implements ITestDatabase {
 
   public override async stats(): Promise<{[key: string]: string | number}> {
     const response = await super.stats();
-    response['size-bytes-games'] = 'any';
-    response['size-bytes-game-results'] = 'any';
-    response['size-bytes-database'] = 'any';
-    response['size-bytes-participants'] = 'any';
-
-    const extraFields = ['rows-game', 'size-bytes-game', 'rows-completed-game', 'size-bytes-completed-game', 'rows-session', 'size-bytes-session'];
-    for (const field of extraFields) {
-      expect(response[field], 'For ' + field).is.not.undefined;
-      delete response[field];
-    }
     return response;
   }
 
   public setTrimCount(trimCount: number) {
     this.trimCount = trimCount;
+  }
+
+  public setCompressOnWrite(compressOnWrite: boolean) {
+    this.compressOnWrite = compressOnWrite;
   }
 
   public async afterEach() {
@@ -101,6 +97,19 @@ class TestPostgreSQL extends PostgreSQL implements ITestDatabase {
   setCompletedTime(gameId: GameId, timestampSeconds: number): Promise<QueryResult<any>> {
     return this.client.query('UPDATE completed_game SET completed_time = to_timestamp($1) WHERE game_id = $2', [timestampSeconds, gameId]);
   }
+
+  // Simulates an orphaned row: deletes every `games` row for a game while leaving its
+  // `game` and `participants` rows behind.
+  public async deleteGamesRows(gameId: GameId): Promise<void> {
+    await this.client.query('DELETE FROM games WHERE game_id = $1', [gameId]);
+  }
+
+  // Reads the two raw storage columns for a single save so tests can assert which
+  // representation (plain-text `game` vs. compressed `game_compressed`) is populated.
+  public async getRawGame(gameId: GameId, saveId: number): Promise<{game: string | null, gameCompressed: Buffer | null}> {
+    const res = await this.client.query('SELECT game, game_compressed FROM games WHERE game_id = $1 AND save_id = $2', [gameId, saveId]);
+    return {game: res.rows[0].game, gameCompressed: res.rows[0].game_compressed};
+  }
 }
 
 describeDatabaseSuite({
@@ -115,24 +124,19 @@ describeDatabaseSuite({
     'pool-total-count': 1,
     'pool-idle-count': 1,
     'pool-waiting-count': 0,
-    'rows-game-results': '0',
-    'rows-games': '0',
-    'rows-participants': '0',
-    'size-bytes-games': 'any',
-    'size-bytes-game-results': 'any',
-    'size-bytes-database': 'any',
+    'orphaned-rows-game': '0',
+    'orphaned-rows-participants': '0',
     'save-conflict-normal-count': 0,
     'save-conflict-undo-count': 0,
     'save-count': 0,
     'save-error-count': 0,
-    'size-bytes-participants': 'any',
   },
 
   otherTests: (dbFactory: () => TestPostgreSQL) => {
     it('saveGame with the same saveID', async () => {
       const db = dbFactory();
       const player = TestPlayer.BLACK.newPlayer();
-      const game = Game.newInstance('game-id-1212', [player], player);
+      const game = Game.newInstance('game-id-1212', [player], player, 'spectatorid');
       cast(player.popWaitingFor(), SelectInitialCards);
       await db.lastSaveGamePromise;
 
@@ -165,13 +169,13 @@ describeDatabaseSuite({
     it('getGames - returns in order of last saved', async () => {
       const db = dbFactory();
       const player = TestPlayer.BLACK.newPlayer();
-      const game1 = Game.newInstance('game-id-1111', [player], player);
+      const game1 = Game.newInstance('game-id-1111', [player], player, 'spectatorid');
       await db.lastSaveGamePromise;
       const player2 = TestPlayer.RED.newPlayer();
-      const game2 = Game.newInstance('game-id-2222', [player2], player2);
+      const game2 = Game.newInstance('game-id-2222', [player2], player2, 'spectatorid');
       await db.lastSaveGamePromise;
       const player3 = TestPlayer.BLUE.newPlayer();
-      const game3 = Game.newInstance('game-id-3333', [player3], player3);
+      const game3 = Game.newInstance('game-id-3333', [player3], player3, 'spectatorid');
       await db.lastSaveGamePromise;
 
       expect(await db.getGameIds()).deep.eq(['game-id-3333', 'game-id-2222', 'game-id-1111']);
@@ -196,7 +200,7 @@ describeDatabaseSuite({
       const db = dbFactory();
       const player = TestPlayer.BLACK.newPlayer();
       const player2 = TestPlayer.RED.newPlayer();
-      const game = Game.newInstance('gameid', [player, player2], player, {draftVariant: false, undoOption: true});
+      const game = Game.newInstance('gameid', [player, player2], player, 'spectatorid', {draftVariant: false, undoOption: true});
 
       await db.awaitAllSaves();
 
@@ -227,7 +231,7 @@ describeDatabaseSuite({
       }
 
       // Player's first action
-      expect(game.activePlayer).eq(player.id);
+      expect(game.activePlayer.id).eq(player.id);
       expect(player.actionsTakenThisRound).eq(0);
 
       // Taking an action triggers a save (when undo is enabled.)
@@ -242,7 +246,7 @@ describeDatabaseSuite({
       expect(await db.getStat('save-conflict-undo-count')).eq(0);
 
       // Player's second action
-      expect(game.activePlayer).eq(player.id);
+      expect(game.activePlayer.id).eq(player.id);
       expect(player.actionsTakenThisRound).eq(1);
 
       takeAction(player);
@@ -253,7 +257,7 @@ describeDatabaseSuite({
       // It is now the second player's turn. This test doesn't care about what the
       // second player does, but it is just a cue that the server has done a few things.
       // This test cares about the database things it does.
-      expect(game.activePlayer).eq(player2.id);
+      expect(game.activePlayer.id).eq(player2.id);
       expect(player.actionsTakenThisRound).eq(0);
 
       // Notice how save-count was 3 and is now 5. It saved twice.
@@ -270,7 +274,7 @@ describeDatabaseSuite({
       const db = dbFactory();
       const player = TestPlayer.BLACK.newPlayer();
       const player2 = TestPlayer.RED.newPlayer();
-      const game = Game.newInstance('gameid', [player, player2], player2, {draftVariant: false, undoOption: true});
+      const game = Game.newInstance('gameid', [player, player2], player2, 'spectatorid', {draftVariant: false, undoOption: true});
       // Adding to the GameLoader because this is manually managed by the Game route, which is the real place responsible for
       // creating new games.
       GameLoader.getInstance().add(game);
@@ -283,14 +287,14 @@ describeDatabaseSuite({
       game.playerIsFinishedWithResearchPhase(player2);
       runAllActions(game);
       expect(game.phase).eq(Phase.ACTION);
-      expect(game.activePlayer).eq(player2.id);
+      expect(game.activePlayer.id).eq(player2.id);
 
       await db.awaitAllSaves();
 
       player2.pass();
       game.playerIsFinishedTakingActions();
       runAllActions(game);
-      expect(game.activePlayer).eq(player.id);
+      expect(game.activePlayer.id).eq(player.id);
 
       // Player.takeAction sets waitingFor and waitingForCb. This overrides it
       // with a custom option (gain one mc), and then mimics the waitingForCb behavior at
@@ -307,7 +311,7 @@ describeDatabaseSuite({
         });
       }
 
-      expect(game.activePlayer).eq(player.id);
+      expect(game.activePlayer.id).eq(player.id);
       expect(player.actionsTakenThisRound).eq(0);
 
       takeAction(player);
@@ -366,7 +370,7 @@ describeDatabaseSuite({
     it('undo works in solo', async () => {
       const db = dbFactory();
       const player = TestPlayer.BLACK.newPlayer();
-      const game = Game.newInstance('gameid', [player], player, {undoOption: true});
+      const game = Game.newInstance('gameid', [player], player, 'spectatorid', {undoOption: true});
       await db.awaitAllSaves();
 
       // Move into the action phase. This triggers a save.
@@ -389,7 +393,7 @@ describeDatabaseSuite({
         });
       }
 
-      expect(game.activePlayer).eq(player.id);
+      expect(game.activePlayer.id).eq(player.id);
       expect(player.actionsTakenThisRound).eq(0);
 
       takeAction(player);
@@ -450,7 +454,7 @@ describeDatabaseSuite({
       const db = dbFactory();
 
       const player = TestPlayer.BLACK.newPlayer();
-      const game = Game.newInstance('game-id-1212', [player], player);
+      const game = Game.newInstance('game-id-1212', [player], player, 'spectatorid');
       await db.lastSaveGamePromise;
       expect(game.lastSaveId).eq(1);
 
@@ -514,7 +518,7 @@ describeDatabaseSuite({
       db.setTrimCount(5);
 
       const player = TestPlayer.BLACK.newPlayer();
-      const game = Game.newInstance('game-id-1212', [player], player);
+      const game = Game.newInstance('game-id-1212', [player], player, 'spectatorid');
       await db.lastSaveGamePromise;
       expect(game.lastSaveId).eq(1);
 
@@ -546,7 +550,7 @@ describeDatabaseSuite({
       db.setTrimCount(2);
 
       const player = TestPlayer.BLACK.newPlayer();
-      const game = Game.newInstance('game-id-1212', [player], player);
+      const game = Game.newInstance('game-id-1212', [player], player, 'spectatorid');
       await db.lastSaveGamePromise;
       expect(game.lastSaveId).eq(1);
 
@@ -576,7 +580,7 @@ describeDatabaseSuite({
       db.setTrimCount(0);
 
       const player = TestPlayer.BLACK.newPlayer();
-      const game = Game.newInstance('game-id-1212', [player], player);
+      const game = Game.newInstance('game-id-1212', [player], player, 'spectatorid');
       await db.lastSaveGamePromise;
       expect(game.lastSaveId).eq(1);
 
@@ -640,12 +644,28 @@ describeDatabaseSuite({
       expect(await db.getSaveIds(game.id)).has.members(range(20));
     });
 
+    it('stats - orphaned rows', async () => {
+      const db = dbFactory();
+      const player = TestPlayer.BLACK.newPlayer();
+      const game = Game.newInstance('game-id-orphan', [player], player, 'spectatorid');
+      await db.lastSaveGamePromise;
+
+      expect(await db.getStat('orphaned-rows-game')).eq('0');
+      expect(await db.getStat('orphaned-rows-participants')).eq('0');
+
+      // Delete the `games` rows directly, leaving `game` and `participants` behind orphaned.
+      await db.deleteGamesRows(game.id);
+
+      expect(await db.getStat('orphaned-rows-game')).eq('1');
+      expect(await db.getStat('orphaned-rows-participants')).eq('1');
+    });
+
     it('trim at -1', async () => {
       const db = dbFactory();
       db.setTrimCount(-1);
 
       const player = TestPlayer.BLACK.newPlayer();
-      const game = Game.newInstance('game-id-1212', [player], player);
+      const game = Game.newInstance('game-id-1212', [player], player, 'spectatorid');
       await db.lastSaveGamePromise;
       expect(game.lastSaveId).eq(1);
 
@@ -656,6 +676,96 @@ describeDatabaseSuite({
 
       await db.saveGame(game);
       expect(await db.getSaveIds(game.id)).has.members(range(3));
+    });
+
+    // Verifies that each save lands in the column matching compressOnWrite, and that a row
+    // reads back correctly even when its stored format doesn't match the current setting.
+    it('saveGame on conflict swaps between plain-text and compressed storage', async () => {
+      const db = dbFactory();
+
+      // Save the game uncompressed: the plain-text `game` column is populated and
+      // `game_compressed` is empty.
+      db.setCompressOnWrite(false);
+      const player = TestPlayer.BLACK.newPlayer();
+      const game = Game.newInstance('game-id-conflict', [player], player, 'spectatorid');
+      await db.awaitAllSaves();
+
+      let raw = await db.getRawGame(game.id, 0);
+      expect(raw.game).is.not.null;
+      expect(raw.gameCompressed).is.null;
+
+      // Resave save_id 0 with compression on. This is the ON CONFLICT DO UPDATE path:
+      // `game` is cleared and `game_compressed` is populated with the new value.
+      db.setCompressOnWrite(true);
+      player.megaCredits = 123;
+      game.lastSaveId = 0;
+      await db.saveGame(game);
+
+      expect(await db.getSaveIds(game.id)).has.members([0]);
+      raw = await db.getRawGame(game.id, 0);
+      expect(raw.game).is.null;
+      expect(raw.gameCompressed).is.not.null;
+      const compressed = await db.getGameVersion(game.id, 0);
+      expect(compressed.players[0].megaCredits).eq(123);
+
+      // Resave save_id 0 again, uncompressed. The conflict path now clears
+      // `game_compressed` and repopulates `game`.
+      db.setCompressOnWrite(false);
+      player.megaCredits = 456;
+      game.lastSaveId = 0;
+      await db.saveGame(game);
+
+      raw = await db.getRawGame(game.id, 0);
+      expect(raw.game).is.not.null;
+      expect(raw.gameCompressed).is.null;
+      const plain = await db.getGameVersion(game.id, 0);
+      expect(plain.players[0].megaCredits).eq(456);
+    });
+
+    it('reads an uncompressed row while compression is enabled', async () => {
+      const db = dbFactory();
+
+      // Write the row uncompressed.
+      db.setCompressOnWrite(false);
+      const player = TestPlayer.BLACK.newPlayer();
+      const game = Game.newInstance('game-id-read-uncompressed', [player], player, 'spectatorid');
+      await db.awaitAllSaves();
+      const saveId = game.lastSaveId;
+      player.megaCredits = 87;
+      await db.saveGame(game);
+
+      // Confirm it really was stored as plain text.
+      const raw = await db.getRawGame(game.id, saveId);
+      expect(raw.game).is.not.null;
+      expect(raw.gameCompressed).is.null;
+
+      // Turn compression on. The read path must still decode the older uncompressed row.
+      db.setCompressOnWrite(true);
+      const serialized = await db.getGameVersion(game.id, saveId);
+      expect(serialized.players[0].megaCredits).eq(87);
+    });
+
+    it('reads a compressed row after compression is disabled', async () => {
+      const db = dbFactory();
+
+      // Write the row compressed.
+      db.setCompressOnWrite(true);
+      const player = TestPlayer.BLACK.newPlayer();
+      const game = Game.newInstance('game-id-read-compressed', [player], player, 'spectatorid');
+      await db.awaitAllSaves();
+      const saveId = game.lastSaveId;
+      player.megaCredits = 91;
+      await db.saveGame(game);
+
+      // Confirm it really was stored compressed.
+      const raw = await db.getRawGame(game.id, saveId);
+      expect(raw.game).is.null;
+      expect(raw.gameCompressed).is.not.null;
+
+      // Turn compression off. The read path must still decompress the older compressed row.
+      db.setCompressOnWrite(false);
+      const serialized = await db.getGameVersion(game.id, saveId);
+      expect(serialized.players[0].megaCredits).eq(91);
     });
   },
 });

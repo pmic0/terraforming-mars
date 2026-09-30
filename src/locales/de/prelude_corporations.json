@@ -43,7 +43,6 @@
   "Effect: When you play an Earth tag, including this, draw a card.": "EFFEKT: Wenn du ein Erdsymbol spielst (inklusive diesem), ziehe eine Karte.",
 
   "ROBINSON": "",
-  "INDUSTRIES": "",
   "Robinson Industries": "",
   "You start with 47 M€.": "Du beginnst mit 47 M€.",
   "Action: Spend 4 M€ to increase (one of) your LOWEST production 1 step.": "AKTION: Bezahle 4 M€, um eine deiner NIEDRIGSTEN Produktionen um 1 zu erhöhen.",
@@ -58,6 +57,7 @@
   "O": "",
   "R": "",
   "Vitor": "",
+  "award": "Auszeichnungen",
   "You start with 45 M€. As your first action, fund an award for free.": "Du beginnst mit 45 M€. Als deine erste Aktion, fördere eine Auszeichnung gratis.",
   "Effect: When you play a card with a NON-NEGATIVE VP icon, including this, gain 3 M€.": "EFFEKT: Wenn du eine Karte mit einem NICHT-NEGATIVEN SP-Symbol spielst (inklusive dieser), erhalte 3 M€."
 }

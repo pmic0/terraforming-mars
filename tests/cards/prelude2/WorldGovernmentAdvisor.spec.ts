@@ -4,12 +4,13 @@ import {testGame} from '../../TestGame';
 import {Phase} from '../../../src/common/Phase';
 import {WorldGovernmentAdvisor} from '../../../src/server/cards/prelude2/WorldGovernmentAdvisor';
 import {IGame} from '../../../src/server/IGame';
-import {cast, maxOutOceans, runAllActions, setOxygenLevel, setTemperature} from '../../TestingUtils';
+import {maxOutOceans, runAllActions, setOxygenLevel, setTemperature} from '../../TestingUtils';
 import {OrOptions} from '../../../src/server/inputs/OrOptions';
 import {assertPlaceOcean} from '../../assertions';
 import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 import {TileType} from '../../../src/common/TileType';
 import {MAX_OXYGEN_LEVEL, MAX_TEMPERATURE} from '../../../src/common/constants';
+import {cast} from '../../../src/common/utils/utils';
 
 describe('WorldGovernmentAdvisor', () => {
   let card: WorldGovernmentAdvisor;
@@ -29,7 +30,9 @@ describe('WorldGovernmentAdvisor', () => {
 
   it('action', () => {
     game.phase = Phase.ACTION;
-    const orOptions = cast(card.action(player), OrOptions);
+    cast(card.action(player), undefined);
+    runAllActions(game);
+    const orOptions = cast(player.popWaitingFor(), OrOptions);
 
     expect(game.phase).eq(Phase.SOLAR);
     expect(orOptions.options[0].title).eq('Increase temperature');
@@ -53,7 +56,10 @@ describe('WorldGovernmentAdvisor', () => {
 
   it('action - placing an ocean', () => {
     game.phase = Phase.ACTION;
-    const orOptions = cast(card.action(player), OrOptions);
+    cast(card.action(player), undefined);
+    runAllActions(game);
+    const orOptions = cast(player.popWaitingFor(), OrOptions);
+
 
     expect(game.phase).eq(Phase.SOLAR);
     expect(orOptions.options[2].title).eq('Add an ocean');
@@ -69,7 +75,9 @@ describe('WorldGovernmentAdvisor', () => {
   });
 
   it('action - placing an ocean', () => {
-    const orOptions = cast(card.action(player), OrOptions);
+    cast(card.action(player), undefined);
+    runAllActions(game);
+    const orOptions = cast(player.popWaitingFor(), OrOptions);
 
     const oceanSpace = game.board.getAvailableSpacesForOcean(player)[0];
     const adjacentSpace = game.board.getAdjacentSpaces(oceanSpace)[0];
@@ -87,7 +95,9 @@ describe('WorldGovernmentAdvisor', () => {
   });
 
   it('action - raise temperature to 0', () => {
-    const orOptions = cast(card.action(player), OrOptions);
+    cast(card.action(player), undefined);
+    runAllActions(game);
+    const orOptions = cast(player.popWaitingFor(), OrOptions);
 
     setTemperature(game, -2);
     orOptions.options[0].cb();
@@ -117,5 +127,7 @@ describe('WorldGovernmentAdvisor', () => {
     maxOutOceans(player);
 
     cast(card.action(player), undefined);
+    runAllActions(game);
+    cast(player.popWaitingFor(), undefined);
   });
 });

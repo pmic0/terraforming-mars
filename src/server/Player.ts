@@ -5,7 +5,7 @@ import {cardsFromJSON, ceosFromJSON, corporationCardsFromJSON, newCorporationCar
 import {CardName} from '../common/cards/CardName';
 import {CardType} from '../common/cards/CardType';
 import {Color} from '../common/Color';
-import {ICorporationCard, isICorporationCard} from './cards/corporation/ICorporationCard';
+import {ICorporationCard} from './cards/corporation/ICorporationCard';
 import {IGame} from './IGame';
 import {Game} from './Game';
 import {Payment, PaymentOptions, DEFAULT_PAYMENT_VALUES} from '../common/inputs/Payment';
@@ -41,6 +41,7 @@ import {MoonExpansion} from './moon/MoonExpansion';
 import {IStandardProjectCard} from './cards/IStandardProjectCard';
 import {ConvertPlants} from './cards/base/standardActions/ConvertPlants';
 import {ConvertHeat} from './cards/base/standardActions/ConvertHeat';
+import {KELVINISTS_POLICY_3} from './turmoil/parties/Kelvinists';
 import {GlobalParameter} from '../common/GlobalParameter';
 import {LogHelper} from './LogHelper';
 import {UndoActionOption} from './inputs/UndoActionOption';
@@ -66,6 +67,7 @@ import {copyAndClear, inplaceRemove, sum, toName} from '../common/utils/utils';
 import {PreludesExpansion} from './preludes/PreludesExpansion';
 import {ChooseCards} from './deferredActions/ChooseCards';
 import {UnderworldPlayerData} from '../common/underworld/UnderworldPlayerData';
+import {DeltaProjectPlayerModel} from '../common/models/DeltaProjectPlayerModel';
 import {UnderworldExpansion} from './underworld/UnderworldExpansion';
 import {Counter} from './behavior/Counter';
 import {TRSource} from '../common/cards/TRSource';
@@ -76,6 +78,7 @@ import {DiscordId} from './server/auth/discord';
 import {AlliedParty} from '../common/turmoil/Types';
 import {PlayedCards} from './cards/PlayedCards';
 import {From} from './logs/From';
+import {SelectStandardProjectToPlay} from './inputs/SelectStandardProjectToPlay';
 
 const THROW_STATE_ERRORS = Boolean(process.env.THROW_STATE_ERRORS);
 const DEFAULT_GLOBAL_PARAMETER_STEPS = {
@@ -85,7 +88,7 @@ const DEFAULT_GLOBAL_PARAMETER_STEPS = {
   [GlobalParameter.VENUS]: 0,
   [GlobalParameter.MOON_HABITAT_RATE]: 0,
   [GlobalParameter.MOON_MINING_RATE]: 0,
-  [GlobalParameter.MOON_LOGISTICS_RATE]: 0,
+  [GlobalParameter.MOON_LOGISTIC_RATE]: 0,
 } as const;
 
 export class Player implements IPlayer {
@@ -131,7 +134,7 @@ export class Player implements IPlayer {
   public dealtProjectCards: Array<IProjectCard> = [];
   public cardsInHand: Array<IProjectCard> = [];
   public preludeCardsInHand: Array<IPreludeCard> = [];
-  public ceoCardsInHand: Set<IProjectCard> = new Set();
+  public ceoCardsInHand: Set<ICeoCard> = new Set();
   public playedCards: PlayedCards = new PlayedCards();
   public draftedCards: Array<IProjectCard> = [];
   public draftHand: Array<IProjectCard> = [];
@@ -154,19 +157,21 @@ export class Player implements IPlayer {
   public plantsNeededForGreenery: number = 8;
   // Lawsuit
   public removingPlayers: Array<PlayerId> = [];
+  // Warmonger
+  public warmongerCards: number = 0;
   // For Playwrights corp.
   // removedFromPlayCards is a bit of a misname: it's a temporary storage for
   // cards that provide 'next card' discounts. This will clear between turns.
   public removedFromPlayCards: Array<IProjectCard> = [];
   public preservationProgram = false;
+  public trThisGeneration = 0;
   public underworldData: UnderworldPlayerData = UnderworldExpansion.initializePlayer();
+  public deltaProjectData?: DeltaProjectPlayerModel;
   public standardProjectsThisGeneration: Set<CardName> = new Set();
   public temporaryGlobalParameterRequirementBonus = 0;
 
   // The number of actions a player can take this round.
   // It's almost always 2, but certain cards can change this value (Mars Maths, Tool with the First Order)
-  //
-  // This value isn't serialized. Probably ought to be.
   public availableActionsThisRound = 2;
 
   public withinDeflectionZone = false;
@@ -315,12 +320,13 @@ export class Player implements IPlayer {
     }
   }
 
-  public getTerraformRating(): number {
-    return this.terraformRating;
-  }
-
   public increaseTerraformRating(steps: number = 1, opts: {log?: boolean, from?: From} = {}) {
-    if (this.preservationProgram === true && this.game.phase === Phase.ACTION) {
+    const inActionPhase = this.game.phase === Phase.ACTION;
+    const isFirstTrThisGeneration = this.trThisGeneration === 0;
+    if (inActionPhase) {
+      this.trThisGeneration += steps;
+    }
+    if (this.preservationProgram === true && inActionPhase && isFirstTrThisGeneration) {
       steps--;
       this.game.log('${0} for ${1} is blocking 1 TR', (b) => b.cardName(CardName.PRESERVATION_PROGRAM).player(this));
       this.preservationProgram = false;
@@ -347,7 +353,7 @@ export class Player implements IPlayer {
       }
     };
 
-    if (PartyHooks.shouldApplyPolicy(this, PartyName.REDS, 'rp01')) {
+    if (PartyHooks.reds01PolicyInEffect(this)) {
       if (!this.canAfford(REDS_RULING_POLICY_COST * steps)) {
         // Cannot pay Reds, will not increase TR
         return;
@@ -399,10 +405,14 @@ export class Player implements IPlayer {
 
   public canHaveProductionReduced(resource: Resource, minQuantity: number, attacker: IPlayer) {
     const reducable = this.production[resource] + (resource === Resource.MEGACREDITS ? 5 : 0);
-    if (reducable < minQuantity) return false;
+    if (reducable < minQuantity) {
+      return false;
+    }
 
     if (resource === Resource.STEEL || resource === Resource.TITANIUM) {
-      if (this.alloysAreProtected()) return false;
+      if (this.alloysAreProtected()) {
+        return false;
+      }
     }
 
     // The pathfindersExpansion test is just an optimization for non-Pathfinders games.
@@ -413,7 +423,9 @@ export class Player implements IPlayer {
   }
 
   public maybeBlockAttack(perpetrator: IPlayer, msg: Message | string, cb: (proceed: boolean) => PlayerInput | undefined): void {
-    this.defer(UnderworldExpansion.maybeBlockAttack(this, perpetrator, msg, cb));
+    this.defer(
+      UnderworldExpansion.maybeBlockAttack(this, perpetrator, msg, cb),
+      Priority.MAYBE_BLOCK_ATTACK);
   }
 
   public attack(perpetrator: IPlayer, resource: Resource, count: number, options?: {log?: boolean, stealing?: boolean}): void {
@@ -450,7 +462,9 @@ export class Player implements IPlayer {
   }
 
   public getColoniesCount() {
-    if (!this.game.gameOptions.coloniesExtension) return 0;
+    if (!this.game.gameOptions.coloniesExtension) {
+      return 0;
+    }
 
     let coloniesCount = 0;
 
@@ -501,12 +515,16 @@ export class Player implements IPlayer {
     const removingPlayer = options?.removingPlayer;
     if (card.resourceCount) {
       const amountRemoved = Math.min(card.resourceCount, count);
-      if (amountRemoved === 0) return;
+      if (amountRemoved === 0) {
+        return;
+      }
       card.resourceCount -= amountRemoved;
 
-      if (removingPlayer !== undefined && removingPlayer !== this) this.resolveInsurance();
+      if (removingPlayer !== undefined && removingPlayer !== this) {
+        this.resolveInsurance();
+      }
 
-      if (options?.log ?? true === true) {
+      if (options?.log ?? true) {
         this.game.log('${0} removed ${1} resource(s) from ${2}\'s ${3}', (b) =>
           b.player(options?.removingPlayer ?? this)
             .number(amountRemoved)
@@ -525,7 +543,7 @@ export class Player implements IPlayer {
     }
   }
 
-  public addResourceTo(card: ICard, options: number | {qty?: number, log: boolean, logZero?: boolean} = 1): void {
+  public addResourceTo(card: ICard, options: number | {qty?: number, log: boolean, logZero?: boolean, from?: From} = 1): void {
     const count = typeof(options) === 'number' ? options : (options.qty ?? 1);
 
     if (card.resourceCount !== undefined) {
@@ -534,7 +552,7 @@ export class Player implements IPlayer {
 
     if (typeof(options) !== 'number' && options.log === true) {
       if (options.logZero === true || count !== 0) {
-        LogHelper.logAddResource(this, card, count);
+        LogHelper.logAddResource(this, card, count, options.from);
       }
     }
 
@@ -586,16 +604,6 @@ export class Player implements IPlayer {
     return result;
   }
 
-  public getUsableOPGCeoCards(): Array<ICeoCard> {
-    const result: Array<ICeoCard> = [];
-    for (const playedCard of this.tableau) {
-      if (isCeoCard(playedCard) && playedCard.canAct(this) ) {
-        result.push(playedCard);
-      }
-    }
-    return result;
-  }
-
   public runProductionPhase(): void {
     this.actionsThisGeneration.clear();
     this.removingPlayers = [];
@@ -603,7 +611,6 @@ export class Player implements IPlayer {
 
     this.turmoilPolicyActionUsed = false;
     this.politicalAgendasActionUsedCount = 0;
-
     if (this.playedCards.has(CardName.SUPERCAPACITORS)) {
       Supercapacitors.onProduction(this);
     } else {
@@ -639,8 +646,12 @@ export class Player implements IPlayer {
    */
   public spendableMegacredits(): number {
     let total = this.megaCredits;
-    if (this.canUseHeatAsMegaCredits) total += this.availableHeat();
-    if (this.canUseTitaniumAsMegacredits) total += this.titanium * (this.titaniumValue - 1);
+    if (this.canUseHeatAsMegaCredits) {
+      total += this.availableHeat();
+    }
+    if (this.canUseTitaniumAsMegacredits) {
+      total += this.titanium * (this.titaniumValue - 1);
+    }
     return total;
   }
 
@@ -649,9 +660,11 @@ export class Player implements IPlayer {
       this.draftedCards = newStandardDraft(this.game).draw(this);
     }
 
+    // If there are 4 cards to choose from, choose 4. If there are 5 because of Mars maths or Luna Project Office,
+    // choose 4. If there are fewer cards because of an exhausted draw pile, draw whatever is available.
     let selectable = this.draftedCards.length;
     if (this.playedCards.has(CardName.MARS_MATHS) && !this.playedCards.has(CardName.LUNA_PROJECT_OFFICE)) {
-      selectable--;
+      selectable = Math.min(selectable, 4);
     }
 
     const cards = copyAndClear(this.draftedCards);
@@ -787,7 +800,7 @@ export class Player implements IPlayer {
 
   public pay(payment: Payment) {
     const standardUnits = Units.of({
-      megacredits: payment.megaCredits,
+      megacredits: payment.megacredits,
       steel: payment.steel,
       titanium: payment.titanium,
       plants: payment.plants,
@@ -807,6 +820,7 @@ export class Player implements IPlayer {
       if (card === undefined) {
         throw new Error('Card ' + name + ' not found');
       }
+      // TODO(kberg): I suggest not logging this. Or do something fuller.
       this.removeResourceFrom(card, count, {log: true});
     };
 
@@ -819,7 +833,7 @@ export class Player implements IPlayer {
     removeResourcesOnCard(CardName.AURORAI, payment.auroraiData);
     removeResourcesOnCard(CardName.KUIPER_COOPERATIVE, payment.kuiperAsteroids);
 
-    if (payment.megaCredits > 0 || payment.steel > 0 || payment.titanium > 0) {
+    if (payment.megacredits > 0 || payment.steel > 0 || payment.titanium > 0) {
       PathfindersExpansion.addToSolBank(this);
     }
   }
@@ -827,6 +841,13 @@ export class Player implements IPlayer {
   public playCard(selectedCard: IProjectCard, payment?: Payment, cardAction: CardAction = 'add'): void {
     if (payment !== undefined) {
       this.pay(payment);
+    }
+
+    const selfReplicatingRobots = this.tableau.get(CardName.SELF_REPLICATING_ROBOTS);
+    if (selfReplicatingRobots instanceof SelfReplicatingRobots) {
+      if (inplaceRemove(selfReplicatingRobots.targetCards, selectedCard)) {
+        selectedCard.resourceCount = 0;
+      }
     }
 
     ColoniesHandler.maybeActivateColonies(this.game, selectedCard);
@@ -863,13 +884,6 @@ export class Player implements IPlayer {
       } else if (preludeCardIndex !== -1) {
         this.preludeCardsInHand.splice(preludeCardIndex, 1);
       }
-
-      const selfReplicatingRobots = this.tableau.get(CardName.SELF_REPLICATING_ROBOTS);
-      if (selfReplicatingRobots instanceof SelfReplicatingRobots) {
-        if (inplaceRemove(selfReplicatingRobots.targetCards, selectedCard)) {
-          selectedCard.resourceCount = 0;
-        }
-      }
     }
 
     switch (cardAction) {
@@ -900,6 +914,12 @@ export class Player implements IPlayer {
     return undefined;
   }
 
+  public triggerOnNonCardTagAdded(tag: Tag): void {
+    for (const card of this.tableau) {
+      card.onNonCardTagAdded?.(this, tag);
+    }
+  }
+
   public onCardPlayed(card: ICard) {
     if (card.type === CardType.PROXY) {
       return;
@@ -907,11 +927,7 @@ export class Player implements IPlayer {
 
     /* A player responding to their own cards played. */
     for (const effectCard of this.playedCards) {
-      if (isICorporationCard(effectCard)) {
-        this.defer(effectCard.onCardPlayedForCorps?.(this, card));
-      } else {
-        this.defer(effectCard.onCardPlayed?.(this, card));
-      }
+      this.defer(effectCard.onCardPlayed?.(this, card));
     }
 
     TurmoilHandler.applyOnCardPlayedEffect(this, card);
@@ -927,7 +943,6 @@ export class Player implements IPlayer {
     PathfindersExpansion.onCardPlayed(this, card);
   }
 
-  /* Visible for testing */
   public playActionCard(): PlayerInput {
     return new SelectCard<ICard & IActionCard>(
       'Perform an action from a played card',
@@ -943,15 +958,19 @@ export class Player implements IPlayer {
       });
   }
 
-  private playCeoOPGAction(): PlayerInput {
-    return new SelectCard<ICeoCard>(
+  private getPlayCeoOPGAction(): PlayerInput | undefined {
+    const cards = CeoExtension.getUsableOPGCeoCards(this);
+    if (cards.length === 0) {
+      return undefined;
+    }
+    return new SelectCard<ICeoCard & IActionCard>(
       'Use CEO once per game action',
       'Take action',
-      this.getUsableOPGCeoCards(),
+      cards,
       {selectBlueCardAction: true})
       .andThen(([card]) => {
         this.game.log('${0} used ${1} action', (b) => b.player(this).card(card));
-        const action = card.action?.(this);
+        const action = card.action(this);
         this.defer(action);
         this.actionsThisGeneration.add(card.name);
         return undefined;
@@ -1046,7 +1065,8 @@ export class Player implements IPlayer {
     if (this.game.allMilestonesClaimed()) {
       return [];
     }
-    if ((this.canAfford(this.milestoneCost()) || this.playedCards.has(CardName.VANALLEN))) {
+    const cost = this.milestoneCost();
+    if (cost === 0 || this.canAfford(cost)) {
       return this.game.milestones
         .filter((milestone) => !this.game.milestoneClaimed(milestone) && milestone.canClaim(this));
     }
@@ -1057,20 +1077,30 @@ export class Player implements IPlayer {
     if (this.game.milestoneClaimed(milestone)) {
       throw new Error(milestone.name + ' is already claimed');
     }
-    this.game.claimedMilestones.push({
-      player: this,
-      milestone: milestone,
-    });
-    // VanAllen CEO Hook for Milestones
-    const vanAllen = this.game.getCardPlayerOrUndefined(CardName.VANALLEN);
-    if (vanAllen !== undefined) {
-      vanAllen.stock.add(Resource.MEGACREDITS, 3, {log: true, from: {player: this}});
+
+    const recordClaim = () => {
+      this.game.log('${0} claimed ${1} milestone', (b) => b.player(this).milestone(milestone));
+      this.game.claimedMilestones.push({
+        player: this,
+        milestone: milestone,
+      });
+      // VanAllen CEO Hook for Milestones
+      const vanAllen = this.game.getCardPlayerOrUndefined(CardName.VANALLEN);
+      if (vanAllen !== undefined) {
+        vanAllen.stock.add(Resource.MEGACREDITS, 3, {log: true, from: {card: CardName.VANALLEN}});
+      }
+    };
+
+    if (this.playedCards.has(CardName.VANALLEN)) {
+      recordClaim();
+    } else {
+      const baseCost = this.milestoneCost();
+      const cost = baseCost + ((milestone.name === 'Briber') ? 12 : 0);
+      const reserveUnits = milestone.name === 'Merchant' ? Units.every(2) : Units.EMPTY;
+      this.game.defer(new SelectPaymentDeferred(this, cost, {title: 'Select how to pay for milestone', reserveUnits: reserveUnits})).andThen(() => {
+        recordClaim();
+      });
     }
-    if (!this.playedCards.has(CardName.VANALLEN)) { // Why isn't this an else clause to the statement above?
-      const cost = this.milestoneCost();
-      this.game.defer(new SelectPaymentDeferred(this, cost, {title: 'Select how to pay for milestone'}));
-    }
-    this.game.log('${0} claimed ${1} milestone', (b) => b.player(this).milestone(milestone));
   }
 
   private isStagedProtestsActive() {
@@ -1082,8 +1112,8 @@ export class Player implements IPlayer {
     return stagedProtests?.generationUsed === this.game.generation;
   }
 
-  private milestoneCost() {
-    if (this.playedCards.has(CardName.NIRGAL_ENTERPRISES)) {
+  public milestoneCost() {
+    if (this.playedCards.has(CardName.VANALLEN) || this.playedCards.has(CardName.NIRGAL_ENTERPRISES)) {
       return 0;
     }
     return this.isStagedProtestsActive() ? MILESTONE_COST + 8 : MILESTONE_COST;
@@ -1187,7 +1217,7 @@ export class Player implements IPlayer {
 
     const playableCards: Array<IProjectCard> = [];
     for (const card of candidateCards) {
-      card.warnings.clear();
+      card.clearWarnings();
       card.additionalProjectCosts = undefined;
       if (this.canPlay(card)) {
         playableCards.push(card);
@@ -1242,15 +1272,18 @@ export class Player implements IPlayer {
     if (this.playedCards.has(CardName.PHARMACY_UNION) && card.tags.includes(Tag.MICROBE)) {
       const pharmacyUnion = this.tableau.get(CardName.PHARMACY_UNION);
       if (pharmacyUnion?.isDisabled === false) {
-        card.warnings.add('pharmacyUnion');
+        card.addWarning('pharmacyUnion');
       }
     }
     return true;
   }
 
+  /**
+   * Returns the most you can spend if the given reserved units are excluded.
+   */
   private maxSpendable(reserveUnits: Units = Units.EMPTY): Payment {
     return {
-      megaCredits: this.megaCredits - reserveUnits.megacredits,
+      megacredits: this.megaCredits - reserveUnits.megacredits,
       steel: this.steel - reserveUnits.steel,
       titanium: this.titanium - reserveUnits.titanium,
       plants: this.plants - reserveUnits.plants,
@@ -1291,7 +1324,7 @@ export class Player implements IPlayer {
     };
 
     const usable: {[key in SpendableResource]: boolean} = {
-      megaCredits: true,
+      megacredits: true,
       steel: options?.steel ?? false,
       titanium: options?.titanium ?? false,
       heat: this.canUseHeatAsMegaCredits,
@@ -1314,7 +1347,9 @@ export class Player implements IPlayer {
 
     let totalToPay = 0;
     for (const key of SPENDABLE_RESOURCES) {
-      if (usable[key]) totalToPay += payment[key] * multiplier[key];
+      if (usable[key]) {
+        totalToPay += payment[key] * multiplier[key];
+      }
     }
 
     return totalToPay;
@@ -1366,19 +1401,25 @@ export class Player implements IPlayer {
    * and additionally pay the reserveUnits (no replaces here)
    */
   public canAfford(o: number | CanAffordOptions): boolean {
+    // Short circuit when players have enough MC.
+    if (typeof(o) === 'number' && o <= this.stock.megacredits) {
+      return true;
+    }
     const options: CanAffordOptions = typeof(o) === 'number' ? {cost: o} : {...o};
     return this.canAffordInternal(options).canAfford;
   }
 
-  public getStandardProjectOption(): SelectCard<IStandardProjectCard> {
+  public getStandardProjectOption(): SelectStandardProjectToPlay {
     const standardProjects: Array<IStandardProjectCard> = this.game.getStandardProjects();
 
-    return new SelectCard(
-      'Standard projects',
-      'Confirm',
+    return new SelectStandardProjectToPlay(
+      this,
       standardProjects,
-      {enabled: standardProjects.map((card) => card.canAct(this))})
-      .andThen(([card]) => card.action(this));
+      {
+        enabled: standardProjects.map((card) => card.canAct(this)),
+        title: 'Standard projects',
+        buttonLabel: 'Confirm',
+      });
   }
 
   private headStartIsInEffect() {
@@ -1497,20 +1538,20 @@ export class Player implements IPlayer {
         orOptions.options.push(this.passOption());
       }
 
-      this.setWaitingFor(orOptions, () => {
+      this.setWaitingFor(orOptions, this.runWhenEmpty(() => {
         if (this.pendingInitialActions.length === 0) {
           this.incrementActionsTaken();
         }
         this.timer.rebate(constants.BONUS_SECONDS_PER_ACTION * 1000);
         this.takeAction();
-      });
+      }));
       return;
     }
 
-    this.setWaitingFor(this.getActions(), () => {
+    this.setWaitingFor(this.getActions(), this.runWhenEmpty(() => {
       this.incrementActionsTaken();
       this.takeAction();
-    });
+    }));
   }
 
   private incrementActionsTaken(): void {
@@ -1523,7 +1564,6 @@ export class Player implements IPlayer {
       .setTitle(this.actionsTakenThisRound === 0 ? 'Take your first action' : 'Take your next action')
       .setButtonLabel('Take action');
 
-    // VanAllen can claim milestones for free:
     const claimableMilestones = this.claimableMilestones();
     if (claimableMilestones.length > 0) {
       const milestoneOption = new OrOptions().setTitle('Claim a milestone');
@@ -1541,19 +1581,25 @@ export class Player implements IPlayer {
       action.options.push(convertPlants.action(this));
     }
 
-    // Convert Heat
-    const convertHeat = new ConvertHeat();
-    if (convertHeat.canAct(this)) {
-      const option = new SelectOption('Convert 8 heat into temperature', 'Convert heat').andThen(() => {
-        return convertHeat.action(this);
-      });
-      if (convertHeat.warnings.size > 0) {
-        option.warnings = Array.from(convertHeat.warnings);
-        if (convertHeat.warnings.has('maxtemp')) {
-          option.eligibleForDefault = false;
-        }
+    // Convert Heat. Kelvinists kp03 swaps in a 6-heat variant in this slot.
+    if (PartyHooks.shouldApplyPolicy(this, PartyName.KELVINISTS, 'kp03')) {
+      if (KELVINISTS_POLICY_3.canAct(this)) {
+        action.options.push(KELVINISTS_POLICY_3.action(this));
       }
-      action.options.push(option);
+    } else {
+      const convertHeat = new ConvertHeat();
+      if (convertHeat.canAct(this)) {
+        const option = new SelectOption('Convert 8 heat into temperature', 'Convert heat').andThen(() => {
+          return convertHeat.action(this);
+        });
+        if (convertHeat.warnings.size > 0) {
+          option.warnings = Array.from(convertHeat.warnings);
+          if (convertHeat.warnings.has('maxtemp')) {
+            option.eligibleForDefault = false;
+          }
+        }
+        action.options.push(option);
+      }
     }
 
     // Turmoil
@@ -1568,8 +1614,9 @@ export class Player implements IPlayer {
     }
 
     // CEO cards
-    if (CeoExtension.ceoActionIsUsable(this)) {
-      action.options.push(this.playCeoOPGAction());
+    const ceoOpgAction = this.getPlayCeoOPGAction();
+    if (ceoOpgAction !== undefined) {
+      action.options.push(ceoOpgAction);
     }
 
     // Playable cards
@@ -1634,7 +1681,9 @@ export class Player implements IPlayer {
 
   private allOtherPlayersHavePassed(): boolean {
     const game = this.game;
-    if (game.isSoloMode()) return true;
+    if (game.isSoloMode()) {
+      return true;
+    }
     const players = game.players;
     const passedPlayers = game.getPassedPlayers();
     return passedPlayers.length === players.length - 1 && passedPlayers.includes(this.color) === false;
@@ -1649,7 +1698,9 @@ export class Player implements IPlayer {
     this.waitingFor = undefined;
     this.waitingForCb = undefined;
     try {
-      this.timer.stop();
+      if (!waitingFor.optional) {
+        this.timer.stop();
+      }
       this.defer(waitingFor.process(input, this));
       waitingForCb();
     } catch (err) {
@@ -1671,7 +1722,9 @@ export class Player implements IPlayer {
         console.warn(message);
       }
     }
-    this.timer.start();
+    if (!input.optional) {
+      this.timer.start();
+    }
     this.waitingFor = input;
     this.waitingForCb = cb;
     this.game.inputsThisRound++;
@@ -1698,6 +1751,15 @@ export class Player implements IPlayer {
           this.setWaitingForSafely(input, cb);
         };
       }
+    }
+  }
+
+  public clearWaitingFor(): void {
+    const waitingFor = this.waitingFor;
+    this.waitingFor = undefined;
+    this.waitingForCb = undefined;
+    if (waitingFor !== undefined && !waitingFor.optional) {
+      this.timer.stop();
     }
   }
 
@@ -1733,8 +1795,10 @@ export class Player implements IPlayer {
       // Luna Trade Federation
       canUseTitaniumAsMegacredits: this.canUseTitaniumAsMegacredits,
       preservationProgram: this.preservationProgram,
+      trThisGeneration: this.trThisGeneration,
       // This generation / this round
       actionsTakenThisRound: this.actionsTakenThisRound,
+      availableActionsThisRound: this.availableActionsThisRound,
       actionsThisGeneration: Array.from(this.actionsThisGeneration),
       pendingInitialActions: this.pendingInitialActions.map(toName),
       // Cards
@@ -1765,10 +1829,12 @@ export class Player implements IPlayer {
       // Leavitt Station.
       scienceTagCount: this.tags.extraScienceTags,
       plantTagCount: this.tags.extraPlantTags,
+      jovianTagCount: this.tags.extraJovianTags,
       // Ecoline
       plantsNeededForGreenery: this.plantsNeededForGreenery,
       // Lawsuit
       removingPlayers: this.removingPlayers,
+      warmongerCards: this.warmongerCards,
       // Playwrights
       removedFromPlayCards: this.removedFromPlayCards.map(toName),
       // Standard Technology: Underworld
@@ -1794,6 +1860,7 @@ export class Player implements IPlayer {
     if (this.lastCardPlayed !== undefined) {
       result.lastCardPlayed = this.lastCardPlayed;
     }
+    result.deltaProject = this.deltaProjectData;
     return result;
   }
 
@@ -1803,6 +1870,7 @@ export class Player implements IPlayer {
     player.actionsTakenThisGame = d.actionsTakenThisGame;
     player.actionsThisGeneration = new Set(d.actionsThisGeneration);
     player.actionsTakenThisRound = d.actionsTakenThisRound;
+    player.availableActionsThisRound = d.availableActionsThisRound ?? 2;
     player.canUseHeatAsMegaCredits = d.canUseHeatAsMegaCredits;
     player.canUsePlantsAsMegacredits = d.canUsePlantsAsMegaCredits;
     player.canUseTitaniumAsMegacredits = d.canUseTitaniumAsMegacredits;
@@ -1833,8 +1901,10 @@ export class Player implements IPlayer {
       titanium: d.titaniumProduction,
     }));
     player.removingPlayers = d.removingPlayers;
+    player.warmongerCards = d.warmongerCards ?? 0;
     player.tags.extraScienceTags = d.scienceTagCount;
     player.tags.extraPlantTags = d.plantTagCount;
+    player.tags.extraJovianTags = d.jovianTagCount ?? 0;
     player.steel = d.steel;
     player.steelValue = d.steelValue;
     player.terraformRating = d.terraformRating;
@@ -1858,6 +1928,7 @@ export class Player implements IPlayer {
     player.dealtPreludeCards = preludesFromJSON(d.dealtPreludeCards);
     player.dealtCeoCards = ceosFromJSON(d.dealtCeoCards);
     player.dealtProjectCards = cardsFromJSON(d.dealtProjectCards);
+    player.deltaProjectData = d.deltaProject;
     player.cardsInHand = cardsFromJSON(d.cardsInHand);
     // I don't like "as IPreludeCard" but this is pretty safe.
     player.preludeCardsInHand = cardsFromJSON(d.preludeCardsInHand) as Array<IPreludeCard>;
@@ -1866,18 +1937,12 @@ export class Player implements IPlayer {
     player.draftedCards = cardsFromJSON(d.draftedCards);
     player.autopass = d.autoPass ?? false;
     player.preservationProgram = d.preservationProgram ?? false;
+    // TODO(kberg): remove ?? 0 by 2026-11-01
+    player.trThisGeneration = d.trThisGeneration ?? 0;
 
     player.timer = Timer.deserialize(d.timer);
+    player.underworldData = d.underworldData;
 
-    if (d.underworldData !== undefined) {
-      const dunerworldData = d.underworldData;
-      // TODO(kberg): Remove the wrapper by 2025-10-01
-      player.underworldData = {
-        tokens: (dunerworldData.tokens ?? []).map((e) => typeof(e) === 'object' ? e : {token: e, shelter: false, active: false}),
-        corruption: dunerworldData.corruption,
-        activeBonus: dunerworldData.temperatureBonus ?? dunerworldData.activeBonus,
-      };
-    }
     if (d.alliedParty !== undefined) {
       player._alliedParty = d.alliedParty;
     }

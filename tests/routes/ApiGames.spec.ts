@@ -4,6 +4,7 @@ import {Game} from '../../src/server/Game';
 import {TestPlayer} from '../TestPlayer';
 import {MockResponse} from './HttpMocks';
 import {RouteTestScaffolding} from './RouteTestScaffolding';
+import {statusCode} from '@/common/http/statusCode';
 
 describe('ApiGames', () => {
   let res: MockResponse;
@@ -18,7 +19,8 @@ describe('ApiGames', () => {
   it('validates server id', () => {
     scaffolding.url = '/api/games';
     ApiGames.INSTANCE.processRequest(scaffolding.req, res, scaffolding.ctx);
-    expect(res.content).eq('Not authorized');
+    expect(res.statusCode).eq(statusCode.forbidden);
+    expect(res.content).eq('forbidden');
   });
 
   it('simple', async () => {
@@ -30,7 +32,7 @@ describe('ApiGames', () => {
 
   it('a game', async () => {
     const player = TestPlayer.BLACK.newPlayer();
-    await scaffolding.ctx.gameLoader.add(Game.newInstance('game-id', [player], player));
+    await scaffolding.ctx.gameLoader.add(Game.newInstance('game-id', [player], player, 'spectatorid'));
     await ApiGames.INSTANCE.get(scaffolding.req, res, scaffolding.ctx);
     // Player ids aren't exactly available in the fake game loader.
     // A base class shared between GameLoader and FakeGameLoader would fix that.

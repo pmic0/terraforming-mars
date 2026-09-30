@@ -6,7 +6,7 @@ import {testGame} from '../../TestGame';
 describe('ConstantStruggle', () => {
   it('resolve play', () => {
     const card = new ConstantStruggle();
-    const [game, player, player2] = testGame(2, {turmoilExtension: true, pathfindersExpansion: true});
+    const [game, player, player2] = testGame(2, {turmoilExtension: true, pathfindersExpansion: true, venusNextExtension: true});
     const turmoil = game.turmoil!;
 
     player.megaCredits = 8;
@@ -31,7 +31,7 @@ describe('ConstantStruggle', () => {
       vps: [],
     });
 
-    card.resolve(game, turmoil);
+    card.resolve(game);
 
     expect(player.megaCredits).eq(0);
     expect(player2.megaCredits).eq(5);
@@ -51,7 +51,7 @@ describe('ConstantStruggle', () => {
 
   it('grants everyone bonus, not bonus for raising player', () => {
     const card = new ConstantStruggle();
-    const [game, player, player2] = testGame(2, {turmoilExtension: true, pathfindersExpansion: true});
+    const [game, player, player2] = testGame(2, {turmoilExtension: true, pathfindersExpansion: true, venusNextExtension: true});
     const turmoil = game.turmoil!;
 
     player.megaCredits = 8;
@@ -61,7 +61,7 @@ describe('ConstantStruggle', () => {
 
     game.pathfindersData!.jovian = 1;
 
-    card.resolve(game, turmoil);
+    card.resolve(game);
 
     expect(game.pathfindersData).deep.eq({
       venus: 2,

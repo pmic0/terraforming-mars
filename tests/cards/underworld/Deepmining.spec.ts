@@ -3,8 +3,9 @@ import {Deepmining} from '../../../src/server/cards/underworld/Deepmining';
 import {IGame} from '../../../src/server/IGame';
 import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 import {TestPlayer} from '../../TestPlayer';
-import {cast, runAllActions} from '../../TestingUtils';
+import {runAllActions} from '../../TestingUtils';
 import {testGame} from '../../TestGame';
+import {cast} from '../../../src/common/utils/utils';
 
 describe('Deepmining', () => {
   let card: Deepmining;
@@ -22,7 +23,7 @@ describe('Deepmining', () => {
   });
 
   const playRuns = [
-    {resourceToken: 'steel2', production: 'steel'},
+    {resourceToken: 'steel2plant', production: 'steel'},
     {resourceToken: 'titanium2', production: 'titanium'},
   ] as const;
   for (const run of playRuns) {

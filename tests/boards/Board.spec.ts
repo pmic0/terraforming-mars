@@ -233,9 +233,6 @@ describe('Board', () => {
   });
 
   class TestBoard extends Board {
-    public constructor(spaces: Array<Space>) {
-      super(spaces, undefined, []);
-    }
   }
 
   it('deserialize', () => {
@@ -272,6 +269,75 @@ describe('Board', () => {
     const board = new TestBoard(Board.deserialize(boardJson, [player1, player2]).spaces);
     expect(board.getSpaceOrThrow('01').player).eq(player1);
     expect(board.getSpaceOrThrow('03').player).eq(player2);
+  });
+
+  it('deserialize migrates cubes stored as tiles', () => {
+    const boardJson: SerializedBoard = {
+      'spaces': [
+        {
+          'id': '03',
+          'spaceType': SpaceType.LAND, 'bonus': [],
+          'x': 4, 'y': 0,
+          'tile': {'tileType': TileType._DEPRECATED_MARTIAN_NATURE_WONDERS},
+        },
+        {
+          'id': '04',
+          'spaceType': SpaceType.LAND, 'bonus': [],
+          'x': 5, 'y': 0,
+          'tile': {'tileType': TileType._DEPRECATED_REY_SKYWALKER},
+        },
+        {
+          'id': '05',
+          'spaceType': SpaceType.LAND, 'bonus': [],
+          'x': 6, 'y': 0,
+          'cube': 'martian-nature-wonders',
+        },
+      ],
+    };
+
+    const board = new TestBoard(Board.deserialize(boardJson, []).spaces);
+
+    // Games saved before cubes had their own field stored them in `tile`.
+    expect(board.getSpaceOrThrow('03').tile).is.undefined;
+    expect(board.getSpaceOrThrow('03').cube).eq('martian-nature-wonders');
+    expect(board.getSpaceOrThrow('04').tile).is.undefined;
+    expect(board.getSpaceOrThrow('04').cube).eq('rey-skywalker');
+    expect(board.getSpaceOrThrow('05').cube).eq('martian-nature-wonders');
+  });
+
+  it('serialize cubes', () => {
+    board.getSpaceOrThrow('05').cube = 'rey-skywalker';
+
+    const serialized = board.serialize();
+
+    expect(serialized.spaces.find((space) => space.id === '05')?.cube).eq('rey-skywalker');
+    expect(serialized.spaces.find((space) => space.id === '06')?.cube).is.undefined;
+  });
+
+  it('Create specifying volcanic spaces', () => {
+    const spaces: Array<Space> = [
+      {id: '01', x: 0, y: 0, spaceType: SpaceType.LAND, bonus: []},
+      {id: '02', x: 1, y: 0, spaceType: SpaceType.LAND, volcanic: true, bonus: []},
+      {id: '03', x: 2, y: 0, spaceType: SpaceType.LAND, bonus: []},
+    ];
+    const board = new TestBoard(spaces);
+    expect(board.getSpaceOrThrow('01').volcanic).is.undefined;
+    expect(board.getSpaceOrThrow('02').volcanic).is.true;
+    expect(board.getSpaceOrThrow('03').volcanic).is.undefined;
+    expect(board.volcanicSpaceIds).deep.eq(['02']);
+  });
+
+  it('Create defining volcanic spaces', () => {
+    const spaces: Array<Space> = [
+      {id: '01', x: 0, y: 0, spaceType: SpaceType.LAND, bonus: []},
+      {id: '02', x: 1, y: 0, spaceType: SpaceType.LAND, bonus: [], volcanic: true},
+      {id: '03', x: 2, y: 0, spaceType: SpaceType.LAND, bonus: []},
+    ];
+    const board = new TestBoard(spaces);
+    expect(board.getSpaceOrThrow('01').volcanic).is.undefined;
+    expect(board.getSpaceOrThrow('02').volcanic).is.true;
+    expect(board.getSpaceOrThrow('03').volcanic).is.undefined;
+    expect(board.volcanicSpaceIds).deep.eq(['02']);
   });
 
   const runs = [

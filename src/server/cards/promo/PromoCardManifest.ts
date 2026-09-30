@@ -1,6 +1,7 @@
 import {CardName} from '../../../common/cards/CardName';
 import {ModuleManifest} from '../ModuleManifest';
 import {Advertising} from './Advertising';
+import {AlbedoPlants} from './AlbedoPlants';
 import {AntidesertificationTechniques} from './AntidesertificationTechniques';
 import {AqueductSystems} from './AqueductSystems';
 import {ArcadianCommunities} from './ArcadianCommunities';
@@ -11,6 +12,7 @@ import {AstraMechanica} from './AstraMechanica';
 import {Astrodrill} from './Astrodrill';
 import {BactoviralResearch} from './BactoviralResearch';
 import {BioPrintingFacility} from './BioPrintingFacility';
+import {BoomTown} from './BoomTown';
 import {CarbonNanosystems} from './CarbonNanosystems';
 import {Casinos} from './Casinos';
 import {CityParks} from './CityParks';
@@ -26,6 +28,7 @@ import {DiversitySupport} from './DiversitySupport';
 import {DoubleDown} from './DoubleDown';
 import {DuskLaserMining} from './DuskLaserMining';
 import {EnergyMarket} from './EnergyMarket';
+import {EstablishedMethods} from './EstablishedMethods';
 import {Factorum} from './Factorum';
 import {FieldCappedCity} from './FieldCappedCity';
 import {FloydContinuum} from './FloydContinuum';
@@ -80,6 +83,7 @@ import {SolarLogistics} from './SolarLogistics';
 import {Splice} from './Splice';
 import {StanfordTorus} from './StanfordTorus';
 import {StaticHarvesting} from './StaticHarvesting';
+import {SterlingVents} from './SterlingVents';
 import {StJosephOfCupertinoMission} from './StJosephOfCupertinoMission';
 import {SubCrustMeasurements} from './SubCrustMeasurements';
 import {Supercapacitors} from './Supercapacitors';
@@ -170,6 +174,7 @@ export const PROMO_CARD_MANIFEST = new ModuleManifest({
     [CardName.PUBLIC_PLANS]: {Factory: PublicPlans},
     [CardName.STATIC_HARVESTING]: {Factory: StaticHarvesting},
     [CardName.WEATHER_BALLOONS]: {Factory: WeatherBalloons},
+    [CardName.STERLING_VENTS]: {Factory: SterlingVents},
   },
 
   preludeCards: {
@@ -182,9 +187,11 @@ export const PROMO_CARD_MANIFEST = new ModuleManifest({
     // [CardName.HEAD_START]: {Factory: HeadStart}, // Head Start is disabled because it's not working well.
 
     [CardName.ANTI_DESERTIFICATION_TECHNIQUES]: {Factory: AntidesertificationTechniques},
-    // [CardName.ESTABLISHED_METHODS]: {Factory: EstablishedMethods}, // X54
+    [CardName.ESTABLISHED_METHODS]: {Factory: EstablishedMethods},
     [CardName.GIANT_SOLAR_COLLECTOR]: {Factory: GiantSolarCollector, compatibility: 'venus'},
     [CardName.STRATEGIC_BASE_PLANNING]: {Factory: StrategicBasePlanning, compatibility: 'colonies'},
+    [CardName.ALBEDO_PLANTS]: {Factory: AlbedoPlants},
+    [CardName.BOOM_TOWN]: {Factory: BoomTown},
   },
 
   cardsToRemove: [

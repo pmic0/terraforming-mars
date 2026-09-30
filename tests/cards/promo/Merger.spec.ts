@@ -3,7 +3,7 @@ import {ICard} from '../../../src/server/cards/ICard';
 import {Merger} from '../../../src/server/cards/promo/Merger';
 import {IGame} from '../../../src/server/IGame';
 import {SelectCard} from '../../../src/server/inputs/SelectCard';
-import {cast, runAllActions} from '../../TestingUtils';
+import {runAllActions} from '../../TestingUtils';
 import {TestPlayer} from '../../TestPlayer';
 import {ArcadianCommunities} from '../../../src/server/cards/promo/ArcadianCommunities';
 import {SaturnSystems} from '../../../src/server/cards/corporation/SaturnSystems';
@@ -42,6 +42,7 @@ import {Inventrix} from '../../../src/server/cards/corporation/Inventrix';
 import {Ambient} from '../../../src/server/cards/pathfinders/Ambient';
 import {OrOptions} from '../../../src/server/inputs/OrOptions';
 import {asArray, toName} from '../../../src/common/utils/utils';
+import {cast} from '../../../src/common/utils/utils';
 
 describe('Merger', () => {
   let merger: Merger;
@@ -431,5 +432,28 @@ describe('Merger', () => {
     expect(game.activePlayer.id).eq(player.id);
     expect(player.getWaitingFor()).is.not.undefined;
     expect(player2.getWaitingFor()).is.undefined;
+  });
+
+  it('draws only from the custom corporation list', () => {
+    const customCorporationsList = [
+      CardName.CREDICOR, CardName.ECOLINE, CardName.HELION,
+      CardName.INVENTRIX, CardName.MINING_GUILD, CardName.PHOBOLOG,
+    ];
+    const [game, player, player2] = testGame(2, {preludeExtension: true, promoCardsOption: true, customCorporationsList});
+
+    // Each player keeps one dealt corporation and discards the rest, as in initial card selection.
+    for (const p of [player, player2]) {
+      game.corporationDeck.discard(...p.dealtCorporationCards.slice(1));
+    }
+
+    player.megaCredits = 100;
+    merger.play(player);
+    runAllActions(game);
+
+    const selectCorp = cast(player.popWaitingFor(), SelectCard<ICorporationCard>);
+    expect(selectCorp.cards).has.length(4);
+    for (const card of selectCorp.cards) {
+      expect(customCorporationsList).contains(card.name);
+    }
   });
 });

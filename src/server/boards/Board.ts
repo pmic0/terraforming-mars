@@ -10,6 +10,7 @@ import {Units} from '../../common/Units';
 import {hazardSeverity} from '../../common/AresTileType';
 import {TR_SOURCES, TRSource} from '../../common/cards/TRSource';
 import {sum} from '../../common/utils/utils';
+import {LEGACY_CUBE_TILES} from '@/common/boards/SpaceCube';
 
 /**
  * The bonus costs to place a tile on a space. For instance, spending 6MC to place an ocean,
@@ -30,23 +31,24 @@ export abstract class Board {
   private maxX: number = 0;
   private maxY: number = 0;
   private map: Map<SpaceId, Space> = new Map();
+  public volcanicSpaceIds: ReadonlyArray<SpaceId>;
 
   // stores adjacent spaces in clockwise order starting from the top left
   private readonly adjacentSpaces = new Map<SpaceId, ReadonlyArray<Space>>();
 
-  protected constructor(
+  public constructor(
     public readonly spaces: ReadonlyArray<Space>,
-    public readonly noctisCitySpaceId: SpaceId | undefined,
-    public readonly volcanicSpaceIds: ReadonlyArray<SpaceId>) {
+    public readonly noctisCitySpaceId?: SpaceId | undefined) {
     this.maxX = Math.max(...spaces.map((s) => s.x));
     this.maxY = Math.max(...spaces.map((s) => s.y));
     spaces.forEach((space) => {
       const adjacentSpaces = this.computeAdjacentSpaces(space);
       const filtered = adjacentSpaces.filter((space) => space !== undefined);
-      // "as ReadonlyArray<Space> is OK because the line above filters out the undefined values."
-      this.adjacentSpaces.set(space.id, filtered as ReadonlyArray<Space>);
+      this.adjacentSpaces.set(space.id, filtered);
       this.map.set(space.id, space);
     });
+
+    this.volcanicSpaceIds = this.spaces.filter((space) => space.volcanic).map((space) => space.id);
   }
 
   /* Returns the space given a Space ID. */
@@ -162,9 +164,11 @@ export abstract class Board {
     switch (hazardSeverity(space.tile?.tileType)) {
     case 'mild':
       costs.megacredits += 8;
+      costs.tr.tr = (costs.tr.tr ?? 0) + 1;
       break;
     case 'severe':
       costs.megacredits += 16;
+      costs.tr.tr = (costs.tr.tr ?? 0) + 2;
       break;
     }
 
@@ -230,6 +234,10 @@ export abstract class Board {
         return false;
       }
 
+      if (space.cube !== undefined) {
+        return false;
+      }
+
       const playableSpace = space.tile === undefined || (AresHandler.hasHazardTile(space) && space.tile?.protectedHazard !== true);
 
       if (!playableSpace) {
@@ -269,8 +277,33 @@ export abstract class Board {
     return spaces[idx];
   }
 
+  /**
+   * Return the number of empty areas adjacent to `player`'s tiles.
+   *
+   * An area is empty when nothing real stands on it: a hazard tile counts as empty.
+   */
+  public getAdjacentEmptySpacesCount(player: IPlayer): number {
+    return this.spaces.filter((space) => {
+      if (space.spaceType === SpaceType.COLONY) {
+        return false;
+      }
+      if (space.spaceType === SpaceType.RESTRICTED) {
+        return false;
+      }
+      if (Board.hasRealTile(space)) {
+        return false;
+      }
+      return this.getAdjacentSpaces(space).some((adj) => {
+        return Board.hasRealTile(adj) && adj.player === player;
+      });
+    }).length;
+  }
+
   public canPlaceTile(space: Space): boolean {
-    return space.tile === undefined && space.spaceType === SpaceType.LAND && space.id !== this.noctisCitySpaceId;
+    return space.spaceType === SpaceType.LAND &&
+      space.tile === undefined &&
+      space.id !== this.noctisCitySpaceId &&
+      space.cube === undefined;
   }
 
   public static isCitySpace(space: Space): boolean {
@@ -329,6 +362,9 @@ export abstract class Board {
           x: space.x,
           y: space.y,
         };
+        if (space.cube !== undefined) {
+          serialized.cube = space.cube;
+        }
         if (space.undergroundResources !== undefined) {
           serialized.undergroundResources = space.undergroundResources;
         }
@@ -338,7 +374,9 @@ export abstract class Board {
         if (space.coOwner !== undefined) {
           serialized.coOwner = space.coOwner.id;
         }
-
+        if (space.volcanic) {
+          serialized.volcanic = true;
+        }
         return serialized;
       }),
     };
@@ -360,8 +398,16 @@ export abstract class Board {
       y: serialized.y,
     };
 
+    if (serialized.cube !== undefined) {
+      space.cube = serialized.cube;
+    }
     if (serialized.tile !== undefined) {
-      space.tile = serialized.tile;
+      const legacyCube = LEGACY_CUBE_TILES.get(serialized.tile.tileType);
+      if (legacyCube) {
+        space.cube = legacyCube;
+      } else {
+        space.tile = serialized.tile;
+      }
     }
     if (player !== undefined) {
       space.player = player;
@@ -377,6 +423,9 @@ export abstract class Board {
     }
     if (coOwner !== undefined) {
       space.coOwner = coOwner;
+    }
+    if (serialized.volcanic !== undefined) {
+      space.volcanic = serialized.volcanic;
     }
     return space;
   }
@@ -399,7 +448,8 @@ export function isSpecialTile(tileType: TileType | undefined): boolean {
   case TileType.EROSION_SEVERE:
   case TileType.DUST_STORM_MILD:
   case TileType.DUST_STORM_SEVERE:
-  case TileType.REY_SKYWALKER:
+  case TileType._DEPRECATED_REY_SKYWALKER:
+  case TileType._DEPRECATED_MARTIAN_NATURE_WONDERS:
   case undefined:
     return false;
   default:

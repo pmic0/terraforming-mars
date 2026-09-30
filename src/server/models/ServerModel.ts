@@ -18,7 +18,7 @@ import {ClaimedMilestoneModel, MilestoneScore} from '../../common/models/Claimed
 import {FundedAwardModel, AwardScore} from '../../common/models/FundedAwardModel';
 import {getTurmoilModel} from '../models/TurmoilModel';
 import {SpectatorModel} from '../../common/models/SpectatorModel';
-import {GameModel} from '../../common/models/GameModel';
+import {GameModel, OtherDeckSizesModel} from '../../common/models/GameModel';
 import {Turmoil} from '../turmoil/Turmoil';
 import {createPathfindersModel} from './PathfindersModel';
 import {MoonModel} from '../../common/models/MoonModel';
@@ -35,6 +35,7 @@ export class Server {
     return {
       activePlayer: game.activePlayer.color,
       id: game.id,
+      name: game.name,
       phase: game.phase,
       players: game.playersInGenerationOrder.map((player) => ({
         color: player.color,
@@ -47,6 +48,7 @@ export class Server {
       expectedPurgeTimeMs: game.expectedPurgeTimeMs(),
     };
   }
+
 
 
   public static getSimpleGameModelBot(game: IGame): SimpleBotGameModel {
@@ -69,8 +71,26 @@ export class Server {
       passedPlayers: game.getPassedPlayers(),
       deckSize: game.projectDeck.drawPile.length ? game.projectDeck.drawPile.length  : -1,
       turmoil: game.gameOptions.turmoilExtension ? getTurmoilModel(game) : undefined,
+
+  
     };
   }
+
+  private static getOtherDeckSizes(game: IGame): OtherDeckSizesModel {
+    const options = game.gameOptions;
+    const sizes = (deck: {drawPile: ReadonlyArray<unknown>, discardPile: ReadonlyArray<unknown>}) => ({
+      drawPile: deck.drawPile.length,
+      discardPile: deck.discardPile.length,
+    });
+    const dealer = game.turmoil?.globalEventDealer;
+    return {
+      corporations: sizes(game.corporationDeck),
+      preludes: options.preludeExtension ? sizes(game.preludeDeck) : undefined,
+      ceos: options.ceoExtension ? sizes(game.ceoDeck) : undefined,
+      globalEvents: dealer === undefined ? undefined : {drawPile: dealer.deck.length, discardPile: dealer.discards.length},
+
+  }
+}
 
   public static getGameModel(game: IGame): GameModel {
     const turmoil = getTurmoilModel(game);
@@ -81,6 +101,7 @@ export class Server {
       colonies: coloniesToModel(game, game.colonies, false, true),
       deckSize: game.projectDeck.drawPile.length,
       discardPileSize: game.projectDeck.discardPile.length,
+      otherDeckSizes: this.getOtherDeckSizes(game),
       discardedColonies: game.discardedColonies.map(toName),
       expectedPurgeTimeMs: game.expectedPurgeTimeMs(),
       gameAge: game.gameAge,
@@ -92,6 +113,7 @@ export class Server {
       lastSoloGeneration: game.lastSoloGeneration(),
       milestones: this.getMilestones(game),
       moon: this.getMoonModel(game),
+      name: game.name,
       oceans: game.board.getOceanSpaces().length,
       oxygenLevel: game.getOxygenLevel(),
       passedPlayers: game.getPassedPlayers(),
@@ -126,6 +148,7 @@ export class Server {
       draftedCards: cardsToModel(player, player.draftedCards, {showCalculatedCost: true}),
       game: this.getGameModel(player.game),
       id: player.id,
+      color: player.color,
       runId: runId,
       pickedCorporationCard: player.pickedCorporationCard ? cardsToModel(player, [player.pickedCorporationCard]) : [],
       preludeCardsInHand: cardsToModel(player, player.preludeCardsInHand),
@@ -172,14 +195,15 @@ export class Server {
       let scores: Array<MilestoneScore> = [];
       if (claimed === undefined && claimedMilestones.length < MAX_MILESTONES) {
         scores = game.players.map((player) => ({
-          playerColor: player.color,
-          playerScore: milestone.getScore(player),
+          color: player.color,
+          score: milestone.getScore(player),
+          claimable: milestone.canClaim(player),
         }));
       }
 
       milestoneModels.push({
         playerName: claimed?.player.name,
-        playerColor: claimed?.player.color,
+        color: claimed?.player.color,
         name: milestone.name,
         scores,
       });
@@ -198,14 +222,14 @@ export class Server {
       let scores: Array<AwardScore> = [];
       if (fundedAwards.length < MAX_AWARDS || funded !== undefined) {
         scores = game.players.map((player) => ({
-          playerColor: player.color,
-          playerScore: scorer.get(player),
+          color: player.color,
+          score: scorer.get(player),
         }));
       }
 
       awardModels.push({
         playerName: funded?.player.name,
-        playerColor: funded?.player.color,
+        color: funded?.player.color,
         name: award.name,
         scores: scores,
       });
@@ -254,8 +278,8 @@ export class Server {
       influence: Turmoil.ifTurmoilElse(game, (turmoil) => turmoil.getInfluence(player), () => 0),
       isActive: player.id === game.activePlayer.id,
       lastCardPlayed: player.lastCardPlayed,
-      megaCredits: player.megaCredits,
-      megaCreditProduction: player.production.megacredits,
+      megacredits: player.megaCredits,
+      megacreditProduction: player.production.megacredits,
       name: player.name,
       needsToDraft: player.needsToDraft,
       needsToResearch: !game.hasResearched(player),
@@ -297,13 +321,17 @@ export class Server {
         negativeVP: 0,
       },
       victoryPointsByGeneration: [],
+      globalParameterSteps: {},
     };
 
     if (game.phase === Phase.END || game.isSoloMode() ||
         game.gameOptions.showOtherPlayersVP === true || modelIsForThisPlayer) {
       model.victoryPointsBreakdown = player.getVictoryPoints();
       model.victoryPointsByGeneration = player.victoryPointsByGeneration;
+      model.globalParameterSteps = player.globalParameterSteps;
     }
+
+    model.deltaProject = player.deltaProjectData;
 
     return model;
   }
@@ -371,12 +399,11 @@ export class Server {
     gagarin: ReadonlyArray<SpaceId> = [],
     cathedrals: ReadonlyArray<SpaceId> = [],
     nomads: SpaceId | undefined = undefined): Array<SpaceModel> {
-    const volcanicSpaceIds = board.volcanicSpaceIds;
     const noctisCitySpaceId = board.noctisCitySpaceId;
 
     return board.spaces.map((space) => {
       let highlight: SpaceHighlight = undefined;
-      if (volcanicSpaceIds.includes(space.id)) {
+      if (space.volcanic) {
         highlight = 'volcanic';
       } else if (noctisCitySpaceId === space.id) {
         highlight = 'noctis';
@@ -393,11 +420,14 @@ export class Server {
       if (tileType !== undefined) {
         model.tileType = tileType;
       }
+      if (space.cube !== undefined) {
+        model.cube = space.cube;
+      }
       const color = this.getColor(space);
       if (color !== undefined) {
         model.color = color;
       }
-      if (highlight === undefined) {
+      if (highlight !== undefined) {
         model.highlight = highlight;
       }
       if (space.tile?.rotated === true) {
@@ -450,6 +480,7 @@ export class Server {
         ceo: options.ceoExtension,
         starwars: options.starWarsExpansion,
         underworld: options.underworldExpansion,
+        deltaProject: options.deltaProjectExpansion,
       },
       fastModeOption: options.fastModeOption,
       includedCards: options.includedCards,
@@ -469,6 +500,21 @@ export class Server {
       requiresVenusTrackCompletion: options.requiresVenusTrackCompletion,
       twoCorpsVariant: options.twoCorpsVariant,
       undoOption: options.undoOption,
+
+      // These are only supplied for the JSON, and
+      // some of them can be a bit large.
+      aresHazards: options.aresHazards,
+      clonedGamedId: options.clonedGamedId,
+      customCeos: options.customCeos,
+      customColoniesList: options.customColoniesList,
+      customCorporationsList: options.customCorporationsList,
+      customPreludes: options.customPreludes,
+      modularMA: options.modularMA,
+      moonStandardProjectVariant: options.moonStandardProjectVariant,
+      moonStandardProjectVariant1: options.moonStandardProjectVariant1,
+      startingCeos: options.startingCeos,
+      startingCorporations: options.startingCorporations,
+      startingPreludes: options.startingPreludes,
     };
   }
 
@@ -476,7 +522,7 @@ export class Server {
     const moonData = game.moonData;
     if (moonData) {
       return {
-        logisticsRate: moonData.logisticRate,
+        logisticRate: moonData.logisticRate,
         miningRate: moonData.miningRate,
         habitatRate: moonData.habitatRate,
         spaces: this.getSpaces(moonData.moon),

@@ -6,6 +6,8 @@ import {PLAYER_COLORS} from '@/common/Color';
 import {NewPlayerModel} from '@/common/game/NewGameConfig';
 import {CardName} from '@/common/cards/CardName';
 import {cast} from '@/common/utils/utils';
+import {CARD_RENAMES} from '@/common/cards/CardRenames';
+import {sanitizeEscapeVelocityOptions} from '@/common/game/escapeVelocity';
 
 function safeBoolean(val: JSONValue): boolean {
   if (typeof val === 'boolean') {
@@ -53,11 +55,12 @@ export class JSONProcessor {
     initializeArrayFieldWithBackup(json_constants.OLD_BANNED_CARDS, json_constants.BANNED_CARDS);
     const ev = json.escapeVelocity as JSONObject;
     if (ev !== undefined && typeof ev === 'object') {
+      const options = sanitizeEscapeVelocityOptions(ev);
       json.escapeVelocityMode = true;
-      json.escapeVelocityBonusSeconds = ev['bonusSectionsPerAction'];
-      json.escapeVelocityPenalty = ev['penaltyVPPerPeriod'];
-      json.escapeVelocityPeriod = ev['penaltyPeriodMinutes'];
-      json.escapeVelocityThreshold = Number.parseInt(ev['thresholdMinutes'] as string ?? '');
+      json.escapeVelocityBonusSeconds = options.bonusSectionsPerAction;
+      json.escapeVelocityPenalty = options.penaltyVPPerPeriod;
+      json.escapeVelocityPeriod = options.penaltyPeriodMinutes;
+      json.escapeVelocityThreshold = options.thresholdMinutes;
     }
 
     function set<T>(field: string): Array<T> {
@@ -86,6 +89,7 @@ export class JSONProcessor {
       ceo: json_constants.CEOEXTENSION,
       starwars: json_constants.STARWARSEXPANSION,
       underworld: json_constants.UNDERWORLDEXPANSION,
+      deltaProject: json_constants.DELTA_PROJECT_EXPANSION,
     } as const;
     for (const expansion of Object.keys(oldExpansionFields)) {
       const x = oldExpansionFields[expansion as Expansion];
@@ -118,16 +122,36 @@ export class JSONProcessor {
       if (ignoredFields.includes(k)) {
         continue;
       }
-      if (!Object.prototype.hasOwnProperty.call(this.model, k)) {
-        this.warnings.push('Unknown property: ' + k);
-      } else {
-        // This is safe because of the hasOwnProperty check, above. hasOwnProperty doesn't help with type declarations.
+      if (k in this.model) {
+        // This is safe because of the in check, above.
         (this.model as any)[k] = json[k];
+      } else {
+        this.warnings.push('Unknown property: ' + k);
       }
     }
 
     for (let i = 0; i < players.length; i++) {
       this.model.players[i] = players[i];
+    }
+
+    this.validateCardNames('customCorporations', this.model.customCorporations);
+    this.validateCardNames('customPreludes', this.model.customPreludes);
+    this.validateCardNames('customCeos', this.model.customCeos);
+    this.validateCardNames('bannedCards', this.bannedCards);
+    this.validateCardNames('includedCards', this.includedCards);
+  }
+
+  private validateCardNames(fieldLabel: string, names: ReadonlyArray<CardName>): void {
+    const validNames = new Set<string>(Object.values(CardName));
+    for (const name of names) {
+      if (!validNames.has(name)) {
+        const canonical = CARD_RENAMES.get(name);
+        if (canonical !== undefined) {
+          this.warnings.push(`Old card name '${name}' in ${fieldLabel}; use '${canonical}'`);
+        } else {
+          this.warnings.push(`Unknown card name '${name}' in ${fieldLabel}`);
+        }
+      }
     }
   }
 

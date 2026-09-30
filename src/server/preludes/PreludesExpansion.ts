@@ -30,12 +30,12 @@ export class PreludesExpansion {
     // This preps the warning attribute in preludes.
     // All preludes can be presented. Unplayable ones just fizzle.
     for (const card of cards) {
-      card.warnings.clear();
+      card.clearWarnings();
       if (!card.canPlay(player)) {
-        card.warnings.add('preludeFizzle');
+        card.addWarning('preludeFizzle');
       }
       if (card.behavior?.addResources && player.game.inDoubleDown) {
-        card.warnings.add('ineffectiveDoubleDown');
+        card.addWarning('ineffectiveDoubleDown');
       }
     }
 
@@ -45,6 +45,9 @@ export class PreludesExpansion {
         if (card.canPlay?.(player) === false) {
           PreludesExpansion.fizzle(player, card);
         } else {
+          if (cardAction === 'double-down') {
+            player.game.doubleDownPrelude = card.name;
+          }
           player.playCard(card, undefined, cardAction);
         }
         if (remainders === 'discard') {

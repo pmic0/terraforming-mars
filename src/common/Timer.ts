@@ -68,8 +68,8 @@ export class Timer {
     timer.running = d.running;
     timer.afterFirstAction = d.afterFirstAction;
 
-    // Should this be `Math.max(Timer.lastStoppedAt, d.lastStoppedAt)`?
-    Timer.lastStoppedAt = d.lastStoppedAt;
+    // Never move the shared timer backwards.
+    Timer.lastStoppedAt = Math.max(Timer.lastStoppedAt, d.lastStoppedAt);
     return timer;
   }
 
@@ -132,13 +132,12 @@ export class Timer {
    * Used to display the timer.
    */
   public static toString(d: SerializedTimer, clock: Clock = REAL_CLOCK) : string {
-    const elapsed = d.sumElapsed + (d.running ? clock.now() - d.startedAt : 0);
-    const elapsedDate = new Date(elapsed);
-    const hours = elapsedDate.getUTCHours() + (elapsedDate.getUTCDate() - 1) * 24;
+    const elapsedMs = d.sumElapsed + (d.running ? clock.now() - d.startedAt : 0);
+    const hours = Math.floor(elapsedMs / 3_600_000);
+    const asString = new Date(elapsedMs).toISOString();
     if (hours > 0) {
-      return String(hours) + elapsedDate.toISOString().substr(13, 6);
+      return String(hours) + asString.slice(13, 19);
     }
-    return elapsedDate.toISOString().substr(14, 5);
+    return asString.slice(14, 19);
   }
 }
-

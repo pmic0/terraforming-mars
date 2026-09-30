@@ -1,20 +1,18 @@
 <template>
   <div>
-  <template v-if="waitingfor === undefined">
-    {{ $t('Not your turn to take any actions') }}
+  <template v-if="waitingfor === undefined || waitingfor.optional">
+    <template v-if="waitingfor === undefined">
+      {{ $t('Not your turn to take any actions') }}
+    </template>
+    <template v-else>
+      {{ $t('Waiting for other players') }}
+    </template>
     <template v-if="playersWaitingFor.length > 0">
-      (⌛ <span v-for="color in playersWaitingFor" :class="playerColorClass(color, 'bg')" :key="color">&nbsp;&nbsp;&nbsp;</span>)
+      (⌛ <span v-for="color in playersWaitingFor" class="log-player" :class="playerColorClass(color, 'bg')" :key="color">{{ getPlayerName(color) }}</span>)
     </template>
   </template>
-  <div v-else class="wf-root">
-    <template v-if="preferences().experimental_ui && playerView.game.phase === Phase.ACTION">
-      <input type="checkbox" name="suspend" id="suspend-checkbox" v-model="suspend" v-on:change="updateSuspend">
-      <label for="suspend-checkbox">
-        <span v-i18n>Suspend</span>
-      </label>
-      <div v-if="showRefresh()">Refresh<span class="reset"></span></div>
-    </template>
-    <player-input-factory :players="players"
+  <div v-if="waitingfor !== undefined" class="wf-root">
+    <PlayerInputFactory :players="playerView.players"
                           :playerView="playerView"
                           :playerinput="waitingfor"
                           :onsave="onsave"
@@ -27,13 +25,13 @@
 <script lang="ts">
 /* global RequestInit */
 
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import * as constants from '@/common/constants';
-import * as raw_settings from '@/genfiles/settings.json';
+import raw_settings from '@/genfiles/settings.json';
 import {vueRoot} from '@/client/components/vueRoot';
 import {PlayerInputModel} from '@/common/models/PlayerInputModel';
 import {playerColorClass} from '@/common/utils/utils';
-import {PublicPlayerModel, PlayerViewModel} from '@/common/models/PlayerModel';
+import {PlayerViewModel, ViewModel} from '@/common/models/PlayerModel';
 import {getPreferences} from '@/client/utils/PreferencesManager';
 import {SoundManager} from '@/client/utils/SoundManager';
 import {WaitingForModel} from '@/common/models/WaitingForModel';
@@ -44,57 +42,74 @@ import {isPlayerId} from '@/common/Types';
 import {InputResponse} from '@/common/inputs/InputResponse';
 import {INVALID_RUN_ID, AppErrorResponse} from '@/common/app/AppErrorId';
 import {Color} from '@/common/Color';
+import {gameDocumentTitle} from '../utils/documentTitle';
+import {setFaviconStatus, setFaviconTurnFrame} from '@/client/utils/favicon';
 
 let ui_update_timeout_id: number | undefined;
+let otherPlayersTimer: number | undefined;
 let documentTitleTimer: number | undefined;
+let animationFrame = 0;
+
+// How often to refresh other players' status during simultaneous phases.
+const OTHER_PLAYERS_INTERVAL = 3000;
+// Phases where every player makes a choice at the same time.
+const SIMULTANEOUS_PHASES: ReadonlyArray<Phase> = [Phase.INITIALDRAFTING, Phase.DRAFTING, Phase.RESEARCH];
+
+// The spinning ◑◒◐◓ symbol used to indicate it's your turn.
+const TURN_SEQUENCE = '◑◒◐◓';
+
+// On a desktop browser the favicon is visible in the tab, so we spin it there
+// rather than cluttering the document title. Mobile browsers don't show tab
+// favicons, so they keep animating the title instead.
+function isDesktopBrowser(): boolean {
+  return !/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
 
 type DataModel = {
-  waitingForTimeout: typeof raw_settings.waitingForTimeout,
   playersWaitingFor: Array<Color>
-  suspend: boolean,
-  savedPlayerView: PlayerViewModel | undefined;
 }
 
 const CANNOT_CONTACT_SERVER = 'Unable to reach the server. It may be restarting or down for maintenance.';
 
-export default Vue.extend({
-  name: 'waiting-for',
+export default defineComponent({
+  name: 'WaitingFor',
   props: {
     playerView: {
-      type: Object as () => PlayerViewModel,
-    },
-    players: {
-      type: Array as () => Array<PublicPlayerModel>,
-    },
-    settings: {
-      type: Object as () => typeof raw_settings,
+      type: Object as () => ViewModel,
+      required: true,
     },
     waitingfor: {
       type: Object as () => PlayerInputModel | undefined,
+      default: undefined,
     },
   },
   data(): DataModel {
     return {
-      waitingForTimeout: this.settings.waitingForTimeout,
       playersWaitingFor: [],
-      suspend: false,
-      savedPlayerView: undefined,
     };
   },
   methods: {
+    getPlayerName(color: Color): string {
+      const player = this.playerView.players.find((p) => p.color === color);
+      return player ? player.name : color;
+    },
     animateTitle() {
       if (!getPreferences().animated_title) {
         return;
       }
 
-      const sequence = '\u25D1\u25D2\u25D0\u25D3';
-      const first = document.title[0];
-      const position = sequence.indexOf(first);
-      let next = sequence[0];
-      if (position !== -1 && position < sequence.length - 1) {
-        next = sequence[position + 1];
+      animationFrame = (animationFrame + 1) % TURN_SEQUENCE.length;
+      const experimental = getPreferences().experimental_ui;
+      // The favicon annotation is an experimental feature.
+      if (experimental) {
+        setFaviconTurnFrame(animationFrame);
       }
-      document.title = next + ' ' + this.$t(constants.APP_NAME);
+      // Existing behavior spins the symbol in the document title. With
+      // experimental UI on a desktop browser we show it only in the tab favicon
+      // instead; otherwise keep animating the title.
+      if (!(experimental && isDesktopBrowser())) {
+        document.title = TURN_SEQUENCE[animationFrame] + ' ' + gameDocumentTitle(this.playerView.game);
+      }
     },
     onsave(out: InputResponse) {
       this.fetchPlayerInput(
@@ -147,18 +162,13 @@ export default Vue.extend({
         });
     },
     updatePlayerView(playerView: PlayerViewModel | undefined) {
-      if (this.suspend === false) {
-        const root = vueRoot(this);
-        root.screen = 'empty';
-        root.playerView = playerView;
-        root.playerkey++;
-        root.screen = 'player-home';
-        if (this.playerView.game.phase === 'end' && window.location.pathname !== paths.THE_END) {
-          window.location = window.location as any as (string & Location); // eslint-disable-line no-self-assign
-        }
-        this.savedPlayerView = undefined;
-      } else {
-        this.savedPlayerView = playerView;
+      const root = vueRoot(this);
+      root.screen = 'empty';
+      root.playerView = playerView;
+      root.playerkey++;
+      root.screen = 'player-home';
+      if (this.playerView.game.phase === 'end' && window.location.pathname !== paths.THE_END) {
+        window.location = window.location as any as (string & Location);
       }
     },
     waitForUpdate() {
@@ -199,7 +209,38 @@ export default Vue.extend({
         xhr.responseType = 'json';
         xhr.send();
       };
-      ui_update_timeout_id = window.setTimeout(askForUpdate, this.waitingForTimeout);
+      ui_update_timeout_id = window.setTimeout(askForUpdate, raw_settings.waitingForTimeout);
+    },
+    /**
+     * While this player makes a simultaneous choice (e.g. drafting), keep the other
+     * players' status current without redrawing the choice in progress.
+     */
+    watchOtherPlayers() {
+      const playerView = this.playerView;
+      window.clearTimeout(otherPlayersTimer);
+      // Schedule the next poll only after this one finishes, so responses can't arrive out of order.
+      const timer = window.setTimeout(async () => {
+        try {
+          const response = await fetch(paths.API_PLAYER + window.location.search);
+          if (response.ok) {
+            const latest: PlayerViewModel = await response.json();
+            playerView.players = latest.players;
+          } else {
+            console.warn('Unable to update other players', response.status, response.statusText);
+            // Client errors (e.g. the game no longer exists) won't recover, so stop polling.
+            if (response.status < 500) {
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Unable to update other players', e);
+        }
+        // Stop if the component unmounted or another poll started while this one was in flight.
+        if (otherPlayersTimer === timer) {
+          this.watchOtherPlayers();
+        }
+      }, OTHER_PLAYERS_INTERVAL);
+      otherPlayersTimer = timer;
     },
     notify() {
       if (getPreferences().enable_sounds) {
@@ -231,24 +272,33 @@ export default Vue.extend({
         }
       }
     },
-    updateSuspend() {
-      if (this.suspend === false && this.savedPlayerView !== undefined) {
-        this.updatePlayerView(this.savedPlayerView);
-      }
-    },
-    showRefresh(): boolean {
-      return this.suspend === true && this.savedPlayerView !== undefined;
+    playerName(color: Color) {
+      const player = this.playerView.players.find((p) => p.color === color);
+      return player?.name ?? '';
     },
   },
   mounted() {
-    document.title = this.$t(constants.APP_NAME);
-    window.clearInterval(documentTitleTimer);
-    if (this.waitingfor === undefined) {
-      this.waitForUpdate();
+    document.title = gameDocumentTitle(this.playerView.game);
+    if (getPreferences().experimental_ui) {
+      setFaviconStatus(this.waitingfor !== undefined ? 'turn' : 'idle');
     }
-    if (this.playerView.players.length > 1 && this.waitingfor !== undefined) {
+    window.clearInterval(documentTitleTimer);
+    if (this.waitingfor === undefined || this.waitingfor.optional) {
+      this.waitForUpdate();
+    } else if (this.playerView.players.length > 1 && SIMULTANEOUS_PHASES.includes(this.playerView.game.phase)) {
+      this.watchOtherPlayers();
+    }
+    if (this.playerView.players.length > 1 && this.waitingfor !== undefined && !this.waitingfor.optional) {
       documentTitleTimer = window.setInterval(() => this.animateTitle(), 1000);
     }
+  },
+  beforeUnmount() {
+    window.clearTimeout(ui_update_timeout_id);
+    ui_update_timeout_id = undefined;
+    window.clearTimeout(otherPlayersTimer);
+    otherPlayersTimer = undefined;
+    window.clearInterval(documentTitleTimer);
+    documentTitleTimer = undefined;
   },
   computed: {
     Phase(): typeof Phase {
