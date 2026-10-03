@@ -164,7 +164,7 @@
   "Minimalist": "Minimalista",
   "Have no more than 2 cards in hand": "Gracz posiada co najwyżej 2 niezagrane karty.",
   "Networker": "Społecznik",
-  "Have placed 3 tiles adjacent to tiles that grant adjacency bonuses": "Gracz posiada co najmniej 3 obszary sąsiadujące z obszarami zapewniającymi premię za sąsiedztwo (z żółtą ramką).",
+  "Have placed 3 tiles adjacent to tiles that grant adjacency bonuses": "Gracz postawi co najmniej 3 obszary sąsiadujące z obszarami zapewniającymi premię za sąsiedztwo (z żółtą ramką).",
   "One Giant Step": "Wielki Krok",
   "Have 6 moon tags": "Gracz posiada co najmniej 6 symboli Księżyca.",
   "Pioneer": "Pionier",
@@ -312,7 +312,7 @@
   "Take your first action": "Faza akcji, wykonaj jedną z dostępnych akcji",
   "Take your next action": "Faza akcji, wykonaj jedną z dostępnych akcji",
   "Undo last action": "Cofnij ostatnią akcję",
-  "End Turn": "Zakończ turę",
+  "End Turn": "Zakończ turę, nie pasujesz.",
   "Perform an action from a played card": "Wykonaj akcję z zagranej karty",
 
   "Power plant (11 M€)": "Elektrownia (11 M€)",
