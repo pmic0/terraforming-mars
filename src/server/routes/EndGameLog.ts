@@ -24,7 +24,7 @@ export class EndGameLog extends Handler {
     } catch (e) {
       throw RouteError.badRequest('cannot fetch game-end log');
     }
-    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Type', 'text/plain; chartset=utf-8');
     res.end(logs);
   }
 }
