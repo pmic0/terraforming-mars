@@ -33,6 +33,7 @@ function newGameConfigForTest(): NewGameConfig {
       ares: false,
       moon: false,
       pathfinders: false,
+      pathfindersLite: false,
       ceo: false,
       starwars: false,
       underworld: false,

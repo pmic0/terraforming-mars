@@ -36,6 +36,7 @@ const MODULE_ABBREVIATIONS = {
   ares: 'a',
   moon: 'm',
   pathfinders: 'P',
+  pathfindersLite: 'Q',
   ceo: 'l', // ceo abbreviation is 'l' for leader, since 'c' and 'C' are already taken
   starwars: 'w',
   underworld: 'u',
@@ -96,6 +97,7 @@ export function hashToModel(windowLocationHash: string): CardListModel {
       moon: true,
       promo: true,
       pathfinders: true,
+      pathfindersLite: false,
       ceo: true,
       starwars: true,
       underworld: true,

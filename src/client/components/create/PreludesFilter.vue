@@ -2,7 +2,7 @@
   <ModuleItemFilter
     title="Preludes"
     :groups="GROUPS"
-    :itemsByGroup="ALL_CARDS_BY_MODULE"
+    :itemsByGroup="itemsByGroup"
     :selected="initialSelected"
     @update:selected="$emit('prelude-list-changed', $event)"
     @close="$emit('close')"
@@ -18,6 +18,7 @@
 import {defineComponent} from 'vue';
 import ModuleItemFilter from './ModuleItemFilter.vue';
 import {CardName} from '@/common/cards/CardName';
+import {PATHFINDERS_LITE_EXCLUDED_PRELUDES} from '@/common/pathfindersLite/PathfindersLiteExclusions';
 import {Expansion, GameModule, GAME_MODULES, MODULE_NAMES} from '@/common/cards/GameModule';
 import {byModule, byType, getCard, getCards} from '@/client/cards/ClientCardManifest';
 import {CardType} from '@/common/cards/CardType';
@@ -57,6 +58,7 @@ export default defineComponent({
       ...this.expansions.community ? preludeCardNames('community') : [],
       ...this.expansions.moon ? preludeCardNames('moon') : [],
       ...this.expansions.pathfinders ? preludeCardNames('pathfinders') : [],
+      ...this.expansions.pathfindersLite ? preludeCardNames('pathfinders').filter((name) => !PATHFINDERS_LITE_EXCLUDED_PRELUDES.has(name)) : [],
       ...this.expansions.ceo ? preludeCardNames('ceo') : [],
       ...this.expansions.underworld ? preludeCardNames('underworld') : [],
       ...this.expansions.prelude2 ? preludeCardNames('prelude2') : [],
@@ -67,8 +69,11 @@ export default defineComponent({
     GROUPS(): typeof GROUPS {
       return GROUPS;
     },
-    ALL_CARDS_BY_MODULE(): typeof ALL_CARDS_BY_MODULE {
-      return ALL_CARDS_BY_MODULE;
+    itemsByGroup(): typeof ALL_CARDS_BY_MODULE {
+      if (!this.expansions.pathfindersLite) {
+        return ALL_CARDS_BY_MODULE;
+      }
+      return {...ALL_CARDS_BY_MODULE, pathfinders: ALL_CARDS_BY_MODULE.pathfinders.filter((name) => !PATHFINDERS_LITE_EXCLUDED_PRELUDES.has(name))};
     },
   },
   methods: {

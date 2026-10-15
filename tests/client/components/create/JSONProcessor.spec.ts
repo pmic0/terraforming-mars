@@ -105,6 +105,7 @@ const TEMPLATE_EXPECTED: CreateGameModel = {
     ares: false,
     moon: false,
     pathfinders: false,
+    pathfindersLite: false,
     ceo: false,
     starwars: false,
     underworld: false,

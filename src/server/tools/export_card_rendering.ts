@@ -32,7 +32,7 @@ type Mutable<T> = {
 class CardProcessor {
   public static json: Array<ClientCard> = [];
   public static makeJson() {
-    ALL_MODULE_MANIFESTS.forEach(this.processManifest);
+    ALL_MODULE_MANIFESTS.filter((manifest) => manifest.module !== 'pathfindersLite').forEach(this.processManifest);
     if (this.errors.length > 0) {
       console.error(
         'The following cards have methods which must be replaced.');
@@ -124,7 +124,7 @@ class CardProcessor {
 class GlobalEventProcessor {
   public static json: Array<ClientGlobalEvent> = [];
   public static makeJson() {
-    ALL_MODULE_MANIFESTS.forEach(this.processManifest);
+    ALL_MODULE_MANIFESTS.filter((manifest) => manifest.module !== 'pathfindersLite').forEach(this.processManifest);
   }
 
   private static processManifest(manifest: ModuleManifest) {

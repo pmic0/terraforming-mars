@@ -8,6 +8,7 @@ import {COMMUNITY_CARD_MANIFEST} from './cards/community/CommunityCardManifest';
 import {ARES_CARD_MANIFEST} from './cards/ares/AresCardManifest';
 import {MOON_CARD_MANIFEST} from './cards/moon/MoonCardManifest';
 import {PATHFINDERS_CARD_MANIFEST} from './cards/pathfinders/PathfindersCardManifest';
+import {PATHFINDERS_LITE_CARD_MANIFEST} from './cards/pathfindersLite/PathfindersLiteCardManifest';
 import {CEO_CARD_MANIFEST} from './cards/ceos/CeoCardManifest';
 import {CardManifest, ModuleManifest} from './cards/ModuleManifest';
 import {CardName} from '../common/cards/CardName';
@@ -58,6 +59,7 @@ export class GameCards {
       [gameOptions.communityCardsOption, COMMUNITY_CARD_MANIFEST],
       [gameOptions.moonExpansion, MOON_CARD_MANIFEST],
       [gameOptions.pathfindersExpansion, PATHFINDERS_CARD_MANIFEST],
+      [gameOptions.pathfindersLiteExpansion, PATHFINDERS_LITE_CARD_MANIFEST],
       [gameOptions.ceoExtension, CEO_CARD_MANIFEST],
       [gameOptions.starWarsExpansion, STAR_WARS_CARD_MANIFEST],
       [gameOptions.underworldExpansion, UNDERWORLD_CARD_MANIFEST],

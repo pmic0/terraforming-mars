@@ -35,6 +35,7 @@ export type GameOptions = {
   removeNegativeGlobalEventsOption: boolean;
   moonExpansion: boolean;
   pathfindersExpansion: boolean;
+  pathfindersLiteExpansion: boolean;
   ceoExtension: boolean;
   starWarsExpansion: boolean;
   underworldExpansion: boolean;
@@ -107,6 +108,7 @@ export const DEFAULT_GAME_OPTIONS: GameOptions = {
     ares: false,
     moon: false,
     pathfinders: false,
+    pathfindersLite: false,
     ceo: false,
     starwars: false,
     underworld: false,
@@ -120,6 +122,7 @@ export const DEFAULT_GAME_OPTIONS: GameOptions = {
   moonStandardProjectVariant: false,
   moonStandardProjectVariant1: false,
   pathfindersExpansion: false,
+  pathfindersLiteExpansion: false,
   politicalAgendasExtension: 'Standard',
   preludeDraftVariant: false,
   ceosDraftVariant: false,

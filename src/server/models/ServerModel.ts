@@ -477,6 +477,7 @@ export class Server {
         ares: options.aresExtension,
         moon: options.moonExpansion,
         pathfinders: options.pathfindersExpansion,
+        pathfindersLite: options.pathfindersLiteExpansion,
         ceo: options.ceoExtension,
         starwars: options.starWarsExpansion,
         underworld: options.underworldExpansion,

@@ -51,7 +51,7 @@ export default defineComponent({
     const initialSelected: Array<ColonyName> = this.selected.length > 0 ? [...this.selected] : [
       ...OFFICIAL_COLONIES,
       ...this.expansions.community ? COMMUNITY_COLONIES : [],
-      ...this.expansions.pathfinders ? PATHFINDERS_COLONIES : [],
+      ...this.expansions.pathfinders || this.expansions.pathfindersLite ? PATHFINDERS_COLONIES : [],
     ];
     return {initialSelected};
   },

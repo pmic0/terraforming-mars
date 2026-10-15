@@ -22,7 +22,7 @@ export class ColonyDealer {
     if (ColonyDealer.includesCommunityColonies(gameOptions)) {
       colonyTiles = colonyTiles.concat(COMMUNITY_COLONIES_TILES);
     }
-    if (gameOptions.pathfindersExpansion || gameOptions.moonExpansion) {
+    if (gameOptions.pathfindersExpansion || gameOptions.pathfindersLiteExpansion || gameOptions.moonExpansion) {
       colonyTiles = colonyTiles.concat(PATHFINDERS_COLONIES_TILES);
     }
     if (gameOptions.moonExpansion && !this.gameOptions.pathfindersExpansion) {

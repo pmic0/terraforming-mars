@@ -15,6 +15,7 @@ export const RULEBOOK_URLS: Record<GameModule, string> = {
   community: `${WIKI}/Community`,
   moon: `${WIKI}/The-Moon`,
   pathfinders: `${WIKI}/Pathfinders`,
+  pathfindersLite: `${WIKI}/Pathfinders`,
   ceo: `${WIKI}/CEOs`,
   starwars: `${WIKI}/StarWars`,
   underworld: `${WIKI}/Underworld`,

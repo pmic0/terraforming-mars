@@ -272,6 +272,7 @@ export class Game implements IGame, Logger {
         ares: partialOptions.aresExtension ?? false,
         moon: partialOptions.moonExpansion ?? false,
         pathfinders: partialOptions.pathfindersExpansion ?? false,
+        pathfindersLite: partialOptions.pathfindersLiteExpansion ?? false,
         ceo: partialOptions.ceoExtension ?? false,
         starwars: partialOptions.starWarsExpansion ?? false,
         underworld: partialOptions.underworldExpansion ?? false,

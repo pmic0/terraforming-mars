@@ -69,6 +69,7 @@ export class GlobalEventDealer {
       community: gameOptions.communityCardsOption,
       moon: gameOptions.moonExpansion,
       pathfinders: gameOptions.pathfindersExpansion,
+      pathfindersLite: gameOptions.pathfindersLiteExpansion,
       ceo: gameOptions.ceoExtension,
       starwars: gameOptions.starWarsExpansion,
       underworld: gameOptions.underworldExpansion,

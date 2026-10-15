@@ -32,6 +32,7 @@ function newGameConfig(overrides: Partial<NewGameConfig> = {}): NewGameConfig {
       ares: false,
       moon: false,
       pathfinders: false,
+      pathfindersLite: false,
       ceo: false,
       starwars: false,
       underworld: false,

@@ -134,10 +134,16 @@
                                 </div>
                             </template>
 
-                            <input type="checkbox" name="pathfinders" id="pathfinders-checkbox" v-model="expansions.pathfinders">
+                            <input type="checkbox" name="pathfinders" id="pathfinders-checkbox" v-model="expansions.pathfinders" @change="expansions.pathfindersLite = false">
                             <label for="pathfinders-checkbox" class="expansion-button">
                                 <div class="create-game-expansion-icon expansion-icon-pathfinders"></div>
                                 <span v-i18n>Pathfinders</span>&nbsp;<a :href="wikiUrls.pathfinders" class="tooltip" v-i18n data-tooltip="Link opens in a new tab/window" target="_blank">&#9432;</a>
+                            </label>
+
+                            <input type="checkbox" name="pathfindersLite" id="pathfindersLite-checkbox" v-model="expansions.pathfindersLite" @change="expansions.pathfinders = false">
+                            <label for="pathfindersLite-checkbox" class="expansion-button">
+                                <div class="create-game-expansion-icon expansion-icon-pathfinders"></div>
+                                <span>Pathfinders Lite (no planetary tracks)</span>
                             </label>
 
                             <template v-if="expansions.venus">
@@ -772,9 +778,15 @@ export default defineComponent({
     },
     validationErrors(): ValidationErrors {
       return validateNewGameConfig(this.newGameConfig, {
-        getCardCompatibility: (name) => getCard(name)?.compatibility ?? [],
+        getCardCompatibility: (name) => {
+          const card = getCard(name);
+          return this.expansions.pathfindersLite && card?.module === 'pathfinders' ?
+            (card.compatibility ?? []).filter((expansion) => expansion !== 'pathfinders') :
+            card?.compatibility ?? [];
+        },
         getColonyExpansion: (name) => {
-          return getColony(name)?.expansion;
+          const expansion = getColony(name)?.expansion;
+          return expansion === 'pathfinders' && this.expansions.pathfindersLite ? undefined : expansion;
         },
       });
     },

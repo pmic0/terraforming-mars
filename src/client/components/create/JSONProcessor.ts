@@ -86,6 +86,7 @@ export class JSONProcessor {
       ares: json_constants.ARESEXTENSION,
       moon: json_constants.MOONEXPANSION,
       pathfinders: json_constants.PATHFINDERSEXPANSION,
+      pathfindersLite: 'pathfindersLiteExpansion',
       ceo: json_constants.CEOEXTENSION,
       starwars: json_constants.STARWARSEXPANSION,
       underworld: json_constants.UNDERWORLDEXPANSION,
@@ -122,7 +123,9 @@ export class JSONProcessor {
       if (ignoredFields.includes(k)) {
         continue;
       }
-      if (k in this.model) {
+      if (k === 'expansions' && json.expansions !== undefined) {
+        this.model.expansions = {...this.model.expansions, ...cast(json.expansions, Object)};
+      } else if (k in this.model) {
         // This is safe because of the in check, above.
         (this.model as any)[k] = json[k];
       } else {
