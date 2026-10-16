@@ -51,7 +51,7 @@ describe('EndGameLog', () => {
     game.phase = Phase.END;
     await scaffolding.ctx.gameLoader.add(game);
     await scaffolding.get(EndGameLog.INSTANCE, res);
-    expect(res.getHeader('Content-Type')).eq('text/plain');
+    expect(res.getHeader('Content-Type')).eq('text/plain; chartset=utf-8');
     expect(res.content).to.match(/^First player this generation is player1/);
   });
 
