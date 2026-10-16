@@ -23,13 +23,12 @@ export class ApiGame extends Handler {
     }
 
     const bot = ctx.url.searchParams.get('bot');
-    if(!bot){
+    if (!bot) {
       const model = Server.getSimpleGameModel(game);
-      responses.writeJson(res,ctx, model);
+      responses.writeJson(res, ctx, model);
     } else {
       const model = Server.getSimpleGameModelBot(game);
-      responses.writeJson(res,ctx, model);
+      responses.writeJson(res, ctx, model);
     }
-
   }
 }

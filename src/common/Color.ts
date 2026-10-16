@@ -28,7 +28,7 @@ export const PLAYER_COLORS = ['blue',
   'lred',
   'lyellow',
   'lgreen',
-  'lblue',] as const;
+  'lblue'] as const;
 
 
 export type ColorWithNeutral = Color | 'NEUTRAL';

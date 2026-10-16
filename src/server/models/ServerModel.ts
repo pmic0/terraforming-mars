@@ -50,10 +50,9 @@ export class Server {
   }
 
 
-
   public static getSimpleGameModelBot(game: IGame): SimpleBotGameModel {
     const activeColor = game.activePlayer.color;
-    const players: Array<PublicPlayerModel> = game.playersInGenerationOrder.map(player => this.getPlayer(player,false));
+    const players: Array<PublicPlayerModel> = game.playersInGenerationOrder.map((player) => this.getPlayer(player, false));
     const thisPlayerIndex = players.findIndex((p) => p.color === activeColor);
     const thisPlayer: PublicPlayerModel = players[thisPlayerIndex];
     return {
@@ -72,7 +71,7 @@ export class Server {
       deckSize: game.projectDeck.drawPile.length ? game.projectDeck.drawPile.length  : -1,
       turmoil: game.gameOptions.turmoilExtension ? getTurmoilModel(game) : undefined,
 
-  
+
     };
   }
 
@@ -89,8 +88,8 @@ export class Server {
       ceos: options.ceoExtension ? sizes(game.ceoDeck) : undefined,
       globalEvents: dealer === undefined ? undefined : {drawPile: dealer.deck.length, discardPile: dealer.discards.length},
 
+    };
   }
-}
 
   public static getGameModel(game: IGame): GameModel {
     const turmoil = getTurmoilModel(game);
@@ -162,7 +161,7 @@ export class Server {
 
   public static getSpectatorModel(game: IGame): SpectatorModel {
     return {
-      color: "neutral",
+      color: 'neutral',
       id: game.spectatorId,
       game: this.getGameModel(game),
       players: game.playersInGenerationOrder.map((p) => this.getPlayer(p, false)),

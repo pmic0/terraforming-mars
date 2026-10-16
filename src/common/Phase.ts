@@ -38,11 +38,11 @@ export const Phase = {
   /** Does some cleanup and also executes the rulebook's turn order phase. */
   INTERGENERATION: 'intergeneration',
 
-   INITIALRESEARCH : 'initial_research',
-    FINALGREEN : 'final_green',
+  INITIALRESEARCH: 'initial_research',
+  FINALGREEN: 'final_green',
 
   /** The game is over. */
-  END : 'end',
+  END: 'end',
 } as const;
 
 export type Phase = typeof Phase[keyof typeof Phase];
