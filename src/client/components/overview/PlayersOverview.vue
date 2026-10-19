@@ -1,12 +1,12 @@
 <template>
-        <div class="players-overview" v-if="hasPlayers()">
+        <div class="players-overview" v-if="hasPlayers">
             <OverviewSettings />
             <div class="other_player" v-if="thisPlayer === undefined || players.length > 1">
-                <div v-for="(otherPlayer, index) in getPlayersInOrder()" :key="otherPlayer.color">
+                <div v-for="(otherPlayer, index) in playersInOrder" :key="otherPlayer.color">
                     <OtherPlayer v-if="thisPlayer === undefined || otherPlayer.color !== thisPlayer.color" :player="otherPlayer" :playerIndex="index"/>
                 </div>
             </div>
-            <PlayerInfo v-for="(p, index) in getPlayersInOrder()"
+            <PlayerInfo v-for="(p, index) in playersInOrder"
               :player="p"
               :key="p.color"
               :playerView="playerView"
@@ -64,23 +64,10 @@ export default defineComponent({
     thisPlayer(): PublicPlayerModel | undefined {
       return this.playerView.thisPlayer;
     },
-  },
-  components: {
-    PlayerInfo,
-    OverviewSettings,
-    OtherPlayer,
-  },
-  data() {
-    return {};
-  },
-  methods: {
     hasPlayers(): boolean {
       return this.players.length > 0;
     },
-    getIsFirstForGen(player: PublicPlayerModel): boolean {
-      return playerIndex(player.color, this.players) === 0;
-    },
-    getPlayersInOrder(): Array<PublicPlayerModel> {
+    playersInOrder(): Array<PublicPlayerModel> {
       const players = this.players;
       if (this.thisPlayer === undefined) {
         return players;
@@ -100,6 +87,16 @@ export default defineComponent({
         .concat(players.slice(0, currentPlayerOffset));
       // return all but the focused user
       return result.slice(0, -1);
+    },
+  },
+  components: {
+    PlayerInfo,
+    OverviewSettings,
+    OtherPlayer,
+  },
+  methods: {
+    getIsFirstForGen(player: PublicPlayerModel): boolean {
+      return playerIndex(player.color, this.players) === 0;
     },
     getActionLabel(player: PublicPlayerModel): ActionLabel {
       if (this.playerView.game.phase === Phase.DRAFTING) {

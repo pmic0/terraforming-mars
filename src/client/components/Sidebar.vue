@@ -1,21 +1,21 @@
 <template>
-<div :class="'sidebar_cont sidebar '+getSideBarClass()">
+<div class="sidebar_cont sidebar" :class="sideBarClass">
   <div class="tm" :title="$t('Generation Marker')">
     <div class="gen-text" v-i18n>GEN</div>
-    <div class="gen-marker">{{ getGenMarker() }}</div>
+    <div class="gen-marker">{{ genMarker }}</div>
   </div>
   <div v-if="gameOptions.expansions.turmoil" :title="$t('Ruling Party')">
-    <div :class="'party-name party-name-indicator party-name--'+rulingPartyToCss()"> <span v-i18n>{{ getRulingParty() }}</span></div>
+    <div class="party-name party-name-indicator" :class="rulingPartyClass"> <span v-i18n>{{ rulingParty }}</span></div>
   </div>
   <div class="global_params">
-    <GlobalParameterValue :param="globalParameter.TEMPERATURE" :value="temperature"/>
-    <GlobalParameterValue :param="globalParameter.OXYGEN" :value="oxygen"/>
-    <GlobalParameterValue :param="globalParameter.OCEANS" :value="oceans"/>
-    <GlobalParameterValue v-if="gameOptions.expansions.venus" :param="globalParameter.VENUS" :value="venus"/>
+    <GlobalParameterValue :param="globalParameter.TEMPERATURE" :value="temperature" :boardName="gameOptions.boardName"/>
+    <GlobalParameterValue :param="globalParameter.OXYGEN" :value="oxygen" :boardName="gameOptions.boardName"/>
+    <GlobalParameterValue :param="globalParameter.OCEANS" :value="oceans" :boardName="gameOptions.boardName"/>
+    <GlobalParameterValue v-if="gameOptions.expansions.venus" :param="globalParameter.VENUS" :value="venus" :boardName="gameOptions.boardName"/>
     <MoonGlobalParameterValue v-if="moonData" :moonData="moonData"/>
   </div>
   <div class="sidebar_item preferences_player" :title="$t('Player Color Cube')">
-    <div :class="getPlayerColorCubeClass()+' player_bg_color_' + playerColor"></div>
+    <div class="preferences_player_inner" :class="[`player_bg_color_${playerColor}`, {active: isAnimated}]"></div>
   </div>
 
   <a href="#board" :title="$t('Jump to board')">
@@ -65,7 +65,7 @@
 
 import {defineComponent} from 'vue';
 import {Color} from '@/common/Color';
-import {getPreferences, PreferencesManager} from '@/client/utils/PreferencesManager';
+import {getPreferences} from '@/client/utils/PreferencesManager';
 import {TurmoilModel} from '@/common/models/TurmoilModel';
 import {PartyName} from '@/common/turmoil/PartyName';
 import InfoPanel from '@/client/components/InfoPanel.vue';
@@ -158,24 +158,24 @@ export default defineComponent({
       'globalParameter': GlobalParameter,
     };
   },
-  methods: {
-    getPlayerColorCubeClass(): string {
-      return this.actingPlayer && (getPreferences().hide_animated_sidebar === false) ? 'preferences_player_inner active' : 'preferences_player_inner';
+  computed: {
+    isAnimated(): boolean {
+      return this.actingPlayer && getPreferences().hide_animated_sidebar === false;
     },
-    getSideBarClass(): string {
-      return this.actingPlayer && (getPreferences().hide_animated_sidebar === false) ? 'preferences_acting_player' : 'preferences_nonacting_player';
+    sideBarClass(): string {
+      return this.isAnimated ? 'preferences_acting_player' : 'preferences_nonacting_player';
     },
-    getGenMarker(): string {
+    genMarker(): string {
       return `${this.generation}`;
     },
-    rulingPartyToCss(): string {
+    rulingPartyClass(): string | undefined {
       if (this.turmoil?.ruling === undefined) {
         console.warn('no party provided');
-        return '';
+        return undefined;
       }
-      return this.turmoil.ruling.toLowerCase().split(' ').join('_');
+      return `party-name--${this.turmoil.ruling.toLowerCase().split(' ').join('_')}`;
     },
-    getRulingParty(): string {
+    rulingParty(): string {
       const ruling = this.turmoil?.ruling;
       switch (ruling) {
       case PartyName.MARS:
@@ -189,11 +189,6 @@ export default defineComponent({
       default:
         return ruling;
       }
-    },
-  },
-  computed: {
-    preferencesManager(): PreferencesManager {
-      return PreferencesManager.INSTANCE;
     },
   },
 });

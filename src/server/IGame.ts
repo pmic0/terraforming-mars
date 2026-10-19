@@ -17,6 +17,7 @@ import {Priority} from './deferredActions/Priority';
 import {DeferredActionsQueue} from './deferredActions/DeferredActionsQueue';
 import {SerializedGame} from './SerializedGame';
 import {SpaceBonus} from '../common/boards/SpaceBonus';
+import {GlobalParameterMaximums} from '../common/boards/GlobalParameterMaximums';
 import {TileType} from '../common/TileType';
 import {ICard} from './cards/ICard';
 import {Turmoil} from './turmoil/Turmoil';
@@ -33,6 +34,7 @@ import {GlobalParameter} from '../common/GlobalParameter';
 import {UnderworldData} from './underworld/UnderworldData';
 import {OrOptions} from './inputs/OrOptions';
 import {IStandardProjectCard} from './cards/IStandardProjectCard';
+import {GlobalParameterTracks} from '@/server/boards/GlobalParameterTracks';
 
 export interface Score {
   corporation: String;
@@ -48,6 +50,8 @@ export interface IGame extends Logger {
   readonly rng: SeededRandom;
   readonly spectatorId: SpectatorId;
   deferredActions: DeferredActionsQueue;
+  /** Run every deferred action, including any added while running them, and then call `cb`. */
+  drainQueue(cb: () => void): void;
   createdTime: Date;
   gameAge: number; // Each log event increases it
   gameLog: Array<LogMessage>;
@@ -127,6 +131,10 @@ export interface IGame extends Logger {
 
   /** The set of tags available in this game. */
   readonly tags: ReadonlyArray<Tag>;
+
+  /** The bonuses on this board's global-parameter tracks. */
+  readonly globalParameterTracks: GlobalParameterTracks;
+
   /** Initiates the first research phase, which is when a player chooses their starting hand, corps and preludes. */
   gotoInitialResearchPhase(): void;
   gotoResearchPhase(): void;
@@ -189,6 +197,7 @@ export interface IGame extends Logger {
   getVenusScaleLevel(): number;
   increaseTemperature(player: IPlayer, increments: -2 | -1 | 1 | 2 | 3): undefined;
   getTemperature(): number;
+  readonly max: GlobalParameterMaximums;
   getGeneration(): number;
   getPassedPlayers():Array<Color>;
   /**
@@ -222,8 +231,11 @@ export interface IGame extends Logger {
   /**
    * Gives all the bonuses from a space on the map.
    */
-  grantSpaceBonuses(player: IPlayer, space: Space): void;
-  grantSpaceBonus(player: IPlayer, spaceBonus: SpaceBonus, count?: number): void;
+  grantSpaceBonuses(player: IPlayer, space: Space, tilePlaced?: boolean): void;
+  /**
+   * Gives one bonus from rewards on `space`. Space can be omitted.
+   */
+  grantSpaceBonus(player: IPlayer, spaceBonus: SpaceBonus, count?: number, space?: Space): void;
   addGreenery(player: IPlayer, space: Space, shouldRaiseOxygen?: boolean): void;
   addCity(player: IPlayer, space: Space, cardName?: CardName | undefined): void;
   canAddOcean(): boolean;

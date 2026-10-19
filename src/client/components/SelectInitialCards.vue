@@ -17,13 +17,13 @@
     <SelectCard v-if="hasCeo" :playerView="playerView" :playerinput="ceoCardOption" :onsave="noop" :showtitle="true" @cardschanged="ceosChanged" />
     <SelectCard :playerView="playerView" :playerinput="projectCardOption" :onsave="noop" :showtitle="true" @cardschanged="cardsChanged" />
     <template v-if="selectedCorporations.length === 1">
-      <div><span v-i18n>Starting Megacredits:</span> <div class="megacredits">{{getStartingMegacredits()}}</div></div>
-      <div v-if="hasPrelude"><span v-i18n>After Preludes:</span> <div class="megacredits">{{getStartingMegacredits() + getAfterPreludes()}}</div></div>
+      <div><span v-i18n>Starting M€:</span> <div class="starting-megacredits">{{getStartingMegacredits()}}</div></div>
+      <div v-if="hasPrelude"><span v-i18n>After Preludes:</span> <div class="starting-megacredits">{{getStartingMegacredits() + getAfterPreludes()}}</div></div>
     </template>
     <div v-if="warning !== undefined" class="tm-warning">
       <label class="label label-error">{{ $t(warning) }}</label>
     </div>
-    <!-- :key=warning is a way of validing that the state of the button should change. If the warning changes, or disappears, that's a signal that the button might change. -->
+    <!-- :key=warning is a way of validating that the state of the button should change. If the warning changes, or disappears, that's a signal that the button might change. -->
     <AppButton :disabled="!valid" v-if="showsave" @click="saveIfConfirmed" type="submit" :title="playerinput.buttonLabel"/>
   </div>
 </template>

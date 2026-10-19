@@ -17,7 +17,8 @@
                           :playerinput="waitingfor"
                           :onsave="onsave"
                           :showsave="true"
-                          :showtitle="true" />
+                          :showtitle="true"
+                          :key="inputKey" />
     </div>
   </div>
 </template>
@@ -66,7 +67,9 @@ function isDesktopBrowser(): boolean {
 }
 
 type DataModel = {
-  playersWaitingFor: Array<Color>
+  playersWaitingFor: Array<Color>,
+  /** Changes with every new player view, so the input starts fresh. */
+  inputKey: number,
 }
 
 const CANNOT_CONTACT_SERVER = 'Unable to reach the server. It may be restarting or down for maintenance.';
@@ -86,9 +89,40 @@ export default defineComponent({
   data(): DataModel {
     return {
       playersWaitingFor: [],
+      inputKey: 0,
     };
   },
+  watch: {
+    playerView() {
+      this.inputKey++;
+      this.stop();
+      this.start();
+    },
+  },
   methods: {
+    start() {
+      document.title = gameDocumentTitle(this.playerView.game);
+      if (getPreferences().experimental_ui) {
+        setFaviconStatus(this.waitingfor !== undefined ? 'turn' : 'idle');
+      }
+      window.clearInterval(documentTitleTimer);
+      if (this.waitingfor === undefined || this.waitingfor.optional) {
+        this.waitForUpdate();
+      } else if (this.playerView.players.length > 1 && SIMULTANEOUS_PHASES.includes(this.playerView.game.phase)) {
+        this.watchOtherPlayers();
+      }
+      if (this.playerView.players.length > 1 && this.waitingfor !== undefined && !this.waitingfor.optional) {
+        documentTitleTimer = window.setInterval(() => this.animateTitle(), 1000);
+      }
+    },
+    stop() {
+      window.clearTimeout(ui_update_timeout_id);
+      ui_update_timeout_id = undefined;
+      window.clearTimeout(otherPlayersTimer);
+      otherPlayersTimer = undefined;
+      window.clearInterval(documentTitleTimer);
+      documentTitleTimer = undefined;
+    },
     getPlayerName(color: Color): string {
       const player = this.playerView.players.find((p) => p.color === color);
       return player ? player.name : color;
@@ -163,9 +197,7 @@ export default defineComponent({
     },
     updatePlayerView(playerView: PlayerViewModel | undefined) {
       const root = vueRoot(this);
-      root.screen = 'empty';
       root.playerView = playerView;
-      root.playerkey++;
       root.screen = 'player-home';
       if (this.playerView.game.phase === 'end' && window.location.pathname !== paths.THE_END) {
         window.location = window.location as any as (string & Location);
@@ -278,34 +310,14 @@ export default defineComponent({
     },
   },
   mounted() {
-    document.title = gameDocumentTitle(this.playerView.game);
-    if (getPreferences().experimental_ui) {
-      setFaviconStatus(this.waitingfor !== undefined ? 'turn' : 'idle');
-    }
-    window.clearInterval(documentTitleTimer);
-    if (this.waitingfor === undefined || this.waitingfor.optional) {
-      this.waitForUpdate();
-    } else if (this.playerView.players.length > 1 && SIMULTANEOUS_PHASES.includes(this.playerView.game.phase)) {
-      this.watchOtherPlayers();
-    }
-    if (this.playerView.players.length > 1 && this.waitingfor !== undefined && !this.waitingfor.optional) {
-      documentTitleTimer = window.setInterval(() => this.animateTitle(), 1000);
-    }
+    this.start();
   },
   beforeUnmount() {
-    window.clearTimeout(ui_update_timeout_id);
-    ui_update_timeout_id = undefined;
-    window.clearTimeout(otherPlayersTimer);
-    otherPlayersTimer = undefined;
-    window.clearInterval(documentTitleTimer);
-    documentTitleTimer = undefined;
+    this.stop();
   },
   computed: {
     Phase(): typeof Phase {
       return Phase;
-    },
-    preferences(): typeof getPreferences {
-      return getPreferences;
     },
     playerColorClass(): typeof playerColorClass {
       return playerColorClass;

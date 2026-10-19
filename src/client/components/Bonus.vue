@@ -23,12 +23,13 @@ const css: Record<SpaceBonus, string> = {
   [SpaceBonus.DATA]: 'data',
   [SpaceBonus.SCIENCE]: 'science',
   [SpaceBonus.ENERGY_PRODUCTION]: 'energy-production',
-  [SpaceBonus.TEMPERATURE]: 'bonustemperature',
+  [SpaceBonus._TEMPERATURE_3MC]: '', // Deprecated, migrated to TEMPERATURE_4MC.
   [SpaceBonus.ASTEROID]: 'asteroid',
   [SpaceBonus.DELEGATE]: 'delegate',
   [SpaceBonus.COLONY]: 'colony',
   [SpaceBonus._RESTRICTED]: '', // RESTRICTED is just a that a space is empty, not an actual bonus.
   [SpaceBonus.TEMPERATURE_4MC]: 'bonustemperature4mc',
+  [SpaceBonus.STANDARD_RESOURCE]: 'standard-resource',
 };
 
 export default defineComponent({
@@ -43,7 +44,6 @@ export default defineComponent({
     getClass(idx: number, bonus: SpaceBonus): string {
       const doubleWideBonuses = [
         SpaceBonus.OCEAN,
-        SpaceBonus.TEMPERATURE,
         SpaceBonus.TEMPERATURE_4MC,
         SpaceBonus.COLONY,
       ];

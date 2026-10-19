@@ -57,7 +57,7 @@
   "Gardener": "Jardineiro",
   "Own 3 greenery tiles": "Deter propriedade de ao menos 3 tiles de vegetação.",
   "Generalist": "Generalista",
-  "Requires that you have increased all 6 productions by at least 1 step": "Ter aumentado todas as suas 6 produções em pelo menos 1 nível cada.",
+  "Have increased all 6 productions by 1 step": "Ter aumentado todas as suas 6 produções em pelo menos 1 nível cada.",
   "Hoverlord": "Aeroproprietário",
   "Have 7 floater resources on your cards": "Ter ao menos 7 flutuadores em suas cartas.",
   "Legend": "Lenda",
@@ -105,7 +105,7 @@
   "Industrialist": "Industrialista",
   "Having most steel and energy resources": "Mais recurso aço e energia.",
   "Desert Settler": "Colono Deserto",
-  "Own the most tiles south of the equator (the four bottom rows)": "Mais tiles ao sul do equador (4 linhas inferiores do mapa).",
+  "Own the most tiles south of the equator (the rows below the middle row)": "Mais tiles ao sul do equador (linhas abaixo da linha central do mapa).",
   "Estate Dealer": "Corretor de Imóveis",
   "Own the most tiles adjacent to ocean tiles": "Mais tiles adjacentes a tiles de oceano.",
   "Benefactor": "Benfeitor",
@@ -224,7 +224,7 @@
   "Select card(s) to buy": "Escolha carta(s) que deseja comprar",
   "You cannot afford any cards": "Você não consegue pagar as cartas",
 
-  "Starting Megacredits:": "Megacréditos iniciais：",
+  "Starting M€:": "Megacréditos iniciais：",
   "After Preludes:": "Depois dos prelúdio：",
 
   "Select a card to keep and pass the rest to ${0}": "Escolha um carta para manter e passe o resto para ${0}",

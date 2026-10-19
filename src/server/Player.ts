@@ -1,6 +1,6 @@
 import * as constants from '../common/constants';
 import {PlayerId} from '../common/Types';
-import {MILESTONE_COST, REDS_RULING_POLICY_COST} from '../common/constants';
+import {MILESTONE_COST, PRODUCTION_MINIMUMS, REDS_RULING_POLICY_COST} from '../common/constants';
 import {cardsFromJSON, ceosFromJSON, corporationCardsFromJSON, newCorporationCard, preludesFromJSON} from './createCard';
 import {CardName} from '../common/cards/CardName';
 import {CardType} from '../common/cards/CardType';
@@ -33,7 +33,7 @@ import {SelfReplicatingRobots} from './cards/promo/SelfReplicatingRobots';
 import {SerializedPlayer} from './SerializedPlayer';
 import {StormCraftIncorporated} from './cards/colonies/StormCraftIncorporated';
 import {Tag} from '../common/cards/Tag';
-import {Timer} from '../common/Timer';
+import {Clock, Timer} from '../common/Timer';
 import {TurmoilHandler} from './turmoil/TurmoilHandler';
 import {AllOptions, DrawCards, DrawOptions} from './deferredActions/DrawCards';
 import {Units} from '../common/Units';
@@ -45,7 +45,6 @@ import {KELVINISTS_POLICY_3} from './turmoil/parties/Kelvinists';
 import {GlobalParameter} from '../common/GlobalParameter';
 import {LogHelper} from './LogHelper';
 import {UndoActionOption} from './inputs/UndoActionOption';
-import {Turmoil} from './turmoil/Turmoil';
 import {PathfindersExpansion} from './pathfinders/PathfindersExpansion';
 import {ColoniesHandler} from './colonies/ColoniesHandler';
 import {MonsInsurance} from './cards/promo/MonsInsurance';
@@ -159,9 +158,10 @@ export class Player implements IPlayer {
   public removingPlayers: Array<PlayerId> = [];
   // Warmonger
   public warmongerCards: number = 0;
-  // For Playwrights corp.
-  // removedFromPlayCards is a bit of a misname: it's a temporary storage for
-  // cards that provide 'next card' discounts. This will clear between turns.
+  // For Playwrights and Odyssey.
+  // removedFromPlayCards is a bit of a misname: it holds replayed events, so their
+  // 'next card' discounts still apply. It is never cleared; stale entries are
+  // harmless because those discounts only apply while lastCardPlayed matches.
   public removedFromPlayCards: Array<IProjectCard> = [];
   public preservationProgram = false;
   public trThisGeneration = 0;
@@ -183,6 +183,8 @@ export class Player implements IPlayer {
   public globalParameterSteps: Record<GlobalParameter, number> = {...DEFAULT_GLOBAL_PARAMETER_STEPS};
 
   public user?: DiscordId;
+  public inputRequestedAt?: number;
+  public clock: Clock = new Clock();
 
   public get megaCredits(): number {
     return this.stock.megacredits;
@@ -257,7 +259,7 @@ export class Player implements IPlayer {
     this.id = id;
     // This seems pretty bad. The game will be set before the Player is actually
     // used, and if that doesn't happen, well, it's a worthy error.
-    // The alterantive, to make game type Game | undefined, will cause compilation
+    // The alternative, to make game type Game | undefined, will cause compilation
     // issues throughout the app.
     // Ideally the right thing is to invert how players and games get created.
     // But one thing at a time.
@@ -404,7 +406,7 @@ export class Player implements IPlayer {
   }
 
   public canHaveProductionReduced(resource: Resource, minQuantity: number, attacker: IPlayer) {
-    const reducable = this.production[resource] + (resource === Resource.MEGACREDITS ? 5 : 0);
+    const reducable = this.production[resource] - PRODUCTION_MINIMUMS[resource];
     if (reducable < minQuantity) {
       return false;
     }
@@ -507,7 +509,7 @@ export class Player implements IPlayer {
   }
 
   public onGlobalParameterIncrease(parameter: GlobalParameter, steps: number): void {
-    // Tracks this player's contributition to global parmeters for end-of-game reporting.
+    // Tracks this player's contribution to global parameters for end-of-game reporting.
     this.globalParameterSteps[parameter] += steps;
   }
 
@@ -641,7 +643,7 @@ export class Player implements IPlayer {
   }
 
   /**
-   * ../..return {number} the number of avaialble megacredits. Which is just a shorthand for megacredits,
+   * ../..return {number} the number of available megacredits. Which is just a shorthand for megacredits,
    * plus any units of heat available thanks to Helion (and Stormcraft, by proxy).
    */
   public spendableMegacredits(): number {
@@ -728,10 +730,7 @@ export class Player implements IPlayer {
       }
     });
 
-    // TODO(kberg): put this in a callback.
-    if (card.tags.includes(Tag.SPACE) && PartyHooks.shouldApplyPolicy(this, PartyName.UNITY, 'up04')) {
-      cost -= 2;
-    }
+    cost -= TurmoilHandler.getCardDiscount(this, card);
 
     return Math.max(cost, 0);
   }
@@ -781,12 +780,23 @@ export class Player implements IPlayer {
       }
     }
 
-    // TODO(kberg): Move this.paymentOptionsForCard to a parameter.
     const totalToPay = this.payingAmount(payment, this.paymentOptionsForCard(selectedCard));
 
     if (totalToPay < cardCost) {
       throw new Error('Did not spend enough to pay for card');
     }
+
+    const deductCardResources = (amt: number | undefined, cardName: CardName) => {
+      if (amt !== undefined && amt > 0) {
+        const card = this.playedCards.get(cardName);
+        if (card) {
+          this.removeResourceFrom(card, amt, {log: true});
+        }
+      }
+    };
+    deductCardResources(selectedCard.additionalProjectCosts?.aeronGenomicsResources, CardName.AERON_GENOMICS);
+    deductCardResources(selectedCard.additionalProjectCosts?.thinkTankResources, CardName.THINK_TANK);
+
     return this.playCard(selectedCard, payment, cardAction);
   }
 
@@ -870,7 +880,7 @@ export class Player implements IPlayer {
     // This issue is evident when playing New Partner, and drawing Double Down.
     // The issue is fixed in Double Down for the time being. But the right fix is to move this block
     // down. As I say, that's going to break a lot of things, many of which are not evident
-    // in tests (because they use card.play instad of player.playCard).
+    // in tests (because they use card.play instead of player.playCard).
     const action = selectedCard.play(this);
     this.defer(action, Priority.DEFAULT);
 
@@ -1161,50 +1171,47 @@ export class Player implements IPlayer {
   }
 
   public takeActionForFinalGreenery(): void {
-    const resolveFinalGreeneryDeferredActions = () => {
-      this.game.deferredActions.runAll(() => this.takeActionForFinalGreenery());
-    };
-
     // Resolve any deferredAction before placing the next greenery
     // Otherwise if two tiles are placed next to Philares, only the last benefit is triggered
     // if Philares does not accept the first bonus before the second tile is down
-    if (this.game.deferredActions.length > 0) {
-      resolveFinalGreeneryDeferredActions();
-      return;
-    }
+    this.game.drainQueue(() => {
+      const resolveFinalGreeneryDeferredActions = () => {
+        this.game.deferredActions.runAll(() => this.takeActionForFinalGreenery());
+      };
 
-    if (this.game.canPlaceGreenery(this)) {
-      const action = new OrOptions()
-        .setTitle('Place any final greenery from plants')
-        .setButtonLabel('Confirm');
-      action.options.push(
-        new SelectSpace(
-          'Select space for greenery tile',
-          this.game.board.getAvailableSpacesForGreenery(this))
-          .andThen((space) => {
-            // Do not raise oxygen or award TR for final greenery placements
-            this.game.addGreenery(this, space, false);
-            this.stock.deduct(Resource.PLANTS, this.plantsNeededForGreenery);
+      if (this.game.canPlaceGreenery(this)) {
+        const action = new OrOptions()
+          .setTitle('Place any final greenery from plants')
+          .setButtonLabel('Confirm');
+        action.options.push(
+          new SelectSpace(
+            'Select space for greenery tile',
+            this.game.board.getAvailableSpacesForGreenery(this))
+            .andThen((space) => {
+              // Do not raise oxygen or award TR for final greenery placements
+              this.game.addGreenery(this, space, false);
+              this.stock.deduct(Resource.PLANTS, this.plantsNeededForGreenery);
 
-            // Resolve Philares deferred actions and maybe place another greenery
-            resolveFinalGreeneryDeferredActions();
+              // Resolve Philares deferred actions and maybe place another greenery
+              resolveFinalGreeneryDeferredActions();
+              return undefined;
+            }));
+        action.options.push(
+          new SelectOption('Don\'t place a greenery').andThen(() => {
+            this.game.playerIsDoneWithGame(this);
             return undefined;
-          }));
-      action.options.push(
-        new SelectOption('Don\'t place a greenery').andThen(() => {
-          this.game.playerIsDoneWithGame(this);
-          return undefined;
-        }),
-      );
-      this.setWaitingForSafely(action);
-      return;
-    }
+          }),
+        );
+        this.setWaitingForSafely(action);
+        return;
+      }
 
-    if (this.game.deferredActions.length > 0) {
-      resolveFinalGreeneryDeferredActions();
-    } else {
-      this.game.playerIsDoneWithGame(this);
-    }
+      if (this.game.deferredActions.length > 0) {
+        resolveFinalGreeneryDeferredActions();
+      } else {
+        this.game.playerIsDoneWithGame(this);
+      }
+    });
   }
 
   public getPlayableCards(): Array<IProjectCard> {
@@ -1307,7 +1314,7 @@ export class Player implements IPlayer {
   }
 
   /**
-   * Returns the value of the suppled payment given the payment options.
+   * Returns the value of the supplied payment given the payment options.
    *
    * For example, if the payment is 3M€ and 2 steel, given that steel by default is
    * worth 2M€, this will return 7.
@@ -1361,10 +1368,6 @@ export class Player implements IPlayer {
    * Returns information about whether a player can afford to spend money with other costs and ways to pay taken into account.
    */
   private canAffordInternal(options: CanAffordOptions): {redsCost: number, canAfford: boolean} {
-    // TODO(kberg): These are set both here and in SelectPayment. Consolidate, perhaps.
-    options.heat = this.canUseHeatAsMegaCredits;
-    options.lunaTradeFederationTitanium = this.canUseTitaniumAsMegacredits;
-
     const reserveUnits = options.reserveUnits ?? Units.EMPTY;
     if (reserveUnits.heat > 0) {
       // Special-case heat
@@ -1434,7 +1437,7 @@ export class Player implements IPlayer {
   /**
    * Set up a player taking their next action.
    *
-   * This method indicates the avalilable actions by setting the `waitingFor` attribute of this player.
+   * This method indicates the available actions by setting the `waitingFor` attribute of this player.
    *
    * saveBeforeTakingAction when true, the game state is saved. Default is `true`. This
    * should only be false in testing and when this method is called during game deserialization. In other
@@ -1442,116 +1445,113 @@ export class Player implements IPlayer {
    */
   // @ts-ignore saveBeforeTakingAction is unused at the moment.
   public takeAction(saveBeforeTakingAction: boolean = true): void {
-    const game = this.game;
+    this.game.drainQueue(() => {
+      const game = this.game;
 
-    if (game.deferredActions.length > 0) {
-      game.deferredActions.runAll(() => this.takeAction());
-      return;
-    }
-
-    if (this.actionsTakenThisRound === 0 || game.gameOptions.undoOption) {
-      game.save();
-    }
-    // if (saveBeforeTakingAction) game.save();
-
-
-    // Autopass is disabled.
-    // if (this.autopass) {
-    //   this.passOption().cb();
-    // }
-    const headStartIsInEffect = this.headStartIsInEffect();
-    this.game.inDoubleDown = false;
-
-    if (!headStartIsInEffect) {
-      // Prelude cards have to be played first
-      if (this.preludeCardsInHand.length > 0) {
-        game.phase = Phase.PRELUDES;
-
-        const selectPrelude = PreludesExpansion.selectPreludeToPlay(this, this.preludeCardsInHand);
-
-        this.setWaitingFor(selectPrelude, this.runWhenEmpty(() => {
-          this.incrementActionsTaken();
-          if (this.preludeCardsInHand.length === 0 && !this.headStartIsInEffect()) {
-            game.playerIsFinishedTakingActions();
-            return;
-          }
-          this.takeAction();
-        }));
-
-        return;
+      if (this.actionsTakenThisRound === 0 || game.gameOptions.undoOption) {
+        game.save();
       }
+      // if (saveBeforeTakingAction) game.save();
 
-      if (this.ceoCardsInHand.size > 0) {
-        // The CEO phase occurs between the Prelude phase and before the Action phase.
-        // All CEO cards are played before players take their first normal actions.
-        game.phase = Phase.CEOS;
 
-        // start from the end of the list and work backwards, not sure why.
-        const playableCeoCards = Array.from(this.ceoCardsInHand).filter((card) => card.canPlay?.(this) === true).reverse();
-        for (const ceo of playableCeoCards) {
-          this.playCard(ceo);
-        }
-        // Null out ceoCardsInHand, anything left was unplayable.
-        this.ceoCardsInHand.clear();
-        this.takeAction(); // back to top
-        return;
-      } else {
-        game.phase = Phase.ACTION;
-      }
-
-      if (game.hasPassedThisActionPhase(this) || (this.allOtherPlayersHavePassed() === false && this.actionsTakenThisRound >= this.availableActionsThisRound)) {
-        this.actionsTakenThisRound = 0;
-        this.availableActionsThisRound = 2;
-        game.resettable = true;
-        game.playerIsFinishedTakingActions();
-        return;
-      }
-    }
-
-    // Terraforming Mars FAQ says:
-    //   If for any reason you are not able to perform your mandatory first action (e.g. if
-    //   all 3 Awards are claimed before starting your turn as Vitor), you can skip this and
-    //   proceed with other actions instead.
-    // This code just uses "must skip" instead of "can skip".
-    const vitor = this.tableau.get(CardName.VITOR);
-    if (vitor !== undefined && this.game.allAwardsFunded()) {
-      this.pendingInitialActions = this.pendingInitialActions.filter((card) => card !== vitor);
-    }
-
-    if (this.pendingInitialActions.length > 0) {
-      const orOptions = new OrOptions();
-
-      this.pendingInitialActions.forEach((corp) => {
-        const option = new SelectOption(
-          message('Take first action of ${0} corporation', (b) => b.card(corp)),
-          corp.initialActionText)
-          .andThen(() => {
-            game.log('${0} took the first action of ${1} corporation', (b) => b.player(this).card(corp)),
-            this.defer(corp.initialAction?.(this));
-            inplaceRemove(this.pendingInitialActions, corp);
-            return undefined;
-          });
-        orOptions.options.push(option);
-      });
+      // Autopass is disabled.
+      // if (this.autopass) {
+      //   this.passOption().cb();
+      // }
+      const headStartIsInEffect = this.headStartIsInEffect();
+      this.game.inDoubleDown = false;
 
       if (!headStartIsInEffect) {
-        orOptions.options.push(this.passOption());
+        // Prelude cards have to be played first
+        if (this.preludeCardsInHand.length > 0) {
+          game.phase = Phase.PRELUDES;
+
+          const selectPrelude = PreludesExpansion.selectPreludeToPlay(this, this.preludeCardsInHand);
+
+          this.setWaitingFor(selectPrelude, this.runWhenEmpty(() => {
+            this.incrementActionsTaken();
+            if (this.preludeCardsInHand.length === 0 && !this.headStartIsInEffect()) {
+              game.playerIsFinishedTakingActions();
+              return;
+            }
+            this.takeAction();
+          }));
+
+          return;
+        }
+
+        if (this.ceoCardsInHand.size > 0) {
+          // The CEO phase occurs between the Prelude phase and before the Action phase.
+          // All CEO cards are played before players take their first normal actions.
+          game.phase = Phase.CEOS;
+
+          // start from the end of the list and work backwards, not sure why.
+          const playableCeoCards = Array.from(this.ceoCardsInHand).filter((card) => card.canPlay?.(this) === true).reverse();
+          for (const ceo of playableCeoCards) {
+            this.playCard(ceo);
+          }
+          // Null out ceoCardsInHand, anything left was unplayable.
+          this.ceoCardsInHand.clear();
+          this.takeAction(); // back to top
+          return;
+        } else {
+          game.phase = Phase.ACTION;
+        }
+
+        if (game.hasPassedThisActionPhase(this) || (this.allOtherPlayersHavePassed() === false && this.actionsTakenThisRound >= this.availableActionsThisRound)) {
+          this.actionsTakenThisRound = 0;
+          this.availableActionsThisRound = 2;
+          game.resettable = true;
+          game.playerIsFinishedTakingActions();
+          return;
+        }
       }
 
-      this.setWaitingFor(orOptions, this.runWhenEmpty(() => {
-        if (this.pendingInitialActions.length === 0) {
-          this.incrementActionsTaken();
+      // Terraforming Mars FAQ says:
+      //   If for any reason you are not able to perform your mandatory first action (e.g. if
+      //   all 3 Awards are claimed before starting your turn as Vitor), you can skip this and
+      //   proceed with other actions instead.
+      // This code just uses "must skip" instead of "can skip".
+      const vitor = this.tableau.get(CardName.VITOR);
+      if (vitor !== undefined && this.game.allAwardsFunded()) {
+        this.pendingInitialActions = this.pendingInitialActions.filter((card) => card !== vitor);
+      }
+
+      if (this.pendingInitialActions.length > 0) {
+        const orOptions = new OrOptions();
+
+        this.pendingInitialActions.forEach((corp) => {
+          const option = new SelectOption(
+            message('Take first action of ${0} corporation', (b) => b.card(corp)),
+            corp.initialActionText)
+            .andThen(() => {
+              game.log('${0} took the first action of ${1} corporation', (b) => b.player(this).card(corp));
+              this.defer(corp.initialAction?.(this));
+              inplaceRemove(this.pendingInitialActions, corp);
+              return undefined;
+            });
+          orOptions.options.push(option);
+        });
+
+        if (!headStartIsInEffect) {
+          orOptions.options.push(this.passOption());
         }
-        this.timer.rebate(constants.BONUS_SECONDS_PER_ACTION * 1000);
+
+        this.setWaitingFor(orOptions, this.runWhenEmpty(() => {
+          if (this.pendingInitialActions.length === 0) {
+            this.incrementActionsTaken();
+          }
+          this.timer.rebate(constants.BONUS_SECONDS_PER_ACTION * 1000);
+          this.takeAction();
+        }));
+        return;
+      }
+
+      this.setWaitingFor(this.getActions(), this.runWhenEmpty(() => {
+        this.incrementActionsTaken();
         this.takeAction();
       }));
-      return;
-    }
-
-    this.setWaitingFor(this.getActions(), this.runWhenEmpty(() => {
-      this.incrementActionsTaken();
-      this.takeAction();
-    }));
+    });
   }
 
   private incrementActionsTaken(): void {
@@ -1632,12 +1632,10 @@ export class Player implements IPlayer {
     }
 
     // Add delegates
-    Turmoil.ifTurmoil(this.game, (turmoil) => {
-      const input = turmoil.getSendDelegateInput(this);
-      if (input !== undefined) {
-        action.options.push(input);
-      }
-    });
+    const input = this.game.turmoil?.getSendDelegateInput(this);
+    if (input !== undefined) {
+      action.options.push(input);
+    }
 
     // End turn
     if (this.game.players.length > 1 &&
@@ -1727,6 +1725,7 @@ export class Player implements IPlayer {
     }
     this.waitingFor = input;
     this.waitingForCb = cb;
+    this.inputRequestedAt = this.clock.now();
     this.game.inputsThisRound++;
   }
 
